@@ -4,6 +4,7 @@ import InventoryUI from "./InventoryUI.js";
 import QuestsUI from "./QuestsUI.js";
 import CompilerUI from "./CompilerUI.js";
 import { GameState } from "../../GameState.js";
+import LessonsUI from "./LessonsUI.js";
 
 export default class HUD {
   constructor() {
@@ -15,6 +16,7 @@ export default class HUD {
     this.inventory = new InventoryUI();
     this.quests = new QuestsUI();
     this.compiler = new CompilerUI();
+    this.lessons = new LessonsUI();
 
     // Compiler bubble tracking
     this.bubbleInterval = null;
@@ -80,6 +82,10 @@ export default class HUD {
         const appId = icon.dataset.app;
         this.openApp(appId);
         if (appId === "app-codex") this.codex.loadCodexList('stories');
+
+        if (appId === "app-lessons") {
+      this.lessons.loadCategories();
+    }
       });
     });
   }
@@ -164,6 +170,7 @@ export default class HUD {
     this.openTablet();
     setTimeout(() => this.openApp(appId), 10);
   }
+
 }
 
 // -------------------------

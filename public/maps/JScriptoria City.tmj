@@ -217,6 +217,7 @@
             1610612863, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 1073741899, 1073741899, 1073741899, 1073741899, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225600, 3221225599],
          "height":100,
          "id":8,
+         "locked":true,
          "name":"Wall Layer",
          "opacity":1,
          "type":"tilelayer",
@@ -452,6 +453,7 @@
         {
          "draworder":"topdown",
          "id":14,
+         "locked":true,
          "name":"NPC Objects",
          "objects":[
                 {
@@ -633,7 +635,7 @@
         {
          "columns":1,
          "firstgid":1,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_door.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_door.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -646,7 +648,7 @@
         {
          "columns":1,
          "firstgid":2,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_roof.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_roof.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -659,7 +661,7 @@
         {
          "columns":1,
          "firstgid":3,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_roof2.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_roof2.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -672,7 +674,7 @@
         {
          "columns":1,
          "firstgid":4,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_roof3.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_roof3.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -685,7 +687,7 @@
         {
          "columns":1,
          "firstgid":5,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_roof4.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_roof4.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -698,7 +700,7 @@
         {
          "columns":1,
          "firstgid":6,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_wall3.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_wall3.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -711,7 +713,7 @@
         {
          "columns":1,
          "firstgid":7,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_wall2.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_wall2.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -724,7 +726,7 @@
         {
          "columns":1,
          "firstgid":8,
-         "image":"..\/..\/..\/..\/testscene\/headquarters_wall1.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/headquarters_wall1.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -737,7 +739,7 @@
         {
          "columns":1,
          "firstgid":9,
-         "image":"..\/..\/..\/..\/testscene\/base_house.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/base_house.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -750,7 +752,7 @@
         {
          "columns":1,
          "firstgid":10,
-         "image":"..\/..\/..\/..\/testscene\/pavement1.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/pavement1.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -763,7 +765,7 @@
         {
          "columns":1,
          "firstgid":11,
-         "image":"..\/..\/..\/..\/testscene\/pavement2.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/pavement2.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -776,7 +778,7 @@
         {
          "columns":1,
          "firstgid":12,
-         "image":"..\/..\/..\/..\/testscene\/base_house2.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/base_house2.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -789,7 +791,7 @@
         {
          "columns":1,
          "firstgid":13,
-         "image":"..\/..\/..\/..\/testscene\/base_house3.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/base_house3.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -802,7 +804,7 @@
         {
          "columns":3,
          "firstgid":14,
-         "image":"..\/..\/..\/..\/testscene\/corner-stone-grass-sheet.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/corner-stone-grass-sheet.png",
          "imageheight":16,
          "imagewidth":48,
          "margin":0,
@@ -832,7 +834,7 @@
         {
          "columns":3,
          "firstgid":17,
-         "image":"..\/..\/..\/..\/testscene\/corner-stone-grass2-sheet.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/corner-stone-grass2-sheet.png",
          "imageheight":16,
          "imagewidth":48,
          "margin":0,
@@ -862,7 +864,7 @@
         {
          "columns":11,
          "firstgid":20,
-         "image":"..\/..\/..\/..\/testscene\/house1.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/house1.png",
          "imageheight":16,
          "imagewidth":176,
          "margin":0,
@@ -875,7 +877,7 @@
         {
          "columns":11,
          "firstgid":31,
-         "image":"..\/..\/..\/..\/testscene\/guild.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/guild.png",
          "imageheight":16,
          "imagewidth":176,
          "margin":0,
@@ -888,7 +890,7 @@
         {
          "columns":8,
          "firstgid":42,
-         "image":"..\/..\/..\/..\/testscene\/inn.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/inn.png",
          "imageheight":16,
          "imagewidth":128,
          "margin":0,
@@ -901,7 +903,7 @@
         {
          "columns":18,
          "firstgid":50,
-         "image":"..\/..\/..\/..\/testscene\/school-sheet.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/school-sheet.png",
          "imageheight":16,
          "imagewidth":288,
          "margin":0,
@@ -914,7 +916,7 @@
         {
          "columns":7,
          "firstgid":68,
-         "image":"..\/..\/..\/..\/testscene\/roads.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/roads.png",
          "imageheight":16,
          "imagewidth":112,
          "margin":0,
@@ -927,7 +929,7 @@
         {
          "columns":1,
          "firstgid":75,
-         "image":"..\/..\/..\/..\/testscene\/roadblock.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/roadblock.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -940,7 +942,7 @@
         {
          "columns":7,
          "firstgid":76,
-         "image":"..\/..\/..\/..\/testscene\/lamppost.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/lamppost.png",
          "imageheight":16,
          "imagewidth":112,
          "margin":0,
@@ -990,7 +992,7 @@
         {
          "columns":26,
          "firstgid":83,
-         "image":"..\/..\/..\/..\/testscene\/library.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/library.png",
          "imageheight":16,
          "imagewidth":416,
          "margin":0,
@@ -1003,7 +1005,7 @@
         {
          "columns":14,
          "firstgid":109,
-         "image":"..\/..\/..\/..\/testscene\/coretower.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/coretower.png",
          "imageheight":16,
          "imagewidth":224,
          "margin":0,
@@ -1053,7 +1055,7 @@
         {
          "columns":6,
          "firstgid":123,
-         "image":"..\/..\/..\/..\/testscene\/walled.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/walled.png",
          "imageheight":16,
          "imagewidth":96,
          "margin":0,
@@ -1066,7 +1068,7 @@
         {
          "columns":1,
          "firstgid":129,
-         "image":"..\/..\/..\/..\/testscene\/base_house.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/base_house.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,
@@ -1079,7 +1081,7 @@
         {
          "columns":1,
          "firstgid":130,
-         "image":"..\/..\/..\/..\/testscene\/base_house.png",
+         "image":"..\/assets\/tilesets\/jscriptoriacity\/base_house.png",
          "imageheight":16,
          "imagewidth":16,
          "margin":0,

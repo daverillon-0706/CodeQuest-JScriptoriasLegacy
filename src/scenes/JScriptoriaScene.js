@@ -37,10 +37,11 @@ export default class JScriptoriaScene extends Phaser.Scene {
       'headquarters_roof2','headquarters_roof3','headquarters_roof4','headquarters_wall3','headquarters_wall2',
       'headquarters_wall1','Sprite-0001','base_house','pavement1','pavement2','base_house2','base_house3',
       'corner-stone-grass-sheet','corner-stone-grass2-sheet','sample_fence','sample_fence-sheet','house1',
-      'guild','inn','school-sheet','roads','roadblock','lamppost','library','coretower','walled'
+      'guild','inn','school-sheet','roads','roadblock','lamppost','library','coretower'
     ];
     tilesets.forEach(name => this.load.image(name, `/assets/tilesets/jscriptoriacity/${name}.png`));
 
+    this.load.image("walled", "/assets/tilesets/jscriptoriacity/walled.png");
     // Player sprite
     this.load.spritesheet('player_male', '/assets/sprites/player/player_male.png', { frameWidth: 16, frameHeight: 16 });
 

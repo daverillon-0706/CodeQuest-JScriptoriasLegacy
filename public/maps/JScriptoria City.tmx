@@ -1,49 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="18" nextobjectid="48">
  <editorsettings>
-  <export target="../../../../testscene/JScriptoria City.tmj" format="json"/>
+  <export target="JScriptoria City.tmj" format="json"/>
  </editorsettings>
  <tileset firstgid="1" name="headquarters_door" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_door.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_door.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="2" name="headquarters_roof" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_roof.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_roof.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="3" name="headquarters_roof2" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_roof2.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_roof2.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="4" name="headquarters_roof3" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_roof3.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_roof3.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="5" name="headquarters_roof4" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_roof4.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_roof4.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="6" name="headquarters_wall3" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_wall3.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_wall3.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="7" name="headquarters_wall2" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_wall2.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_wall2.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="8" name="headquarters_wall1" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/headquarters_wall1.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/headquarters_wall1.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="9" name="base_house" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/base_house.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/base_house.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="10" name="pavement1" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/pavement1.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/pavement1.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="11" name="pavement2" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/pavement2.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/pavement2.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="12" name="base_house2" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/base_house2.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/base_house2.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="13" name="base_house3" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/base_house3.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/base_house3.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="14" name="corner-stone-grass-sheet" tilewidth="16" tileheight="16" tilecount="3" columns="3">
-  <image source="../../../../testscene/corner-stone-grass-sheet.png" width="48" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/corner-stone-grass-sheet.png" width="48" height="16"/>
   <tile id="0">
    <animation>
     <frame tileid="0" duration="300"/>
@@ -53,7 +53,7 @@
   </tile>
  </tileset>
  <tileset firstgid="17" name="corner-stone-grass2-sheet" tilewidth="16" tileheight="16" tilecount="3" columns="3">
-  <image source="../../../../testscene/corner-stone-grass2-sheet.png" width="48" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/corner-stone-grass2-sheet.png" width="48" height="16"/>
   <tile id="0">
    <animation>
     <frame tileid="0" duration="300"/>
@@ -63,25 +63,25 @@
   </tile>
  </tileset>
  <tileset firstgid="20" name="house1" tilewidth="16" tileheight="16" tilecount="11" columns="11">
-  <image source="../../../../testscene/house1.png" width="176" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/house1.png" width="176" height="16"/>
  </tileset>
  <tileset firstgid="31" name="guild" tilewidth="16" tileheight="16" tilecount="11" columns="11">
-  <image source="../../../../testscene/guild.png" width="176" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/guild.png" width="176" height="16"/>
  </tileset>
  <tileset firstgid="42" name="inn" tilewidth="16" tileheight="16" tilecount="8" columns="8">
-  <image source="../../../../testscene/inn.png" width="128" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/inn.png" width="128" height="16"/>
  </tileset>
  <tileset firstgid="50" name="school-sheet" tilewidth="16" tileheight="16" tilecount="18" columns="18">
-  <image source="../../../../testscene/school-sheet.png" width="288" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/school-sheet.png" width="288" height="16"/>
  </tileset>
  <tileset firstgid="68" name="roads" tilewidth="16" tileheight="16" tilecount="7" columns="7">
-  <image source="../../../../testscene/roads.png" width="112" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/roads.png" width="112" height="16"/>
  </tileset>
  <tileset firstgid="75" name="roadblock" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/roadblock.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/roadblock.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="76" name="lamppost" tilewidth="16" tileheight="16" tilecount="7" columns="7">
-  <image source="../../../../testscene/lamppost.png" width="112" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/lamppost.png" width="112" height="16"/>
   <tile id="2">
    <animation>
     <frame tileid="2" duration="340"/>
@@ -96,10 +96,10 @@
   </tile>
  </tileset>
  <tileset firstgid="83" name="library" tilewidth="16" tileheight="16" tilecount="26" columns="26">
-  <image source="../../../../testscene/library.png" width="416" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/library.png" width="416" height="16"/>
  </tileset>
  <tileset firstgid="109" name="coretower" tilewidth="16" tileheight="16" tilecount="14" columns="14">
-  <image source="../../../../testscene/coretower.png" width="224" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/coretower.png" width="224" height="16"/>
   <tile id="9">
    <animation>
     <frame tileid="9" duration="200"/>
@@ -114,13 +114,13 @@
   </tile>
  </tileset>
  <tileset firstgid="123" name="walled" tilewidth="16" tileheight="16" tilecount="6" columns="6">
-  <image source="../../../../testscene/walled.png" width="96" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/walled.png" width="96" height="16"/>
  </tileset>
  <tileset firstgid="129" name="base_house" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/base_house.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/base_house.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="130" name="base_house" tilewidth="16" tileheight="16" tilecount="1" columns="1">
-  <image source="../../../../testscene/base_house.png" width="16" height="16"/>
+  <image source="../assets/tilesets/jscriptoriacity/base_house.png" width="16" height="16"/>
  </tileset>
  <tileset firstgid="131" name="corner-stone-grass2-sheet" tilewidth="16" tileheight="16" tilecount="3" columns="3">
   <image source="../../../../CodeQuest testing/corner-stone-grass2-sheet.png" width="48" height="16"/>
@@ -246,7 +246,7 @@
 1610612863,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,68,70,70,3221225540,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225600,3221225599
 </data>
  </layer>
- <layer id="8" name="Wall Layer" width="100" height="100">
+ <layer id="8" name="Wall Layer" width="100" height="100" locked="1">
   <data encoding="csv">
 127,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,0,2147483723,2147483723,2147483723,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,2684354687,
 1610612864,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2684354688,
@@ -558,7 +558,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="14" name="NPC Objects">
+ <objectgroup id="14" name="NPC Objects" locked="1">
   <object id="43" name="sample npc" x="800.083" y="912.542" width="15.75" height="15.125">
    <properties>
     <property name="dialogue" value="[&quot;This is a test space, player.&quot;, &quot;Proceed to the headquarters to test out your compiler.&quot;, &quot;Inside there you will greet Master Elysia and the others.&quot;, &quot;Talk to them about that bug they caught and they will ask you to debug it or something.&quot;]"/>

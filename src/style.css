@@ -977,7 +977,7 @@ body {
 #compiler-output-box {
   position: absolute;
   top: 35%;
-  left: 4%;
+  left: 50%;
   transform: translateX(-50%);
   background: #2e2e3f;
   color: #f0f0f0;
@@ -992,4 +992,114 @@ body {
 }
 #compiler-output-box.hidden {
   display: none;
+}
+
+/*Lessons UI Panel and Icon*/
+
+/* ===============================
+   LESSONS APP STYLING
+   =============================== */
+
+#app-lessons {
+  display: grid;
+  grid-template-columns: 35% 65%;
+  gap: 10px;
+  height: 100%;
+}
+
+/* LEFT LIST */
+#lessons-list {
+  background: #121212;
+  border-right: 2px solid #2b2b2b;
+  padding: 10px;
+  overflow-y: auto;
+  border-radius: 6px;
+}
+
+#lessons-list button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  background: #1f1f1f;
+  border: 1px solid #333;
+  color: #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+#lessons-list button:hover {
+  background: #2d2d2d;
+  color: white;
+}
+
+/* Specific category and lesson buttons */
+.lessons-category-btn {
+  font-weight: bold;
+  background: #242424;
+}
+
+.lessons-category-btn:hover {
+  background: #363636;
+}
+
+.lessons-lesson-btn {
+  background: #1d1d1d;
+}
+
+.lessons-lesson-btn:hover {
+  background: #2e2e2e;
+}
+
+/* RIGHT CONTENT AREA */
+#lessons-content {
+  background: #0f0f0f;
+  border: 1px solid #222;
+  border-radius: 6px;
+  padding: 15px;
+  white-space: pre-line;
+  color: #e0e0e0;
+  font-size: 15px;
+  overflow-y: auto;
+}
+
+/* TITLE AREA */
+#lessons-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+/* NAV BUTTONS */
+#lesson-prev,
+#lesson-next {
+  padding: 8px 14px;
+  background: #202020;
+  border: 1px solid #3a3a3a;
+  color: #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+  display: none;
+  margin: 5px;
+}
+
+#lesson-prev:hover,
+#lesson-next:hover {
+  background: #323232;
+  color: white;
+}
+
+#lessons-navigation {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+#lessons-container {
+  display: grid;
+  grid-template-columns: 35% 65%;
+  height: calc(100% - 40px);
+  gap: 10px;
 }
