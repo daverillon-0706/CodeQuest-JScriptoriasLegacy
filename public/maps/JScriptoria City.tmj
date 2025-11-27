@@ -482,30 +482,41 @@
         {
          "draworder":"topdown",
          "id":17,
-         "locked":true,
          "name":"door objects",
          "objects":[
-                {
-                 "height":15.875,
-                 "id":46,
-                 "name":"hqdoor2",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":15.5,
-                 "x":784.125,
-                 "y":831.875
-                }, 
                 {
                  "height":16,
                  "id":47,
                  "name":"hqdoor1",
+                 "properties":[
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"\"HQInteriorScene\""
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":16,
-                 "x":816.125,
+                 "width":47.5,
+                 "x":784.625,
                  "y":831.313
+                }, 
+                {
+                 "height":16,
+                 "id":48,
+                 "name":"orinacademydoor",
+                 "properties":[
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"\"OrinsAcademyScene\""
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":32,
+                 "x":672,
+                 "y":433
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -626,7 +637,7 @@
          "y":0
         }],
  "nextlayerid":18,
- "nextobjectid":48,
+ "nextobjectid":50,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",

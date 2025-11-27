@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import HQInteriorScene from "./scenes/HQInteriorScene.js";
 import JScriptoriaScene from "./scenes/JScriptoriaScene.js";
 import BattleScene from "./scenes/BattleScene.js";
+import OrinsAcademyScene from "./scenes/OrinsAcademyScene.js";
 
 console.log("Using Phaser:", Phaser.VERSION);
 console.log("MAIN.JS LOADED (Vite)");
@@ -20,7 +21,7 @@ const config = {
     default: "arcade",
     arcade: { debug: false }
   },
-  scene: [JScriptoriaScene, HQInteriorScene, BattleScene]
+  scene: [JScriptoriaScene, HQInteriorScene, OrinsAcademyScene, BattleScene]
 };
 
 const game = new Phaser.Game(config);

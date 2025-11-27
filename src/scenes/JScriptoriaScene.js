@@ -151,18 +151,53 @@ export default class JScriptoriaScene extends Phaser.Scene {
 
     // ---- INTERACTIONS ----
     this.input.keyboard.on("keydown-Z", () => {
-        const result = this.dialogueManager.handleZKey(this.map.getObjectLayer('door objects'));
-        if (result && result.name) {
-            this.scene.start('HQInteriorScene', {
-                spawn: result.name,
-                playerHP: this.playerHP,
-                playerEnergy: this.playerEnergy,
-                playerCoins: this.playerCoins,
-                playerX: this.player.x,
-                playerY: this.player.y
-            });
-        }
+      if (this.dialogueManager.activeDialogue) {
+        if (this.dialogueManager.isTyping) this.dialogueManager._finishTypingInstant();
+        else this.dialogueManager.next();
+        return;
+      }
+
+      const npc = this.playerController.canTalkTo;
+      if (npc && npc.dialogue?.length > 0) {
+        this.dialogueManager.start(npc.dialogue);
+        return;
+      }
+    if (!this.doors) return;
+
+    // Find a door the player is standing on
+    const door = this.doors.find(d => {
+        const rect = new Phaser.Geom.Rectangle(d.x, d.y - d.height, d.width, d.height);
+        return Phaser.Geom.Rectangle.Overlaps(rect, this.player.getBounds());
     });
+
+    if (!door) return;
+
+    // Read targetScene from Tiled property
+    let target = door.properties?.find(p => p.name === "targetScene")?.value;
+    if (!target) {
+        console.warn("Door has no targetScene property!");
+        return;
+    }
+
+    // Strip extra quotes if any
+    target = target.replace(/^"(.*)"$/, '$1');
+
+    console.log("Door interaction: moving to scene", target);
+
+    // Start target scene, passing player data
+    this.scene.start(target, {
+        spawn: door.name,
+        playerHP: this.playerHP,
+        playerEnergy: this.playerEnergy,
+        playerCoins: this.playerCoins,
+        playerX: this.player.x,
+        playerY: this.player.y
+    });
+});
+
+
+
+
 
     // ---- HOVER MANAGER ----
     this.hoverManager = new HoverManager(this);
@@ -231,12 +266,19 @@ export default class JScriptoriaScene extends Phaser.Scene {
   setupDoors() {
     const doorLayer = this.map.getObjectLayer('door objects');
     if (!doorLayer) return;
+
+    // Offset the Y for sprite alignment
     doorLayer.objects.forEach(door => { door.y += this.TILE_SIZE; });
-    // DEBUG only
+
+    // DEBUG: draw rectangles around doors
     doorLayer.objects.forEach(door => {
-      const g = this.add.graphics();
-      g.lineStyle(1, 0xff0000, 0.7);
-      g.strokeRect(door.x, door.y, door.width, door.height);
+        const g = this.add.graphics();
+        g.lineStyle(1, 0xff0000, 0.7);
+        g.strokeRect(door.x, door.y, door.width, door.height);
     });
-  }
+
+    // Save doors for interaction
+    this.doors = doorLayer.objects;
+}
+
 }

@@ -7,6 +7,7 @@ export default class PlayerController {
 
     // Arrow keys
     this.cursors = scene.input.keyboard.createCursorKeys();
+    this.shiftKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
 
     // Nearby NPC (or interactable) detection
     this.canTalkTo = null;
@@ -19,26 +20,30 @@ export default class PlayerController {
     this.player.body.setVelocity(0);
     let anim = null;
 
+    // ---- Determine speed ----
+    let speed = this.MOVE_SPEED;
+    if (this.shiftKey.isDown) speed *= 1.8; // Running multiplier
+
     // ---- Horizontal movement ----
     if (this.cursors.left.isDown) {
-      this.player.body.setVelocityX(-this.MOVE_SPEED);
+      this.player.body.setVelocityX(-speed);
       anim = "walk-left";
     } else if (this.cursors.right.isDown) {
-      this.player.body.setVelocityX(this.MOVE_SPEED);
+      this.player.body.setVelocityX(speed);
       anim = "walk-right";
     }
 
     // ---- Vertical movement ----
     if (this.cursors.up.isDown) {
-      this.player.body.setVelocityY(-this.MOVE_SPEED);
+      this.player.body.setVelocityY(-speed);
       anim = "walk-up";
     } else if (this.cursors.down.isDown) {
-      this.player.body.setVelocityY(this.MOVE_SPEED);
+      this.player.body.setVelocityY(speed);
       anim = "walk-down";
     }
 
     // ---- Normalize diagonal movement ----
-    this.player.body.velocity.normalize().scale(this.MOVE_SPEED);
+    this.player.body.velocity.normalize().scale(speed);
 
     // ---- Play animation ----
     if (anim) this.player.anims.play(anim, true);
@@ -46,16 +51,14 @@ export default class PlayerController {
 
     // ---- Detect nearby NPCs using hitbox collision ----
     let closestDist = Infinity;
-    // Detect nearby NPCs
-this.canTalkTo = null;
-npcs.forEach(npc => {
-  const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
-  if (dist < 24) {
-    this.canTalkTo = npc;
-    console.log("Detected NPC:", npc.name, "Distance:", dist);
-  }
-});
-
+    this.canTalkTo = null;
+    npcs.forEach(npc => {
+      const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
+      if (dist < 24) {
+        this.canTalkTo = npc;
+        console.log("Detected NPC:", npc.name, "Distance:", dist);
+      }
+    });
 
     // ---- Return NPC the player can talk to ----
     return this.canTalkTo;
