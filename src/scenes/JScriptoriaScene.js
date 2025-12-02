@@ -54,7 +54,14 @@ export default class JScriptoriaScene extends Phaser.Scene {
 
     // ---- TILEMAP ----
     this.map = this.make.tilemap({ key: 'city' });
-    const tilesets = this.map.tilesets.map(ts => this.map.addTilesetImage(ts.name, ts.name));
+    const tilesets = this.map.tilesets.map(ts => {
+    // For the animated tileset name specifically
+    if (ts.name === "Sprite-0001") {
+        return this.map.addTilesetImage("Sprite-0001", "Sprite-0001");
+    }
+    return this.map.addTilesetImage(ts.name, ts.name);
+});
+
 
     const groundLayer = this.map.createLayer('Ground Layer', tilesets, 0, 0);
     const wallLayer = this.map.createLayer('Wall Layer', tilesets, 0, 0);

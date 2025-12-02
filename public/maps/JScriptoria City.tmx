@@ -558,7 +558,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="14" name="NPC Objects" locked="1">
+ <objectgroup id="14" name="NPC Objects">
   <object id="43" name="sample npc" x="800.083" y="912.542" width="15.75" height="15.125">
    <properties>
     <property name="dialogue" value="[&quot;This is a test space, player.&quot;, &quot;Proceed to the headquarters to test out your compiler.&quot;, &quot;Inside there you will greet Master Elysia and the others.&quot;, &quot;Talk to them about that bug they caught and they will ask you to debug it or something.&quot;]"/>
@@ -571,11 +571,7 @@
     <property name="targetScene" value="&quot;HQInteriorScene&quot;"/>
    </properties>
   </object>
-  <object id="48" name="orinacademydoor" x="672" y="433" width="32" height="16">
-   <properties>
-    <property name="targetScene" value="&quot;OrinsAcademyScene&quot;"/>
-   </properties>
-  </object>
+  <object id="48" name="orinacademydoor" x="672" y="433" width="32" height="16"/>
  </objectgroup>
  <layer id="16" name="Overlay layer" width="100" height="100" locked="1">
   <data encoding="csv">

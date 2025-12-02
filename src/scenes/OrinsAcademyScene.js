@@ -1,7 +1,7 @@
 // src/scenes/OrinsAcademyScene.js
 import Phaser from "phaser";
 import PlayerController from "../systems/PlayerController.js";
-import DialogueManager from "../systems/DialogueManager.js";
+// import DialogueManager from "../systems/DialogueManager.js";
 
 export default class OrinsAcademyScene extends Phaser.Scene {
   constructor() {
@@ -23,7 +23,8 @@ export default class OrinsAcademyScene extends Phaser.Scene {
     this.load.image("floor", "/assets/tilesets/orinsacademy/floor.png");
     this.load.image("lowerwall", "/assets/tilesets/orinsacademy/lowerwall.png");
     this.load.image("upperwall", "/assets/tilesets/orinsacademy/upperwall.png");
-    this.load.image("stairs", "/assets/tilesets/orinsacademy/stairs.png" )
+    this.load.image("stairs", "/assets/tilesets/orinsacademy/stairs.png" );
+    this.load.image("door", "/assets/tilesets/orinsacademy/door.png")
 
     // Player sprite
     this.load.spritesheet("player_male", "/assets/sprites/player/player_male.png", {
@@ -42,6 +43,7 @@ export default class OrinsAcademyScene extends Phaser.Scene {
         this.map.addTilesetImage("lowerwall", "lowerwall"),
         this.map.addTilesetImage("upperwall", "upperwall"),
         this.map.addTilesetImage("stairs", "stairs"),
+        this.map.addTilesetImage("door", "door")
     ];
 
     // ---- LAYERS ----
@@ -50,6 +52,7 @@ export default class OrinsAcademyScene extends Phaser.Scene {
     const collisionStairLayer = this.map.createLayer("collision stairs", tilesets, 0, 0);
     const lowerWallLayer = this.map.createLayer("lower wall 1", tilesets, 0, 0);
     const upperWallLayer = this.map.createLayer("upper wall 1", tilesets, 0, 0);
+    const upperBorderLayer = this.map.createLayer("upper border 1", tilesets, 0, 0);
 
 
     console.log(this.map.layers.map(l => l.name));
@@ -64,7 +67,7 @@ export default class OrinsAcademyScene extends Phaser.Scene {
 
     // ---- SPAWN ----
     const spawnLayer = this.map.getObjectLayer("Objects");
-    let spawnX = 100, spawnY = 100;
+    let spawnX = 400, spawnY = 400;
 
     if (data.spawn && spawnLayer) {
         const spawnObj = spawnLayer.objects.find(o => o.name === data.spawn);
@@ -94,6 +97,7 @@ export default class OrinsAcademyScene extends Phaser.Scene {
     lowerWallLayer.setDepth(2);
     this.player.setDepth(5);
     upperWallLayer.setDepth(10);
+    upperBorderLayer.setDepth(12);
 
     // ---- COLLIDERS ----
     this.physics.add.collider(this.player, lowerWallLayer);
