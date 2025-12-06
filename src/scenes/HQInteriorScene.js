@@ -4,7 +4,7 @@ import DialogueManager from "../systems/DialogueManager.js";
 import PlayerController from "../systems/PlayerController.js";
 import BugManager from "../systems/BugManager.js";
 import HoverManager from "../systems/HoverManager.js";
-import { GameState } from "../GameState.js";
+import  GameState  from "../GameState.js";
 
 export default class HQInteriorScene extends Phaser.Scene {
   constructor() {

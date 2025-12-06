@@ -1,348 +1,82 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>codequest-game</title>
-    <link rel="stylesheet" href="/src/style.css">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeQuest Login</title>
+</head>
+<body>
+  <h1>CodeQuest Login</h1>
 
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #000;
+  <input id="username" type="text" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
+  <button id="loginBtn">Login</button>
+  <button id="registerBtn">Register</button>
+
+  <script type="module">
+  import GameState from './src/GameState.js';
+
+  const usernameInput = document.getElementById('username');
+  const passwordInput = document.getElementById('password');
+  const loginBtn = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
+
+  loginBtn.addEventListener('click', async () => {
+    const username = usernameInput.value;
+    const player_password = passwordInput.value; // match server
+
+    if (!username || !player_password) return alert("Fill both fields");
+
+    try {
+      const res = await fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, player_password }) // use player_password
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        GameState.player = data.player; // save player globally
+        window.location.href = 'game.html'; // redirect to game
+      } else {
+        alert(data.error || "Login failed");
       }
-    </style>
-  </head>
-  <body>
 
-    <div class="game-border">
-      <div id="stage">
-
-        <!-- Game viewport -->
-        <div id="game-container"></div>
-
-        <div id="dialogue-box" class="dialogue-box hidden">
-          <p id="dialogue-text"></p>
-          <button id="dialogue-next">▶</button>
-        </div>
-
-      </div>
-
-      <!-- Battle UI -->
-      <div id="battle-ui" class="hidden" style="display:none; visibility:hidden;">
-        <div id="battle-bg"></div>
-
-        <div id="player-container">
-          <textarea id="player-code" placeholder="Type JS code here..."></textarea>
-        </div>
-
-        <div id="bug-container">
-          <pre id="bug-code">// Bug's error code appears here</pre>
-        </div>
-
-        <div id="battle-buttons">
-          <button id="debug-btn" disabled>Debug</button>
-          <button class="perk-btn" data-perk="Passive">Passive</button>
-          <button class="perk-btn" data-perk="Attack">Attack</button>
-          <button class="perk-btn" data-perk="Defend">Defend</button>
-          <button id="escape-btn">Escape</button>
-        </div>
-
-        <div id="battle-stats">
-          <p>HP: <span id="battle-playerHP">100</span></p>
-          <p>Energy: <span id="battle-playerEnergy">50</span></p>
-          <p>EXP: <span id="battle-playerExp">0</span></p>
-          <p>Bug HP: <span id="battle-bugHP">50</span></p>
-          <p>Bug Energy: <span id="battle-bugEnergy"></span></p>
-          <div id="bug-debuffs">
-
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- HUD -->
-    <button id="hud-toggle">HUD</button>
-
-    <!-- HUD (Tablet version) -->
-<!-- MINIMAP (Top-left) -->
-<div id="minimap-container" class="hud-top-left">
-  <canvas id="minimapCanvas" width="160" height="160"></canvas>
-  <div id="map-name">J. Scriptoria — Main Plaza</div>
-</div>
-
-<!-- PLAYER STATS (Top-right) -->
-<div id="player-stats" class="hud-top-right">
-  <div class="stats-left">
-    <div class="bar-row">
-      <label>HP</label>
-      <div class="bar-wrap">
-        <div id="hp-bar" class="bar hp" style="width:100%"></div>
-      </div>
-      <span id="playerHP-text" class="stat-text">100</span>
-    </div>
-
-    <div class="bar-row">
-      <label>Perk Energy</label>
-      <div class="bar-wrap">
-        <div id="energy-bar" class="bar energy" style="width:50%"></div>
-      </div>
-      <span id="playerEnergy-text" class="stat-text">50</span>
-    </div>
-
-    <div class="bar-row small">
-      <label>Cryptos</label>
-      <div class="cryptos">
-        <img src="/src/assets/crypto-icon.png" alt="crypto" class="coin-icon" onerror="this.style.display='none'">
-        <span id="cryptos-count">123</span>
-      </div>
-    </div>
-
-    <div class="quick-toggles">
-      <button class="quick-btn" id="quick-inv">Inventory</button>
-      <button class="quick-btn" id="quick-quests">Quests</button>
-      <button class="quick-btn" id="quick-codex">Codex</button>
-      <button class="quick-btn" id="quick-compiler">Compiler</button>
-    </div>
-  </div>
-
-  <div class="stats-right">
-    <button id="player-icon-btn" class="player-icon" title="Open Tablet HUD">
-      <!-- put a sprite or avatar here; fallback to initials -->
-      <span class="avatar-initials">PL</span>
-    </button>
-  </div>
-</div>
-
-<div id="compiler-output-box" class="compiler-output hidden"></div>
-<!-- TABLET OVERLAY -->
-<div id="tablet-overlay" class="hidden">
-  
-  <div id="tablet-hud">
-
-    <!-- HEADER -->
-    <header class="tablet-header">
-      <button id="tablet-back" class="tablet-nav-btn hidden">←</button>
-      <h2 id="tablet-title">Tablet Home</h2>
-      <button id="tablet-close" class="tablet-close">✕</button>
-    </header>
-
-    <!-- HOME ICON GRID -->
-    <div id="tablet-home" class="tablet-grid">
-      <div class="app-icon" data-app="app-codex">
-        <div class="icon-img codex-icon"></div>
-        <p>Codex</p>
-      </div>
-
-      <div class="app-icon" data-app="app-inventory">
-        <div class="icon-img inventory-icon"></div>
-        <p>Inventory</p>
-      </div>
-
-      <div class="app-icon" data-app="app-quests">
-        <div class="icon-img quests-icon"></div>
-        <p>Quests</p>
-      </div>
-
-      <div class="app-icon" data-app="app-compiler">
-        <div class="icon-img compiler-icon"></div>
-        <p>Compiler</p>
-      </div>
-
-      <div class="app-icon" data-app="app-logs">
-        <div class="icon-img logs-icon"></div>
-        <p>Logs</p>
-      </div>
-
-      <div class="app-icon" data-app="app-settings">
-        <div class="icon-img settings-icon"></div>
-        <p>Settings</p>
-      </div>
-
-      <div class="app-icon" data-app="app-achievements">
-        <div class="icon-img achievements-icon"></div>
-        <p>Achievements</p>
-      </div>
-
-      <div class="app-icon" data-app="app-lessons">
-        <div class="icon-img lessons-icon"></div>
-        <p>Lessons</p>
-      </div>
-    </div>
-
-    <!-- APP PANELS -->
-    <!-- ✨ Journal Codex App -->
-<div id="app-codex" class="app-window hidden">
-
-  <div class="codex-container">
-
-    <!-- Sidebar (Categories) -->
-    <aside class="codex-sidebar">
-      <h3>Categories</h3>
-      <ul class="codex-category-list">
-        <li class="cat active" data-cat="stories">📘 Stories</li>
-        <li class="cat" data-cat="lore">📜 Lore</li>
-        <li class="cat" data-cat="characters">🧑 Characters</li>
-        <li class="cat" data-cat="locations">🌍 Locations</li>
-        <li class="cat" data-cat="bugs">🧩 Bugs</li>
-        <li class="cat" data-cat="achievements">🏆 Achievements</li>
-        <li class="cat" data-cat="lessons">📖 Lessons</li>
-      </ul>
-    </aside>
-
-    <!-- Book List -->
-    <section class="codex-list">
-      <h3 class="codex-list-title">Stories</h3>
-      <ul id="codex-items" class="codex-items">
-        <!-- Filled dynamically -->
-      </ul>
-    </section>
-
-    <!-- Reader Panel -->
-    <section class="codex-reader">
-      <div id="codex-reader-content" class="reader-content">
-        <div id="codex-entry-icon" class="entry-icon hidden">
-    <img src="" alt="Entry Icon">
-  </div>
-        <p>Select an entry to read.</p>
-      </div>
-
-      <!-- Page Controls -->
-      <div id="codex-pages" class="reader-pages hidden">
-        <button id="page-prev" class="page-btn">◀</button>
-        <span id="page-number">Page 1</span>
-        <button id="page-next" class="page-btn">▶</button>
-      </div>
-    </section>
-
-  </div>
-</div>
-
-  <!-- NEW INVENTORY CONTAINER -->
-  <div id="app-inventory" class="tablet-panel hidden">
-  <h3>Inventory</h3>
-
-  <div class="inventory-wrapper">
-
-    <!-- LEFT SIDE: GRID -->
-    <div class="inventory-left">
-
-      <!-- CATEGORY TABS -->
-      <div id="inventory-tabs">
-        <button class="inv-tab active" data-tab="key">Key Items</button>
-        <button class="inv-tab" data-tab="cons">Consumables</button>
-      </div>
-
-      <!-- GRID AREA -->
-      <div id="inventory-grid"></div>
-    </div>
-
-    <!-- RIGHT SIDE: ITEM DETAILS -->
-    <div class="inventory-right">
-      <div id="inventory-details" class="hidden">
-        <button id="inv-details-close">✕</button>
-        <div id="inv-item-icon" class="inv-item-icon">
-          <img src="" alt="Item Icon">
-        </div>
-        <h2 id="inv-item-name"></h2>
-        <p id="inv-item-desc"></p>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-    <div id="app-quests" class="tablet-panel hidden">
-  <h3>Quests</h3>
-
-  <!-- Tabs -->
-  <div class="quests-tabs">
-    <button class="quest-tab active" data-tab="active">Active Quests</button>
-    <button class="quest-tab" data-tab="completed">Completed Quests</button>
-  </div>
-
-  <!-- Filters -->
-  <div class="quests-filter">
-    <button class="filter-btn active" data-filter="main">Main Quests</button>
-    <button class="filter-btn" data-filter="side">Side Quests</button>
-  </div>
-
-  <!-- Quest Lists -->
-  <div class="quests-list-container">
-    <ul id="active-quests-list" class="quests-list">
-      <!-- Active quests populated dynamically -->
-    </ul>
-    <ul id="completed-quests-list" class="quests-list hidden">
-      <!-- Completed quests populated dynamically -->
-    </ul>
-  </div>
-
-  <!-- Quest Details Panel -->
-  <div id="quest-details" class="quests-details hidden">
-    <h4 id="quest-title"></h4>
-    <p id="quest-desc"></p>
-    <p id="quest-rewards"></p>
-    <button id="quest-details-close">Close</button>
-  </div>
-</div>
-
-
-
-    <div id="app-compiler" class="tablet-panel hidden">
-  <h3>Compiler</h3>
-  <textarea id="compiler-code" placeholder="Write JavaScript here..."></textarea>
-  <button id="compiler-run">Run</button>
-</div>
-
-
-    <div id="app-logs" class="tablet-panel hidden">
-      <h3>Dialogue Logs</h3>
-      <p>Your previous conversations appear here.</p>
-    </div>
-
-    <div id="app-settings" class="tablet-panel hidden">
-      <h3>Settings</h3>
-      <p>Audio, UI, and control settings will go here.</p>
-    </div>
-
-    <div id="app-achievements" class="tablet-panel hidden">
-      <h3>Achievements</h3>
-      <p>All unlocked achievements will go here.</p>
-    </div>
-
-    
-    <div id="app-lessons" class="tablet-panel hidden">
-  <h3 id="lessons-title">Lessons</h3>
-
-  <div id="lessons-container">
-    <div id="lessons-list"></div>
-
-    <div id="lessons-right">
-      <div id="lessons-content">All unlocked lessons will appear here.</div>
-
-      <div id="lessons-navigation">
-        <button id="lesson-prev">◀ Prev</button>
-        <button id="lesson-next">Next ▶</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-  </div>
-</div>
-
-
-
-    <!-- Correct Vite module import -->
-    <script type="module" src="/src/main.js"></script>
-    <script src="/src/ui/HUD/HUD.js" type="module"></script>
-
-
-  </body>
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
+  });
+
+  registerBtn.addEventListener('click', async () => {
+    const username = usernameInput.value;
+    const player_password = passwordInput.value; // match server
+    const email = prompt("Enter your email:");
+
+    if (!username || !player_password || !email) return alert("Fill all fields");
+
+    try {
+      const res = await fetch('http://localhost:3000/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, player_password, email }) // use player_password
+      });
+
+      const data = await res.json();
+      if (data.success) alert("Registration successful! You may now login.");
+      else alert(data.error || "Registration failed");
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
+  });
+
+  // Optional: redirect if already logged in
+  if (GameState.player) {
+    window.location.href = 'game.html';
+  }
+</script>
+
+</body>
 </html>

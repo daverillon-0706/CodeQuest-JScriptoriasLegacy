@@ -3,15 +3,34 @@ import HQInteriorScene from "./scenes/HQInteriorScene.js";
 import JScriptoriaScene from "./scenes/JScriptoriaScene.js";
 import BattleScene from "./scenes/BattleScene.js";
 import OrinsAcademyScene from "./scenes/OrinsAcademyScene.js";
+import GameState from "./GameState.js"; // keeps track of logged-in player
+
+if (!GameState.player) {
+  alert("Please log in first!");
+  window.location.href = "index.html";
+}
+
 
 console.log("Using Phaser:", Phaser.VERSION);
 console.log("MAIN.JS LOADED (Vite)");
 
+// --------------------------
+// Ensure player is logged in
+// --------------------------
+if (!GameState.player) {
+  console.warn("No logged-in player detected. Redirecting to login page.");
+  window.location.href = "index.html";
+}
+
+// --------------------------
+// Phaser config
+// --------------------------
 const config = {
   type: Phaser.AUTO,
-  parent: "game-container",
   width: 800,
   height: 600,
+  parent: "game-container", // the div in game.html
+  dom: { createContainer: true },
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH
@@ -25,29 +44,29 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-window.game = game; // optional, for debugging
+window.game = game;
 
-// Start initial scene with initial stats
+// --------------------------
+// Start with first game scene
+// --------------------------
 game.scene.start("JScriptoriaScene", {
   playerHP: 100,
   playerEnergy: 50,
-  playerCoins: 0
+  playerCoins: 0,
+  username: GameState.player.username
 });
 
-// Auto-resize
-window.addEventListener("resize", () => game.scale.refresh());
-
-// Ensure BattleScene is properly stopped at boot
+// --------------------------
+// BattleScene helpers
+// --------------------------
 game.events.on("ready", () => {
   const battle = game.scene.getScene("BattleScene");
-
   if (battle) {
-    battle.scene.stop();  // don't make it visible yet
+    battle.scene.stop(); // keep hidden until launched
     console.log("BattleScene stopped on boot.");
   }
 });
 
-// Optional helper to launch BattleScene with player data
 window.launchBattle = (data) => {
   const battle = game.scene.get("BattleScene");
   if (battle) {
@@ -56,7 +75,6 @@ window.launchBattle = (data) => {
   }
 };
 
-// Optional helper to stop BattleScene
 window.endBattle = () => {
   const battle = game.scene.get("BattleScene");
   if (battle) {
@@ -64,33 +82,25 @@ window.endBattle = () => {
   }
 };
 
-const hudToggle = document.getElementById("hud-toggle");
-const hud = document.getElementById("hud");
-
-hudToggle.addEventListener("click", () => {
-  hud.classList.toggle("active");
-});
-
-
-// ==========================
-//  FIX COMPILER TYPING ISSUE
-// ==========================
-
+// --------------------------
+// Prevent Phaser input while typing
+// --------------------------
 const codeInput = document.getElementById("player-code");
+if (codeInput) {
+  codeInput.addEventListener("focus", () => {
+    console.log("[Compiler] Focused -> Disabling game input");
+    game.input.keyboard.enabled = false;
+  });
 
-// Prevent Phaser from capturing keys when the code editor is focused
-codeInput.addEventListener("focus", () => {
-  console.log("[Compiler] Focused -> Disabling game input");
-  game.input.keyboard.enabled = false;
-});
+  codeInput.addEventListener("blur", () => {
+    console.log("[Compiler] Blurred -> Enabling game input");
+    game.input.keyboard.enabled = true;
+  });
 
-// Re-enable Phaser input when clicking out of textarea
-codeInput.addEventListener("blur", () => {
-  console.log("[Compiler] Blurred -> Enabling game input");
-  game.input.keyboard.enabled = true;
-});
+  codeInput.addEventListener("keydown", (e) => e.stopPropagation());
+}
 
-// Prevent movement keys from leaking while typing
-codeInput.addEventListener("keydown", (e) => {
-  e.stopPropagation();
-});
+// --------------------------
+// Auto-resize
+// --------------------------
+window.addEventListener("resize", () => game.scale.refresh());

@@ -1,9 +1,9 @@
-// src/ui/HUD.js
+// src/ui/HUD/HUD.js
 import CodexUI from "./CodexUI.js";
 import InventoryUI from "./InventoryUI.js";
 import QuestsUI from "./QuestsUI.js";
 import CompilerUI from "./CompilerUI.js";
-import { GameState } from "../../GameState.js";
+import GameState from "../../GameState.js";
 import LessonsUI from "./LessonsUI.js";
 
 export default class HUD {
