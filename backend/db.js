@@ -1,6 +1,6 @@
 //installed npm mmysql2
 
-import mysql from 'mysql2/promise';
+import mysql from 'mysql2/promise'; //to connect to the database// 
 
 //The function to connect to the database
 const db = await mysql.createPool({

@@ -52,10 +52,10 @@
         </div>
 
         <div id="battle-stats">
-          <p>HP: <span id="battle-playerHP">100</span></p>
-          <p>Energy: <span id="battle-playerEnergy">50</span></p>
-          <p>EXP: <span id="battle-playerExp">0</span></p>
-          <p>Bug HP: <span id="battle-bugHP">50</span></p>
+          <p>HP: <span id="battle-playerHP">0</span></p>
+          <p>Energy: <span id="battle-playerEnergy">0</span></p>
+          <p>Cryptos: <span id="battle-playerCryptos">0</span></p>
+          <p>Bug HP: <span id="battle-bugHP">1</span></p>
           <p>Bug Energy: <span id="battle-bugEnergy"></span></p>
           <div id="bug-debuffs">
 
@@ -67,6 +67,7 @@
 
     <!-- HUD (Tablet version) -->
 <!-- MINIMAP (Top-left) -->
+  
 <div id="minimap-container" class="hud-top-left">
   <canvas id="minimapCanvas" width="160" height="160"></canvas>
   <div id="map-name">J. Scriptoria — Main Plaza</div>
@@ -80,7 +81,7 @@
       <div class="bar-wrap">
         <div id="hp-bar" class="bar hp" style="width:100%"></div>
       </div>
-      <span id="playerHP-text" class="stat-text">100</span>
+      <span id="playerHP-text" class="stat-text">0</span>
     </div>
 
     <div class="bar-row">
@@ -88,14 +89,14 @@
       <div class="bar-wrap">
         <div id="energy-bar" class="bar energy" style="width:50%"></div>
       </div>
-      <span id="playerEnergy-text" class="stat-text">50</span>
+      <span id="playerEnergy-text" class="stat-text">0</span>
     </div>
 
     <div class="bar-row small">
       <label>Cryptos</label>
       <div class="cryptos">
         <img src="/src/assets/crypto-icon.png" alt="crypto" class="coin-icon" onerror="this.style.display='none'">
-        <span id="cryptos-count">123</span>
+        <span id="cryptos-count">0</span>
       </div>
     </div>
 
@@ -115,8 +116,13 @@
   </div>
 </div>
 
+
+
+
 <div id="compiler-output-box" class="compiler-output hidden"></div>
 <!-- TABLET OVERLAY -->
+
+
 <div id="tablet-overlay" class="hidden">
   
   <div id="tablet-hud">
@@ -168,6 +174,16 @@
       <div class="app-icon" data-app="app-lessons">
         <div class="icon-img lessons-icon"></div>
         <p>Lessons</p>
+      </div>
+
+      <div class="app-icon" data-app="app-save">
+        <div class="icon-img save-icon"></div>
+        <p>Save Game</p>
+      </div>
+
+      <div class="app-icon" data-app="app-logout">
+        <div class="icon-img logout-icon"></div>
+        <p>Logout</p>
       </div>
     </div>
 
@@ -330,15 +346,41 @@
   </div>
 </div>
 
+    <div id="app-save" class="tablet-panel hidden">
+      <h3>Save Game</h3>
+      <p>Lists here your recent save data.</p>
+      <button id="save-btn">Save Now</button>
+    </div>
+
+    <div id="app-logout" class="tablet-panel hidden">
+      <h3>Logout</h3>
+      <p>Are you sure to logout? Save first before you logout to prevent data loss.</p>
+      <button id="logout-btn">Logout</button>
+    </div>
+
 
   </div>
-</div>
 
+
+
+</div>
+<div id="debug-controls" style="position:absolute; bottom:10px; left:10px; color:white; background:#222; padding:10px; border-radius:6px; z-index:1000;">
+    <h4>Test Stats</h4>
+    <button id="hp-plus">HP +10</button>
+    <button id="hp-minus">HP -10</button>
+    <button id="energy-plus">Energy +10</button>
+    <button id="energy-minus">Energy -10</button>
+    <button id="crypto-plus">Cryptos +50</button>
+    <button id="crypto-minus">Cryptos -50</button>
+    <button id="reset-stats">Reset Stats</button>
+  </div>
 
 
     <!-- Correct Vite module import -->
     <script type="module" src="/src/main.js"></script>
     <script src="/src/ui/HUD/HUD.js" type="module"></script>
+    <script type="module" src="debug.js"></script>
+
 
 
   </body>

@@ -7,10 +7,16 @@ export default class PlayerController {
 
     // Arrow keys
     this.cursors = scene.input.keyboard.createCursorKeys();
-    this.shiftKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+    this.shiftKey = scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SHIFT
+    );
 
     // Nearby NPC (or interactable) detection
     this.canTalkTo = null;
+
+    // ---- DEBUG: POSITION LOGGER ----
+    this.debugPosition = false; // toggle per scene
+    this._debugTimer = 0;
   }
 
   update(npcs = []) {
@@ -22,7 +28,7 @@ export default class PlayerController {
 
     // ---- Determine speed ----
     let speed = this.MOVE_SPEED;
-    if (this.shiftKey.isDown) speed *= 1.8; // Running multiplier
+    if (this.shiftKey.isDown) speed *= 1.8;
 
     // ---- Horizontal movement ----
     if (this.cursors.left.isDown) {
@@ -49,18 +55,48 @@ export default class PlayerController {
     if (anim) this.player.anims.play(anim, true);
     else this.player.anims.stop();
 
-    // ---- Detect nearby NPCs using hitbox collision ----
+    // ---- Detect nearby NPCs ----
     let closestDist = Infinity;
     this.canTalkTo = null;
+
     npcs.forEach(npc => {
-      const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y);
-      if (dist < 24) {
+      const dist = Phaser.Math.Distance.Between(
+        this.player.x,
+        this.player.y,
+        npc.x,
+        npc.y
+      );
+
+      if (dist < 24 && dist < closestDist) {
+        closestDist = dist;
         this.canTalkTo = npc;
-        console.log("Detected NPC:", npc.name, "Distance:", dist);
       }
     });
 
-    // ---- Return NPC the player can talk to ----
+    // ---- DEBUG: PLAYER POSITION LOG ----
+    this.logPlayerPosition(this.scene.game.loop.delta);
+
     return this.canTalkTo;
+  }
+
+  // ---- DEBUG HELPER ----
+  logPlayerPosition(delta) {
+    if (!this.debugPosition) return;
+
+    this._debugTimer += delta;
+    if (this._debugTimer < 500) return; // log every 0.5s
+
+    this._debugTimer = 0;
+
+    const px = Math.round(this.player.x);
+    const py = Math.round(this.player.y);
+
+    const tileSize = this.scene.TILE_SIZE || 16;
+    const tileX = Math.floor(px / tileSize);
+    const tileY = Math.floor(py / tileSize);
+
+    console.log(
+      `[${this.scene.scene.key}] Player @ px(${px}, ${py}) | tile(${tileX}, ${tileY})`
+    );
   }
 }

@@ -27,6 +27,8 @@ export default class HUD {
 
     // Global reference
     window.hud = this;
+
+    this.updateHUD();
   }
 
   // -------------------------
@@ -47,6 +49,20 @@ export default class HUD {
 
     this.compilerBubble = document.getElementById('compiler-output-box');
   }
+
+  updateHUD() {
+  if (!GameState.player) return;
+
+  const hpPercent = (GameState.player.hp / GameState.player.max_hp) * 100;
+  const energyPercent = (GameState.player.energy / GameState.player.max_energy) * 100;
+
+  document.getElementById("playerHP-text").textContent = GameState.player.hp;
+  document.getElementById("playerEnergy-text").textContent = GameState.player.energy;
+  document.getElementById("cryptos-count").textContent = GameState.player.cryptos;
+
+  document.getElementById("hp-bar").style.width = hpPercent + "%";
+  document.getElementById("energy-bar").style.width = energyPercent + "%";
+}
 
   // -------------------------
   // EVENT LISTENERS
@@ -88,6 +104,63 @@ export default class HUD {
     }
       });
     });
+    const saveBtn = document.getElementById('save-btn');
+saveBtn?.addEventListener('click', async () => {
+  if (!GameState.player) return;
+
+  try {
+    const res = await fetch('http://localhost:3000/save-stats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        player_id: GameState.player.id,
+        hp: GameState.player.hp,
+        energy: GameState.player.energy,
+        cryptos: GameState.player.cryptos
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log('Player stats saved manually.');
+      alert('Game saved successfully!');
+    } else {
+      console.error('Failed to save stats:', data.error);
+    }
+  } catch (err) {
+    console.error('Network error while saving stats:', err);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutPanel = document.getElementById("app-logout");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  // Optional: open panel when icon is clicked
+  const logoutIcon = document.querySelector('.app-icon[data-app="app-logout"]');
+  if (logoutIcon) {
+    logoutIcon.addEventListener("click", () => {
+      logoutPanel.classList.remove("hidden");
+    });
+  }
+
+  // Close panel if needed (optional)
+  const closeBtn = logoutPanel.querySelector(".close-btn");
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      logoutPanel.classList.add("hidden");
+    });
+  }
+
+  // Logout process
+  logoutBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to logout? Unsaved data may be lost.")) {
+      GameState.logout(); // clears localStorage
+      window.location.href = "index.html"; // redirect to login
+    }
+  });
+});
+
   }
 
   attachCompilerEvents() {
@@ -99,6 +172,9 @@ export default class HUD {
       setTimeout(() => this.openTablet(), 6000);
     });
   }
+
+  
+
 
   // -------------------------
   // COMPILER BUBBLE

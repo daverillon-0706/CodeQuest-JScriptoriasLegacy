@@ -65,17 +65,14 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// --------------------------
+
 // LOGIN
-// --------------------------
 app.post('/login', async (req, res) => {
   const { username, player_password } = req.body;
 
   if (!username || !player_password) {
     return res.status(400).json({ error: 'Fill all fields' });
   }
-
-  console.log('Login payload:', req.body);
 
   try {
     const [rows] = await db.query(
@@ -92,16 +89,52 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Incorrect password' });
     }
 
-    // Update last_login
     await db.query(
       'UPDATE players SET last_login = NOW() WHERE player_id = ?',
       [rows[0].player_id]
     );
 
-    res.json({ success: true, player: { id: rows[0].player_id, username: rows[0].username } });
+    // 🔹 Return full player stat data
+    res.json({
+      success: true,
+      player: {
+        id: rows[0].player_id,
+        username: rows[0].username,
+        hp: rows[0].hp,
+        max_hp: rows[0].max_hp,
+        energy: rows[0].energy,
+        max_energy: rows[0].max_energy,
+        cryptos: rows[0].cryptos
+      }
+    });
+
   } catch (err) {
     console.error('MySQL error on login:', err);
     res.status(400).json({ error: err.message });
+  }
+});
+
+// --------------------------
+// SAVE PLAYER STATS
+// --------------------------
+app.post('/save-stats', async (req, res) => {
+  const { player_id, hp, energy, cryptos } = req.body;
+
+  // Validate input
+  if (!player_id || hp == null || energy == null || cryptos == null) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+
+  try {
+    await db.query(
+      'UPDATE players SET hp = ?, energy = ?, cryptos = ? WHERE player_id = ?',
+      [hp, energy, cryptos, player_id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('MySQL error on save-stats:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

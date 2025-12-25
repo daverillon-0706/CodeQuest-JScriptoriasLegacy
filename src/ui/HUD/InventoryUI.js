@@ -1,23 +1,21 @@
 import inventoryData from '/src/ui/data/inventoryData.js';
+import inventoryState from '/src/ui/data/inventoryState.js';
 
 export default class InventoryUI {
   constructor() {
-    // DOM elements
     this.invTabs = document.querySelectorAll('.inv-tab');
     this.invGrid = document.getElementById('inventory-grid');
     this.invDetails = document.getElementById('inventory-details');
     this.invName = document.getElementById('inv-item-name');
     this.invDesc = document.getElementById('inv-item-desc');
-    this.invClose = document.getElementById('inv-details-close');
-    this.currentTab = 'key';
     this.invIcon = document.querySelector('#inv-item-icon img');
+    this.invClose = document.getElementById('inv-details-close');
 
+    this.currentTab = 'key';
 
-    // Inventory database (static for now)
-    this.InventoryDB = inventoryData;
-
-    // Event listeners
-    this.invClose?.addEventListener('click', () => this.invDetails.classList.add('hidden'));
+    this.invClose?.addEventListener('click', () =>
+      this.invDetails.classList.add('hidden')
+    );
 
     this.invTabs.forEach(tab => {
       tab.addEventListener('click', () => {
@@ -27,7 +25,6 @@ export default class InventoryUI {
       });
     });
 
-    // Initialize grid
     this.loadInventory(this.currentTab);
   }
 
@@ -35,41 +32,48 @@ export default class InventoryUI {
     this.currentTab = tab;
     this.invGrid.innerHTML = '';
 
-    const listObj = this.InventoryDB[tab];
-    if (!listObj) return;
+    const data = inventoryData[tab];
+    const state = inventoryState[tab];
+    if (!data || !state) return;
 
-    // Convert object to array for iteration
-    const list = Object.values(listObj);
+    Object.keys(data).forEach(key => {
+      const owned =
+        tab === 'key' ? state[key] === true : state[key] > 0;
 
-    list.forEach(item => {
+      if (!owned) return;
+
+      const item = data[key];
       const slot = document.createElement('div');
       slot.classList.add('inv-slot');
 
       const img = document.createElement('img');
-      img.src = `/src/assets/items/${item.icon}`;
+      img.src = `/codequest-game/public/assets/icons/item/key_item/${item.icon}`;
       img.classList.add('inv-icon');
-      img.onerror = () => img.style.display = 'none';
-
       slot.appendChild(img);
 
-      // Click shows details
-      slot.addEventListener('click', () => this.openItemDetails(item));
+      if (tab === 'cons') {
+        const count = document.createElement('span');
+        count.classList.add('inv-count');
+        count.textContent = state[key];
+        slot.appendChild(count);
+      }
+
+      slot.addEventListener('click', () =>
+        this.openItemDetails(item, state[key])
+      );
 
       this.invGrid.appendChild(slot);
     });
   }
 
-  openItemDetails(item) {
+  openItemDetails(item, amount = null) {
     this.invName.textContent = item.name;
-    this.invDesc.textContent = item.desc || item.effect || '';
+    this.invDesc.textContent =
+      item.desc + (amount !== null ? `\nQuantity: ${amount}` : '');
 
-    if(item.icon) {
-        this.invIcon.src = '/src/assets/items/${item.icon}';
-        this.invIcon.style.display = 'block';
-    } else {
-        this.invIcon.style.display = 'none';
-    }
-    
+    this.invIcon.src = `/codequest-game/public/assets/icons/item/key_item/${item.icon}`;
+    this.invIcon.style.display = 'block';
+
     this.invDetails.classList.remove('hidden');
   }
 }

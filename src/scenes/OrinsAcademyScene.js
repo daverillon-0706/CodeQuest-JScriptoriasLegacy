@@ -19,14 +19,14 @@ export default class OrinsAcademyScene extends Phaser.Scene {
     // Tilemap
     this.load.tilemapTiledJSON("orins_academy_map", "/maps/Orins Academy.tmj");
 
-    // Tilesets (embedded expected)
+    // Tilesets (embedded expected) 
     this.load.image("floor", "/assets/tilesets/orinsacademy/floor.png");
     this.load.image("lowerwall", "/assets/tilesets/orinsacademy/lowerwall.png");
     this.load.image("upperwall", "/assets/tilesets/orinsacademy/upperwall.png");
     this.load.image("stairs", "/assets/tilesets/orinsacademy/stairs.png" );
     this.load.image("door", "/assets/tilesets/orinsacademy/door.png")
 
-    // Player sprite
+    // Player sprite character animation// 
     this.load.spritesheet("player_male", "/assets/sprites/player/player_male.png", {
       frameWidth: 16,
       frameHeight: 16,
@@ -77,11 +77,11 @@ export default class OrinsAcademyScene extends Phaser.Scene {
         }
     }
 
-    // ---- PLAYER ----
+    // ---- PLAYER Spritesheet--// 
     this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
         .setOrigin(0, 1)
         .setSize(12, 8)
-        .setOffset(2, 8);
+        .setOffset(2, 8); 
 
     // ---- CAMERA ----
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
@@ -107,7 +107,7 @@ export default class OrinsAcademyScene extends Phaser.Scene {
     // ---- DOORS ----
     this.setupDoors();
 
-    // Z-KEY → DOOR INTERACT
+    // Z-KEY → DOOR INTERACT- Interact to entire NPC// 
     this.input.keyboard.on("keydown-Z", () => {
         const doorLayer = this.map.getObjectLayer("door objects");
         const result = this.handleDoorInteraction(doorLayer);

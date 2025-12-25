@@ -89,30 +89,29 @@
         {
          "draworder":"topdown",
          "id":4,
-         "locked":true,
          "name":"door objects",
          "objects":[
                 {
                  "height":16,
                  "id":10,
                  "name":"hqdoor1",
+                 "properties":[
+                        {
+                         "name":"spawn",
+                         "type":"string",
+                         "value":"hqdoor1"
+                        }, 
+                        {
+                         "name":"targetScene",
+                         "type":"string",
+                         "value":"JScriptoriaScene"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":16,
-                 "x":256.25,
-                 "y":463.25
-                }, 
-                {
-                 "height":16,
-                 "id":11,
-                 "name":"hqdoor2",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":208.5,
-                 "y":463.5
+                 "width":64,
+                 "x":208.25,
+                 "y":448.25
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -123,7 +122,6 @@
         {
          "draworder":"topdown",
          "id":6,
-         "locked":true,
          "name":"npc object",
          "objects":[
                 {
@@ -140,8 +138,8 @@
                  "type":"",
                  "visible":true,
                  "width":16,
-                 "x":287.5,
-                 "y":400.25
+                 "x":288.5,
+                 "y":416.75
                 }, 
                 {
                  "height":16,

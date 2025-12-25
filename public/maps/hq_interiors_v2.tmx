@@ -88,11 +88,15 @@
 12,12,12,12,12,12,12,12,12,12,12,12,12,6,10,10,6,12,12,12,12,12,12,12,12,12,12,12,12,12
 </data>
  </layer>
- <objectgroup id="4" name="door objects" locked="1">
-  <object id="10" name="hqdoor1" x="256.25" y="463.25" width="16" height="16"/>
-  <object id="11" name="hqdoor2" x="208.5" y="463.5" width="16" height="16"/>
+ <objectgroup id="4" name="door objects">
+  <object id="10" name="hqdoor1" x="208.25" y="448.25" width="64" height="16">
+   <properties>
+    <property name="spawn" value="hqdoor1"/>
+    <property name="targetScene" value="JScriptoriaScene"/>
+   </properties>
+  </object>
  </objectgroup>
- <objectgroup id="6" name="npc object" locked="1">
+ <objectgroup id="6" name="npc object">
   <object id="16" name="elysia" x="287.5" y="400.25" width="16" height="16">
    <properties>
     <property name="elysia dialogue" value="[&quot;Oh, it's you.&quot;, &quot;This is just a precaution before you venture out on the outskirts of the city.&quot;, &quot;In front of you is a bug the guild members caught.&quot;, &quot;I want you to test it for a debugging battle, and prove that you are capable of handling them.&quot;, &quot;Good luck.&quot;]"/>

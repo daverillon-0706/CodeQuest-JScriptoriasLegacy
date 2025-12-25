@@ -1,202 +1,252 @@
 const inventoryData = {
   key: {
-    "key_logic": {
+    // -------------------------
+    // KEYCARDS
+    // -------------------------
+    key_logic: {
       item_id: 1,
       name: "Keycard of Logic",
-      desc: "A keycard that allows the player to open the Monolith of Logic.",
+      desc: "A keycard granting access to the Monolith of Logic.",
       icon: "key_logic.png"
     },
-    "key_flow": {
+    key_flow: {
       item_id: 2,
       name: "Keycard of Flow",
-      desc: "A keycard that allows the player to open the Monolith of Flow.",
+      desc: "A keycard granting access to the Monolith of Flow.",
       icon: "key_flow.png"
     },
-    "key_creations": {
+    key_structure: {
       item_id: 3,
-      name: "Keycard of Creations",
-      desc: "A keycard that allows the player to open the Monolith of Creations.",
-      icon: "key_creations.png"
+      name: "Keycard of Structure",
+      desc: "A keycard granting access to the Monolith of Structure.",
+      icon: "key_structure.png"
     },
-    "key_abstraction": {
+    key_computation: {
       item_id: 4,
-      name: "Keycard of Abstraction",
-      desc: "A keycard that allows the player to open the Monolith of Abstraction.",
-      icon: "key_abstraction.png"
+      name: "Keycard of Computation",
+      desc: "A keycard granting access to the Monolith of Computation.",
+      icon: "key_computation.png"
     },
-    "elysia_keycard": {
-      item_id: 5,
-      name: "Elysia's Keycard",
-      desc: "A keycard that allows the player to open Elysia's office anytime.",
+
+    // -------------------------
+    // DATA STONES
+    // -------------------------
+    data_syntax: { item_id: 10, name: "Data Stone: Syntax", desc: "Contains knowledge about syntax rules.", icon: "data_syntax.png" },
+    data_variables: { item_id: 11, name: "Data Stone: Variables", desc: "Encodes variable handling.", icon: "data_variables.png" },
+    data_operators: { item_id: 12, name: "Data Stone: Operators", desc: "Explains operators and expressions.", icon: "data_operators.png" },
+    data_conditions: { item_id: 13, name: "Data Stone: Conditions", desc: "Holds conditional logic.", icon: "data_conditions.png" },
+    data_loops: { item_id: 14, name: "Data Stone: Loops", desc: "Loop execution patterns.", icon: "data_loops.png" },
+    data_strings: { item_id: 15, name: "Data Stone: Strings", desc: "String manipulation data.", icon: "data_strings.png" },
+    data_numbers: { item_id: 16, name: "Data Stone: Numbers", desc: "Numeric processing data.", icon: "data_numbers.png" },
+    data_functions: { item_id: 17, name: "Data Stone: Functions", desc: "Function architecture.", icon: "data_functions.png" },
+    data_objects: { item_id: 18, name: "Data Stone: Objects", desc: "Object-oriented constructs.", icon: "data_objects.png" },
+    data_arrays: { item_id: 19, name: "Data Stone: Arrays", desc: "Array data structures.", icon: "data_arrays.png" },
+    data_dates: { item_id: 20, name: "Data Stone: Dates", desc: "Time and date handling.", icon: "data_dates.png" },
+    data_sets: { item_id: 21, name: "Data Stone: Sets", desc: "Set-based data models.", icon: "data_sets.png" },
+    data_maps: { item_id: 22, name: "Data Stone: Maps", desc: "Key-value mappings.", icon: "data_maps.png" },
+    data_math: { item_id: 23, name: "Data Stone: Math", desc: "Advanced math utilities.", icon: "data_math.png" },
+    data_types: { item_id: 24, name: "Data Stone: Data Types", desc: "Primitive and complex types.", icon: "data_types.png" },
+
+    // -------------------------
+    // STORY ITEMS
+    // -------------------------
+    broken_locket: {
+      item_id: 30,
+      name: "Broken Locket",
+      desc: "A damaged locket with sentimental value.",
+      icon: "broken_locket.png"
+    },
+    elysia_hq_keycard: {
+      item_id: 31,
+      name: "Elysia's Headquarter Keycard",
+      desc: "Grants access to Elysia’s headquarters. Don't snoop around.",
       icon: "elysia_keycard.png"
     },
-    "orin_badge": {
-      item_id: 6,
-      name: "Orin's Academy Badge",
-      desc: "Orin's badge that shows the academy.",
-      icon: "orin_badge.png"
+    academy_id: {
+      item_id: 32,
+      name: "Academy ID",
+      desc: "Official identification for Orin's Academy.",
+      icon: "academy_id.png"
     },
-    "kaelen_pass": {
-      item_id: 7,
-      name: "Kaelen's Guild Pass",
-      desc: "A pass granting access to Kaelen's guild areas.",
-      icon: "kaelen_pass.png"
+    guild_id: {
+      item_id: 33,
+      name: "Guild ID",
+      desc: "Membership card for Kaelen's Guild.",
+      icon: "guild_id.png"
     },
-    "mira_teddy": {
-      item_id: 8,
-      name: "Mira's Teddy Bear",
-      desc: "A soft stuffed bear belonging to Mira.",
-      icon: "teddy_bear.png"
+    library_id: {
+      item_id: 34,
+      name: "Library ID",
+      desc: "Access card for restricted archives. Only Selena trusts you to have this.",
+      icon: "library_id.png"
     },
-    "selena_book": {
-      item_id: 9,
-      name: "Selena's Favorite Book",
-      desc: "Selena’s well-worn favorite book.",
-      icon: "selena_book.png"
+    mira_hairpin: {
+      item_id: 35,
+      name: "Mira's Diamond Hairpin",
+      desc: "A beautifully crafted diamond hairpin. Mira teases you a lot if you return it.",
+      icon: "mira_hairpin.png"
     },
-    // Trade items
-    "chocolate_coin": {
-      item_id: 10,
-      name: "Chocolate Coin",
-      desc: "A small chocolate coin. Used for trading.",
-      icon: "choco_coin.png"
+    mocha_coffee: {
+      item_id: 36,
+      name: "Mocha Coffee",
+      desc: "A warm cup of coffee with a rich aroma. A trade item.",
+      icon: "mocha_coffee.png"
     },
-    "bag_glass": {
-      item_id: 11,
-      name: "Bag of Glass Shards",
-      desc: "A bag full of broken glass shards. Trade item.",
-      icon: "glass_shards.png"
+    sword_of_bane: {
+      item_id: 37,
+      name: "Sword of Bane",
+      desc: "A weapon infused with OOP code, but it is a fake one. A trade item.",
+      icon: "sword_of_bane.png"
     },
-    "vanilla_farfait": {
-      item_id: 12,
-      name: "Vanilla Farfait",
-      desc: "A small dessert. Used for trading.",
-      icon: "vanilla_farfait.png"
+    futuristic_eyepiece: {
+      item_id: 38,
+      name: "Futuristic Eyepiece",
+      desc: "Legends say it lets you see the power level of your enemies. A trade item.",
+      icon: "futuristic_eyepiece.png"
     },
-    "book_knowledge": {
-      item_id: 13,
-      name: "Book of Knowledge",
-      desc: "Contains insights and random facts. Trade item.",
-      icon: "book_knowledge.png"
-    },
-    "love_letter": {
-      item_id: 14,
-      name: "Love Letter",
-      desc: "A sealed letter containing someone's feelings.",
-      icon: "love_letter.png"
-    },
-    "novelty_glasses": {
-      item_id: 15,
+    novelty_glasses: {
+      item_id: 39,
       name: "Novelty Glasses",
-      desc: "Funny glasses used as a trade item.",
+      desc: "Stylish but questionable fashion choice. A trade item.",
       icon: "novelty_glasses.png"
     },
-    "dad_jokes": {
-      item_id: 16,
-      name: "Dad Jokes for Dummies",
-      desc: "A book containing terrible jokes.",
-      icon: "dad_jokes.png"
+    chocolate_coin: {
+      item_id: 40,
+      name: "Chocolate Coin",
+      desc: "A novelty chocolate coin, but it tastes bland. A trade item.",
+      icon: "chocolate_coin.png"
     },
-    "mocha_plushie": {
-      item_id: 17,
-      name: "Mocha Plushie",
-      desc: "A cute plushie. Trade item.",
-      icon: "mocha_plushie.png"
+    homerun_bat: {
+      item_id: 41,
+      name: "Homerun Baseball Bat",
+      desc: "A perfect bat rumored to score you homeruns with ease. A trade item.",
+      icon: "homerun_bat.png"
     },
-    "clocktower_key": {
-      item_id: 18,
-      name: "Clock Tower Key",
-      desc: "Opens the Clock Tower.",
-      icon: "clocktower_key.png"
+    coding_for_dummies: {
+      item_id: 42,
+      name: "Coding for Dummies",
+      desc: "Surprisingly useful beginner book. A trade item.",
+      icon: "coding_for_dummies.png"
     },
-    "perk_shards": {
-      item_id: 19,
-      name: "Lost Perk Shards",
-      desc: "Collect all 10 to recover a special perk.",
-      icon: "perk_shards.png",
-      quantity: 0,
-      max: 10
+    hookshot_upgrade: {
+      item_id: 43,
+      name: "Hookshot Upgrade",
+      desc: "A very high quality cable made for the hookshot. Bring it to Kaelen to upgrade your hookshot.",
+      icon: "hookshot_upgrade.png"
     },
-    "over_9000": {
-      item_id: 20,
-      name: "Over 9000!!!",
-      desc: "Cool mono glasses that let you see how difficult a bug is.",
-      icon: "over9000.png"
+    corruption_token: {
+      item_id: 44,
+      name: "Corruption Token",
+      desc: "An unstable token for accessing the Deep Web with the Git Terminal. Handle with care.",
+      icon: "/codequest-game/public/assets/icons/item/corruption_token.png"
+    },
+    jscriptoria_token: {
+      item_id: 45,
+      name: "J.Scriptoria Token",
+      desc: "A token for accessing J.Scriptoria City easily with the Git Terminal.",
+      icon: "jscriptoria_token.png"
+    },
+    north_token: {
+      item_id: 46,
+      name: "North Outskirts Token",
+      desc: "A token for accessing the North Outskirts easily with the Git Terminal.",
+      icon: "north_token.png"
+    },
+    south_token: {
+      item_id: 47,
+      name: "South Outskirts Token",
+      desc: "A token for accessing the South Outskirts easily with the Git Terminal.",
+      icon: "south_token.png"
+    },
+    east_token: {
+      item_id: 48,
+      name: "East Outskirts Token",
+      desc: "A token for accessing the North Outskirts easily with the Git Terminal.",
+      icon: "east_token.png"
+    },
+    west_token: {
+      item_id: 49,
+      name: "West Outskirts Token",
+      desc: "A token for accessing the West Outskirts easily with the Git Terminal.",
+      icon: "west_token.png"
+    },
+    codexus_token: {
+      item_id: 50,
+      name: "Codexus Monolith Token",
+      desc: "A token for accessing the Codexus Monolith easily with the Git Terminal.",
+      icon: "east_token.png"
+    },
+    git_token: {
+      item_id: 51,
+      name: "Git Tokens",
+      desc: "A couple of gold tokens that allows you to activate Git Terminals.",
+      icon: "git_token.png"
     }
   },
 
   cons: {
-    "hp_pill": {
-      item_id: 21,
-      name: "Health Pills",
-      tier: 1,
-      effect: "Heals a small amount.",
-      icon: "hp_pill.png"
+    health_pills: { 
+      item_id: 100, 
+      name: "Health Pills", 
+      desc: "Restores a small amount of HP.", 
+      icon: "health_pills.png", 
+      max: 99 
     },
-    "hp_pod": {
-      item_id: 22,
-      name: "Health Pod",
-      tier: 2,
-      effect: "Heals a moderate amount.",
-      icon: "hp_pod.png"
+    health_pod: { 
+      item_id: 101, 
+      name: "Health Pod", 
+      desc: "Restores moderate HP.", 
+      icon: "health_pod.png", 
+      max: 99 
     },
-    "medkit": {
-      item_id: 23,
-      name: "Medkit",
-      tier: 3,
-      effect: "Heals a large amount.",
-      icon: "medkit.png"
+    medkit: { 
+      item_id: 102, 
+      name: "Medkit", 
+      desc: "Restores a large amount of HP.", 
+      icon: "medkit.png", 
+      max: 99 
     },
-    "energy_pill": {
-      item_id: 24,
-      name: "Energy Pill",
-      tier: 1,
-      effect: "Restores a small amount of Energy.",
-      icon: "energy_pill.png"
+    energy_pills: { 
+      item_id: 103, 
+      name: "Energy Pills", 
+      desc: "Restores small Energy.", 
+      icon: "energy_pills.png", 
+      max: 99 
     },
-    "energy_drink": {
-      item_id: 25,
-      name: "Energy Drink",
-      tier: 2,
-      effect: "Restores a moderate amount of Energy.",
-      icon: "energy_drink.png"
+    energy_drink: { 
+      item_id: 104, 
+      name: "Energy Drink", 
+      desc: "Restores moderate Energy.", 
+      icon: "energy_drink.png", 
+      max: 99 
     },
-    "energy_restore": {
-      item_id: 26,
-      name: "Energy Restoration",
-      tier: 3,
-      effect: "Restores a large amount of Energy.",
-      icon: "energy_restore.png"
+    energy_vial: { 
+      item_id: 105, 
+      name: "Energy Vial", 
+      desc: "Restores large Energy.", 
+      icon: "energy_vial.png", 
+      max: 99 
     },
-    "full_rev": {
-      item_id: 27,
-      name: "Full Revitalization",
-      effect: "Fully restores Health & Energy and removes all debuffs.",
-      icon: "full_rev.png"
+    revitalization_vial: { 
+      item_id: 106, 
+      name: "Revitalization Vial", 
+      desc: "Fully restores HP & Energy.", 
+      icon: "revitalization_vial.png", 
+      max: 99 
     },
-    "flashbang": {
-      item_id: 28,
-      name: "Emergency Flashbang",
-      effect: "Retreat from battle and reset all actions.",
-      icon: "flashbang.png"
+    flashbang: { 
+      item_id: 107, 
+      name: "Flashbang", 
+      desc: "Blind the bugs and escape from battle immediately.", 
+      icon: "flashbang.png", 
+      max: 99 
     },
-    "timer_add": {
-      item_id: 29,
-      name: "Timer",
-      effect: "Adds 5 minutes to the battle timer.",
-      icon: "timer.png"
-    },
-    "slow_motion": {
-      item_id: 30,
-      name: "Slow Motion",
-      effect: "Slows timer and bug debuff cooldown.",
-      icon: "slow_motion.png"
-    },
-    "temp_hp": {
-      item_id: 31,
-      name: "Temporary Health",
-      effect: "Grants +50% temporary HP for 30 minutes.",
-      icon: "temp_hp.png"
+    adrenaline: { 
+      item_id: 108, 
+      name: "Adrenaline", 
+      desc: "Give 30% HP and slows time during debugging.", 
+      icon: "adrenaline.png", 
+      max: 99 
     }
   }
 };

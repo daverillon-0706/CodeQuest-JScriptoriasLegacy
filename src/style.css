@@ -1103,3 +1103,30 @@ body {
   height: calc(100% - 40px);
   gap: 10px;
 }
+
+/* Save Game Button */
+#app-save #save-btn {
+  background-color: #4CAF50;      /* Green color like a “positive action” */
+  color: white;                    /* Text color */
+  border: none;
+  border-radius: 8px;              /* Rounded corners to match other buttons */
+  padding: 10px 20px;              /* Button size */
+  font-size: 1rem;                 /* Match other tablet text */
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#app-save #save-btn:hover {
+  background-color: #45a049;       /* Slightly darker on hover */
+}
+
+#app-save #save-btn:active {
+  transform: scale(0.98);          /* Tiny press animation */
+}
+
+#app-save #save-btn:disabled {
+  background-color: #888;
+  cursor: not-allowed;
+}
+

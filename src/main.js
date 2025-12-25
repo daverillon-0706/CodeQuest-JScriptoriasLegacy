@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import HQInteriorScene from "./scenes/HQInteriorScene.js";
 import JScriptoriaScene from "./scenes/JScriptoriaScene.js";
 import BattleScene from "./scenes/BattleScene.js";
-import OrinsAcademyScene from "./scenes/OrinsAcademyScene.js";
+import OrinsAcademyScene from "./scenes/OrinsAcademyScene.js"; 
 import GameState from "./GameState.js"; // keeps track of logged-in player
 
 if (!GameState.player) {

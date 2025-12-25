@@ -3,11 +3,13 @@ import Phaser from "phaser";
 import DialogueManager from "../systems/DialogueManager.js";
 import PlayerController from "../systems/PlayerController.js";
 import HoverManager from "../systems/HoverManager.js";
+import ChestSystem from "../systems/ChestSystem.js";
+import GameState from "../GameState.js";
+import { setupSceneTriggers } from '/src/utils/SceneTransitions.js';
 
 export default class JScriptoriaScene extends Phaser.Scene {
   constructor() {
     super('JScriptoriaScene');
-
     this.TILE_SIZE = 16;
     this.MOVE_SPEED = 80;
 
@@ -18,10 +20,6 @@ export default class JScriptoriaScene extends Phaser.Scene {
     this.items = [];
     this.canTalkTo = null;
 
-    this.playerHP = 100;
-    this.playerEnergy = 50;
-    this.playerCoins = 0;
-
     this.playerController = null;
     this.dialogueManager = null;
     this.hoverManager = null;
@@ -31,208 +29,170 @@ export default class JScriptoriaScene extends Phaser.Scene {
     // Tilemap
     this.load.tilemapTiledJSON('city', '/maps/JScriptoria City.tmj');
 
-    // Tilesets
     const tilesets = [
       'road_full','road_side','sidewalk_pavement','sidewalk','headquarters_door','headquarters_roof',
       'headquarters_roof2','headquarters_roof3','headquarters_roof4','headquarters_wall3','headquarters_wall2',
       'headquarters_wall1','Sprite-0001','base_house','pavement1','pavement2','base_house2','base_house3',
       'corner-stone-grass-sheet','corner-stone-grass2-sheet','sample_fence','sample_fence-sheet','house1',
-      'guild','inn','school-sheet','roads','roadblock','lamppost','library','coretower'
+      'guild','inn','school-sheet','roads','roadblock','lamppost','library','coretower', 'walled'
     ];
     tilesets.forEach(name => this.load.image(name, `/assets/tilesets/jscriptoriacity/${name}.png`));
+    this.load.image("git_terminal_full", "/assets/tilesets/deepweb/git_terminal_full.png");
 
-    this.load.image("walled", "/assets/tilesets/jscriptoriacity/walled.png");
-    // Player sprite
+    this.load.spritesheet("chest", "/assets/icons/item/chest.png", { frameWidth: 16, frameHeight: 16 });
     this.load.spritesheet('player_male', '/assets/sprites/player/player_male.png', { frameWidth: 16, frameHeight: 16 });
-
-    // NPC Sprites
     this.load.spritesheet('kaelen', '/assets/sprites/npc/kaelen.png', { frameWidth: 16, frameHeight: 16 });
   }
 
   create(data = {}) {
-    const TILE_SIZE = this.TILE_SIZE;
-
-    // ---- TILEMAP ----
+    // ---- Tilemap & Layers ----
     this.map = this.make.tilemap({ key: 'city' });
-    const tilesets = this.map.tilesets.map(ts => {
-    // For the animated tileset name specifically
-    if (ts.name === "Sprite-0001") {
-        return this.map.addTilesetImage("Sprite-0001", "Sprite-0001");
-    }
-    return this.map.addTilesetImage(ts.name, ts.name);
-});
+    const tilesets = this.map.tilesets.map(ts => this.map.addTilesetImage(ts.name, ts.name));
+
+    this.groundLayer = this.map.createLayer('Ground Layer', tilesets, 0, 0);
+    this.wallLayer = this.map.createLayer('Wall Layer', tilesets, 0, 0);
+    this.buildingLayer = this.map.createLayer('Building Layer', tilesets, 0, 0);
+    this.itemLayer = this.map.createLayer('Item Layer', tilesets, 0, 0);
+    this.overlayLayer = this.map.createLayer('Overlay layer', tilesets, 0, 0);
+
+    [this.wallLayer, this.buildingLayer, this.itemLayer].forEach(layer => layer.setCollisionByExclusion([-1]));
+
+    // ---- Player Spawn ----
+const spawnLayer = this.map.getObjectLayer("Objects");
+
+let spawnObj =
+  spawnLayer?.objects.find(o => o.name === data.spawn) ||
+  spawnLayer?.objects.find(o => o.name === "MalePlayer") ||
+  { x: 1500, y: 1500 };
+
+const spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
+const spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
+
+this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
+  .setOrigin(0, 1)
+  .setCollideWorldBounds(true)
+  .setSize(12, 8)
+  .setOffset(2, 8)
+  .setDepth(5);
 
 
-    const groundLayer = this.map.createLayer('Ground Layer', tilesets, 0, 0);
-    const wallLayer = this.map.createLayer('Wall Layer', tilesets, 0, 0);
-    const buildingLayer = this.map.createLayer('Building Layer', tilesets, 0, 0);
-    const itemLayer = this.map.createLayer('Item Layer', tilesets, 0, 0);
-    const overlayLayer = this.map.createLayer('Overlay layer', tilesets, 0, 0);
 
-    [wallLayer, buildingLayer, itemLayer].forEach(layer => layer.setCollisionByExclusion([-1]));
+    this.player.customData = {
+      HP: data.playerHP ?? 100,
+      Energy: data.playerEnergy ?? 50,
+      Coins: data.playerCoins ?? 0
+    };
 
-    // ---- PLAYER SPAWN ----
-    const spawnLayer = this.map.getObjectLayer('Objects');
-    const spawnObj = spawnLayer?.objects.find(o => o.name === 'MalePlayer') || { x: 800, y: 850 };
-    const spawnX = Math.round(spawnObj.x / TILE_SIZE) * TILE_SIZE;
-    const spawnY = Math.round(spawnObj.y / TILE_SIZE) * TILE_SIZE;
+    GameState.player = this.player;
 
-    this.player = this.physics.add.sprite(spawnX, spawnY, 'player_male', 0)
-        .setOrigin(0, 1)
-        .setCollideWorldBounds(true)
-        .setSize(12, 8)
-        .setOffset(2, 8);
-
-    // ---- ASSIGN PLAYER TO GLOBAL STATE (HUD, Compiler) ----
-    if (window.GameState) GameState.player = this.player;
-
-    // ---- CAMERA ----
+    // ---- Camera ----
     this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08).setZoom(3);
 
-    // ---- ANIMATIONS ----
+    // ---- Animations ----
     this.createAnimations();
 
     // ---- NPCs ----
     this.createNPCs();
 
-    // ---- COLLIDERS ----
-    [wallLayer, buildingLayer, itemLayer].forEach(layer => this.physics.add.collider(this.player, layer));
-    this.npcs.forEach(npc => npc.setDepth(4));
-    this.player.setDepth(5);
-    overlayLayer.setDepth(10);
-
-    // ---- PLAYER CONTROLLER ----
+    // ---- Player Controller ----
     this.playerController = new PlayerController(this, this.player, this.MOVE_SPEED);
 
+    this.transitioning = false;
+
     // ---- DOM HUD ----
-    this.playerHPEl = document.getElementById('playerHP');
-    this.playerEnergyEl = document.getElementById('playerEnergy');
-    this.playerExpEl = document.getElementById('playerExp');
+    this.playerHPEl = document.getElementById('playerHP-text');
+    this.playerEnergyEl = document.getElementById('playerEnergy-text');
+    this.playerCoinsEl = document.getElementById('cryptos-count');
 
-    this.playerHP = data.playerHP ?? this.playerHP;
-    this.playerEnergy = data.playerEnergy ?? this.playerEnergy;
-    this.playerCoins = data.playerCoins ?? this.playerCoins;
+    this.updateHUD();
 
-    if (this.playerHPEl) this.playerHPEl.textContent = this.playerHP;
-    if (this.playerEnergyEl) this.playerEnergyEl.textContent = this.playerEnergy;
-    if (this.playerExpEl) this.playerExpEl.textContent = data.playerExp ?? 120;
-
-    // ---- DIALOGUE MANAGER ----
+    // ---- Dialogue Manager ----
     const dialogueBoxEl = document.getElementById("dialogue-box");
     const dialogueTextEl = document.getElementById("dialogue-text");
     const dialogueNextEl = document.getElementById("dialogue-next");
 
     this.dialogueManager = DialogueManager;
     this.dialogueManager.init(this);
-    this.dialogueManager.setDomElements({
-        dialogueBox: dialogueBoxEl,
-        dialogueText: dialogueTextEl,
-        nextBtn: dialogueNextEl
-    });
+    this.dialogueManager.setDomElements({ dialogueBox: dialogueBoxEl, dialogueText: dialogueTextEl, nextBtn: dialogueNextEl });
 
     if (dialogueNextEl) {
-        dialogueNextEl.removeEventListener?.("click", this._nextBtnHandler);
-        this._nextBtnHandler = () => {
-            if (this.dialogueManager.isTyping) return;
-            this.dialogueManager.next();
-        };
-        dialogueNextEl.addEventListener("click", this._nextBtnHandler);
+      dialogueNextEl.removeEventListener?.("click", this._nextBtnHandler);
+      this._nextBtnHandler = () => { if (!this.dialogueManager.isTyping) this.dialogueManager.next(); };
+      dialogueNextEl.addEventListener("click", this._nextBtnHandler);
     }
 
-    // ---- DOORS ----
-    this.setupDoors();
+    // ---- Scene Triggers ----
+    this.sceneTriggers = setupSceneTriggers(this, this.map, this.player);
 
-    // ---- WORLD STEP PROXIMITY ----
+    // ---- Chests ----
+    ChestSystem.init(this, this.player);
+    ChestSystem.createAnimations(this);
+    ChestSystem.loadFromMap(this.map);
+
+    // ---- Colliders ----
+    [this.wallLayer, this.buildingLayer, this.itemLayer].forEach(layer => this.physics.add.collider(this.player, layer));
+    this.npcs.forEach(npc => npc.setDepth(4));
+    this.overlayLayer.setDepth(10);
+
+    // ---- Worldstep for NPC proximity ----
     this.physics.world.on("worldstep", () => {
-        this.canTalkTo = null;
-        this.npcs.forEach(npc => {
-            if (!npc?.body) return;
-            if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.body, npc.body)) {
-                this.canTalkTo = npc;
-            }
-        });
-        this.dialogueManager.updateProximity(this.player, this.npcs);
+      this.canTalkTo = null;
+      this.npcs.forEach(npc => {
+        if (!npc?.body) return;
+        if (Phaser.Geom.Intersects.RectangleToRectangle(this.player.body, npc.body)) this.canTalkTo = npc;
+      });
+      this.dialogueManager.updateProximity(this.player, this.npcs);
     });
 
-    // ---- INTERACTIONS ----
+    // ---- Z key interactions ----
     this.input.keyboard.on("keydown-Z", () => {
-      if (this.dialogueManager.activeDialogue) {
-        if (this.dialogueManager.isTyping) this.dialogueManager._finishTypingInstant();
-        else this.dialogueManager.next();
-        return;
-      }
+  if (ChestSystem.interact()) return;
 
-      const npc = this.playerController.canTalkTo;
-      if (npc && npc.dialogue?.length > 0) {
-        this.dialogueManager.start(npc.dialogue);
-        return;
-      }
-    if (!this.doors) return;
+  if (this.dialogueManager.activeDialogue) {
+    if (this.dialogueManager.isTyping)
+      this.dialogueManager._finishTypingInstant();
+    else
+      this.dialogueManager.next();
+    return;
+  }
 
-    // Find a door the player is standing on
-    const door = this.doors.find(d => {
-        const rect = new Phaser.Geom.Rectangle(d.x, d.y - d.height, d.width, d.height);
-        return Phaser.Geom.Rectangle.Overlaps(rect, this.player.getBounds());
+  const npc = this.playerController.canTalkTo;
+  if (npc && npc.customData.dialogue?.length) {
+    this.dialogueManager.start(npc.customData.dialogue);
+    return;
+  }
+
+
+  const trigger = this.sceneTriggers.getNearbyTrigger();
+  if (trigger) {
+    this.sceneTriggers.activateTrigger(trigger, {
+      playerHP: this.playerHP,
+      playerEnergy: this.playerEnergy,
+      playerCoins: this.playerCoins
     });
-
-    if (!door) return;
-
-    // Read targetScene from Tiled property
-    let target = door.properties?.find(p => p.name === "targetScene")?.value;
-    if (!target) {
-        console.warn("Door has no targetScene property!");
-        return;
-    }
-
-    // Strip extra quotes if any
-    target = target.replace(/^"(.*)"$/, '$1');
-
-    console.log("Door interaction: moving to scene", target);
-
-    // Start target scene, passing player data
-    this.scene.start(target, {
-        spawn: door.name,
-        playerHP: this.playerHP,
-        playerEnergy: this.playerEnergy,
-        playerCoins: this.playerCoins,
-        playerX: this.player.x,
-        playerY: this.player.y
-    });
+  }
 });
 
 
-
-
-
-    // ---- HOVER MANAGER ----
+    // ---- Hover Manager ----
     this.hoverManager = new HoverManager(this);
     this.hoverManager.init();
     this.npcs.forEach(npc => this.hoverManager.register(npc, "NPC: " + (npc.name || "Unknown")));
     this.buildings.forEach(building => this.hoverManager.register(building, "Building: " + (building.name || "Unknown")));
     this.items.forEach(item => this.hoverManager.register(item, "Item: " + (item.name || "Unknown")));
-
-    // ---- RESPONSIVE ----
-    this.scale.on('resize', size => {
-        if (this.cameras?.main)
-            this.cameras.main.setViewport(0, 0, size.width, size.height);
-    });
-}
-
+  }
 
   update() {
     if (!this.playerController) return;
-
-    // Player movement
     this.canTalkTo = this.playerController.update(this.npcs);
+  }
 
-    // Hover manager updates (cursor-based hover)
-    //this.hoverManager.update([
-    //  ...this.npcs,
-    //  ...this.buildings,
-    //  ...this.items
-    //]);
+  updateHUD() {
+    if (this.playerHPEl) this.playerHPEl.textContent = this.player.customData.HP;
+    if (this.playerEnergyEl) this.playerEnergyEl.textContent = this.player.customData.Energy;
+    if (this.playerCoinsEl) this.playerCoinsEl.textContent = this.player.customData.Coins;
   }
 
   createAnimations() {
@@ -258,34 +218,15 @@ export default class JScriptoriaScene extends Phaser.Scene {
         .setImmovable(true)
         .play('npc-idle-down');
 
-      npc.dialogue = [];
+      npc.customData = {};
       const prop = obj.properties?.find(p => p.name === 'dialogue');
       if (prop?.value) {
-        try { npc.dialogue = JSON.parse(prop.value); }
-        catch { npc.dialogue = [prop.value]; }
-      }
+        try { npc.customData.dialogue = JSON.parse(prop.value); }
+        catch { npc.customData.dialogue = [prop.value]; }
+      } else npc.customData.dialogue = [];
 
       this.physics.add.collider(this.player, npc);
       this.npcs.push(npc);
     });
   }
-
-  setupDoors() {
-    const doorLayer = this.map.getObjectLayer('door objects');
-    if (!doorLayer) return;
-
-    // Offset the Y for sprite alignment
-    doorLayer.objects.forEach(door => { door.y += this.TILE_SIZE; });
-
-    // DEBUG: draw rectangles around doors
-    doorLayer.objects.forEach(door => {
-        const g = this.add.graphics();
-        g.lineStyle(1, 0xff0000, 0.7);
-        g.strokeRect(door.x, door.y, door.width, door.height);
-    });
-
-    // Save doors for interaction
-    this.doors = doorLayer.objects;
-}
-
 }
