@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="21" nextobjectid="56">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="22" nextobjectid="58">
  <editorsettings>
   <export target="JScriptoria City.tmj" format="json"/>
  </editorsettings>
@@ -669,6 +669,8 @@
   <object id="51" name="chest_1" x="1360.67" y="1120.67" width="16" height="16">
    <properties>
     <property name="chesttype" value="key"/>
+    <property name="hoverDescription" value="A chest that contains a key item."/>
+    <property name="hoverName" value="Key Item Chest"/>
     <property name="lootkey" value="corruption_token"/>
    </properties>
   </object>
@@ -676,6 +678,8 @@
    <properties>
     <property name="chesttype" value="mimic"/>
     <property name="damage" type="int" value="25"/>
+    <property name="hoverDescription" value="A chest that contains items... looks suspicious..."/>
+    <property name="hoverName" value="Item Chest"/>
    </properties>
   </object>
  </objectgroup>
@@ -683,10 +687,12 @@
   <object id="43" name="sample npc" x="800.083" y="912.542" width="15.75" height="15.125">
    <properties>
     <property name="dialogue" value="[&quot;This is a test space, player.&quot;, &quot;Proceed to the headquarters to test out your compiler.&quot;, &quot;Inside there you will greet Master Elysia and the others.&quot;, &quot;Talk to them about that bug they caught and they will ask you to debug it or something.&quot;]"/>
+    <property name="hoverDescription" value="This is a sample NPC."/>
+    <property name="hoverName" value="NPC"/>
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="17" name="door objects">
+ <objectgroup id="17" name="door objects" locked="1">
   <object id="47" name="hqdoor1" x="784.625" y="831.313" width="47.5" height="16">
    <properties>
     <property name="spawn" value="hqdoor1"/>
@@ -695,7 +701,15 @@
   </object>
   <object id="48" name="orinacademydoor" x="672" y="433" width="32" height="16"/>
  </objectgroup>
- <objectgroup id="20" name="git_terminal">
+ <objectgroup id="21" name="hover objects">
+  <object id="56" name="Headquarters" x="688.152" y="752.242" width="239.636" height="95.7879">
+   <properties>
+    <property name="hoverDescription" value="This building is Elysia's current headquarters of the city. This building monitors all things on the city under Elysia's watchful eye."/>
+    <property name="hoverName" value="Elysia's Headquarters"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="20" name="git_terminal" locked="1">
   <object id="53" name="git_terminal_1" x="1312" y="1105.33" width="32" height="32">
    <properties>
     <property name="ID" value="jscriptoria_city"/>

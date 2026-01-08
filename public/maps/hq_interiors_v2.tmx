@@ -97,7 +97,7 @@
   </object>
  </objectgroup>
  <objectgroup id="6" name="npc object">
-  <object id="16" name="elysia" x="287.5" y="400.25" width="16" height="16">
+  <object id="16" name="elysia" x="288.5" y="416.75" width="16" height="16">
    <properties>
     <property name="elysia dialogue" value="[&quot;Oh, it's you.&quot;, &quot;This is just a precaution before you venture out on the outskirts of the city.&quot;, &quot;In front of you is a bug the guild members caught.&quot;, &quot;I want you to test it for a debugging battle, and prove that you are capable of handling them.&quot;, &quot;Good luck.&quot;]"/>
    </properties>

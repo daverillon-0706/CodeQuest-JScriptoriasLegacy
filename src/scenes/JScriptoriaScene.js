@@ -176,12 +176,14 @@ this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
 });
 
 
-    // ---- Hover Manager ----
-    this.hoverManager = new HoverManager(this);
-    this.hoverManager.init();
-    this.npcs.forEach(npc => this.hoverManager.register(npc, "NPC: " + (npc.name || "Unknown")));
-    this.buildings.forEach(building => this.hoverManager.register(building, "Building: " + (building.name || "Unknown")));
-    this.items.forEach(item => this.hoverManager.register(item, "Item: " + (item.name || "Unknown")));
+// ---- Hover Manager ----
+this.hoverManager = new HoverManager(this);
+this.hoverManager.init();
+
+// Read all hover rectangles from the Tiled layer
+this.hoverManager.registerFromObjectLayer(this.map, "hover objects");
+
+
   }
 
   update() {

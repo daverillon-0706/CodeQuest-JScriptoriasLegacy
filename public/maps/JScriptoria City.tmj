@@ -575,6 +575,16 @@
                          "value":"key"
                         }, 
                         {
+                         "name":"hoverDescription",
+                         "type":"string",
+                         "value":"A chest that contains a key item."
+                        }, 
+                        {
+                         "name":"hoverName",
+                         "type":"string",
+                         "value":"Key Item Chest"
+                        }, 
+                        {
                          "name":"lootkey",
                          "type":"string",
                          "value":"corruption_token"
@@ -600,6 +610,16 @@
                          "name":"damage",
                          "type":"int",
                          "value":25
+                        }, 
+                        {
+                         "name":"hoverDescription",
+                         "type":"string",
+                         "value":"A chest that contains items... looks suspicious..."
+                        }, 
+                        {
+                         "name":"hoverName",
+                         "type":"string",
+                         "value":"Item Chest"
                         }],
                  "rotation":0,
                  "type":"",
@@ -629,6 +649,16 @@
                          "name":"dialogue",
                          "type":"string",
                          "value":"[\"This is a test space, player.\", \"Proceed to the headquarters to test out your compiler.\", \"Inside there you will greet Master Elysia and the others.\", \"Talk to them about that bug they caught and they will ask you to debug it or something.\"]"
+                        }, 
+                        {
+                         "name":"hoverDescription",
+                         "type":"string",
+                         "value":"This is a sample NPC."
+                        }, 
+                        {
+                         "name":"hoverName",
+                         "type":"string",
+                         "value":"NPC"
                         }],
                  "rotation":0,
                  "type":"",
@@ -646,6 +676,7 @@
         {
          "draworder":"topdown",
          "id":17,
+         "locked":true,
          "name":"door objects",
          "objects":[
                 {
@@ -689,7 +720,41 @@
         }, 
         {
          "draworder":"topdown",
+         "id":21,
+         "name":"hover objects",
+         "objects":[
+                {
+                 "height":95.7878787878788,
+                 "id":56,
+                 "name":"Headquarters",
+                 "properties":[
+                        {
+                         "name":"hoverDescription",
+                         "type":"string",
+                         "value":"This building is Elysia's current headquarters of the city. This building monitors all things on the city under Elysia's watchful eye."
+                        }, 
+                        {
+                         "name":"hoverName",
+                         "type":"string",
+                         "value":"Elysia's Headquarters"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":239.636363636364,
+                 "x":688.151515151515,
+                 "y":752.242424242424
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":20,
+         "locked":true,
          "name":"git_terminal",
          "objects":[
                 {
@@ -832,8 +897,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":21,
- "nextobjectid":56,
+ "nextlayerid":22,
+ "nextobjectid":58,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
