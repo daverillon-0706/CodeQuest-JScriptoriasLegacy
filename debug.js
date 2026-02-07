@@ -1,83 +1,114 @@
 // src/debug.js
 import GameState from "./src/GameState";
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-  // Ensure player exists in GameState with defaults
+  // --- Ensure player state exists ---
   const ensurePlayer = () => {
     if (!GameState.player) {
-      GameState.player = { hp: 100, energy: 50, cryptos: 0 };
+      GameState.player = {
+        hp: 3,
+        maxHP: 12,
+        energy: 2,
+        maxEnergy: 10,
+        cryptos: 1200
+      };
     }
-    const player = GameState.player;
-    player.hp ??= 100;
-    player.energy ??= 50;
-    player.cryptos ??= 0;
-    GameState.player = player; // write back any defaults
-    return player;
+
+    const p = GameState.player;
+
+    p.hp ??= 3;
+    p.maxHP ??= 12;
+    p.energy ??= 2;
+    p.maxEnergy ??= 10;
+    p.cryptos ??= 0;
+
+    GameState.player = p;
+    return p;
   };
 
-  // Update all HUD numbers (tablet + battle)
+  // --- Update HUD (icons only) ---
   const updateHUD = () => {
     const player = ensurePlayer();
 
-    // Tablet HUD
-    const hpEl = document.getElementById('playerHP-text');
-    const energyEl = document.getElementById('playerEnergy-text');
-    const cryptoEl = document.getElementById('cryptos-count');
+    // Icon HUD (top-left)
+    if (window.updateHearts) {
+      updateHearts(player.hp, player.maxHP);
+    }
 
-    if (hpEl) hpEl.textContent = player.hp ?? 0;
-    if (energyEl) energyEl.textContent = player.energy ?? 0;
-    if (cryptoEl) cryptoEl.textContent = player.cryptos ?? 0;
+    if (window.updateEnergy) {
+      updateEnergy(player.energy, player.maxEnergy);
+    }
 
-    // Battle HUD
-    const battleHP = document.getElementById('battle-playerHP');
-    const battleEnergy = document.getElementById('battle-playerEnergy');
-    const battleCryptos = document.getElementById('battle-playerCryptos');
+    if (window.updateCryptos) {
+      updateCryptos(player.cryptos);
+    }
 
-    if (battleHP) battleHP.textContent = player.hp ?? 0;
-    if (battleEnergy) battleEnergy.textContent = player.energy ?? 0;
-    if (battleCryptos) battleCryptos.textContent = player.cryptos ?? 0;
+    // Battle HUD (still numeric for now – OK)
+    const battleHP = document.getElementById("battle-playerHP");
+    const battleEnergy = document.getElementById("battle-playerEnergy");
+    const battleCryptos = document.getElementById("battle-playerCryptos");
 
-    // Call your HUD module if it exists
-    if (window.hud?.updateHUD) window.hud.updateHUD();
+    if (battleHP) battleHP.textContent = player.hp;
+    if (battleEnergy) battleEnergy.textContent = player.energy;
+    if (battleCryptos) battleCryptos.textContent = player.cryptos;
   };
 
-  // Change a stat and update HUD + GameState
-  const changeStat = (stat, amount) => {
+  // --- Change stat safely ---
+  const changeStat = (stat, amount, maxKey = null) => {
     const player = ensurePlayer();
-    player[stat] = Math.max(0, (player[stat] || 0) + amount);
+
+    player[stat] = (player[stat] || 0) + amount;
+
+    if (maxKey) {
+      player[stat] = Math.max(0, Math.min(player[stat], player[maxKey]));
+    } else {
+      player[stat] = Math.max(0, player[stat]);
+    }
+
     GameState.player = player;
     updateHUD();
   };
 
-  // Reset stats to default
+  // --- Reset stats ---
   const resetStats = () => {
-    const player = { hp: 100, energy: 50, cryptos: 0 };
-    GameState.player = player;
+    GameState.player = {
+      hp: 3,
+      maxHP: 12,
+      energy: 2,
+      maxEnergy: 10,
+      cryptos: 0
+    };
     updateHUD();
   };
 
-  // Attach debug buttons
-  const attachButton = (id, handler) => {
+  // --- Button wiring ---
+  const bind = (id, fn) => {
     const btn = document.getElementById(id);
-    if (btn) btn.onclick = handler;
+    if (btn) btn.onclick = fn;
   };
 
-  attachButton('hp-plus', () => changeStat('hp', 10));
-  attachButton('hp-minus', () => changeStat('hp', -10));
-  attachButton('energy-plus', () => changeStat('energy', 10));
-  attachButton('energy-minus', () => changeStat('energy', -10));
-  attachButton('crypto-plus', () => changeStat('cryptos', 50));
-  attachButton('crypto-minus', () => changeStat('cryptos', -50));
-  attachButton('reset-stats', resetStats);
+  bind("hp-plus", () => changeStat("hp", 1, "maxHP"));
+  bind("hp-minus", () => changeStat("hp", -1, "maxHP"));
 
-  // Ensure battle HUD updates whenever it becomes visible
-  const battleUI = document.getElementById('battle-ui');
+  bind("energy-plus", () => changeStat("energy", 1, "maxEnergy"));
+  bind("energy-minus", () => changeStat("energy", -1, "maxEnergy"));
+
+  bind("crypto-plus", () => changeStat("cryptos", 100));
+  bind("crypto-minus", () => changeStat("cryptos", -100));
+
+  bind("reset-stats", resetStats);
+
+  // --- Observe battle UI visibility ---
+  const battleUI = document.getElementById("battle-ui");
   if (battleUI) {
-    const observer = new MutationObserver(() => updateHUD());
-    observer.observe(battleUI, { attributes: true, attributeFilter: ['style', 'class'] });
+    const observer = new MutationObserver(updateHUD);
+    observer.observe(battleUI, {
+      attributes: true,
+      attributeFilter: ["class", "style"]
+    });
   }
 
-  // Initial HUD update on page load
+  // Initial sync
   updateHUD();
 });

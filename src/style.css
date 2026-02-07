@@ -381,11 +381,6 @@ body {
   overflow:hidden;
 }
 
-/* classic hp / energy bars */
-.bar { height:100%; border-radius:4px; }
-.bar.hp { background: linear-gradient(90deg,#ff4d4d,#c20000); width:100%; }
-.bar.energy { background: linear-gradient(90deg,#4db8ff,#0066cc); width:50%; }
-
 .stat-text { width:40px; text-align:right; font-size:10px; color:#cfe; }
 
 /* cryptos row */
@@ -400,16 +395,34 @@ body {
 }
 .quick-btn:hover { background:#00b3b3; }
 
-/* right column player icon */
+/* left part player icon */
 .stats-right { display:flex; align-items:center; }
-.player-icon {
-  width:64px; height:64px; border-radius:10px;
-  background:linear-gradient(180deg,#223344,#112233);
-  border:2px solid #00ffff; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 6px 12px rgba(0,0,0,0.6);
+.tablet-icon-btn {
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 4px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.avatar-initials { font-family:"Press Start 2P", monospace; color:#cfe; font-size:12px; }
+
+.tablet-icon-btn img {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+
+.tablet-icon-btn:hover {
+  background: rgba(40, 40, 40, 0.75);
+}
+
+.tablet-icon-btn:active {
+  transform: translateY(1px); /* subtle press */
+}
+
 
 /* ---------- Tablet overlay ---------- */
 /* --- Tablet Overlay --- */
@@ -1128,5 +1141,210 @@ body {
 #app-save #save-btn:disabled {
   background-color: #888;
   cursor: not-allowed;
+}
+
+/*Player Stats UI*/
+
+/* Pixel Player Stats UI — TOP LEFT */
+#pixel-stats {
+  position: absolute;
+  top: 12px;
+  left: 12px;      /* ← moved from right to left */
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  z-index: 11000;
+
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/*New UI*/
+.hearts-container img,
+.energy-container img {
+  width: 24px;
+  height: 24px;
+  margin-right: 2px;
+}
+
+.cryptos img.coin-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.hud-top-left {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  color: #fff;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.bar-row label {
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.quick-toggles {
+  margin-top: 6px;
+}
+
+.quick-btn {
+  margin-right: 4px;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.hud-bg {
+  background-color: rgba(0, 0, 0, 0.4); /* Black with 40% opacity */
+  padding: 8px 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tablet-icon-btn {
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 4px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tablet-icon-btn img {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+}
+
+.tablet-icon-btn:hover {
+  background: rgba(40, 40, 40, 0.75);
+}
+
+.tablet-icon-btn:active {
+  transform: translateY(1px); /* subtle press */
+}
+
+
+/* QUICK ACCESS CONTAINER */
+#quick-access {
+  position: absolute;
+  left: 20px;
+  top: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+  z-index: 900;
+  image-rendering: pixelated;
+}
+
+.quick-slot {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.quick-slot:active {
+  background: linear-gradient(#1e1e1e, #3a3a3a);
+  box-shadow:
+    inset -1px -1px 0 rgba(255,255,255,0.15),
+    inset 1px 1px 0 rgba(0,0,0,0.6);
+}
+
+.quick-slot img {
+  width: 32px;
+  height: 32px;
+  position: relative;
+}
+
+.perk-frame img{
+  position: relative;
+  width: 42px;
+  height: 42px;
+  transform: scale(1.5);
+  transform-origin: center;
+  image-rendering: pixelated;
+}
+
+.perk-icon img{
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  top: 21px;
+  left: 21px;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.perk-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  margin: 2px 0;
+  border: 1px solid #ccc;
+  background-color: #222;
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+}
+
+.perk-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.perk-cooldown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.perk-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.perk-item {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  cursor: pointer;
+}
+.perk-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.perk-icon {
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
 }
 

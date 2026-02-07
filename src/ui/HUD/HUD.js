@@ -1,180 +1,208 @@
 // src/ui/HUD/HUD.js
+import { PassivePerks, OffensePerks, DefensePerks } from "../data/perkData.js";
 import CodexUI from "./CodexUI.js";
 import InventoryUI from "./InventoryUI.js";
 import QuestsUI from "./QuestsUI.js";
 import CompilerUI from "./CompilerUI.js";
-import GameState from "../../GameState.js";
 import LessonsUI from "./LessonsUI.js";
+import GameState from "../../GameState.js";
+import PerksManager from "../../systems/PerksManager.js";
 
 export default class HUD {
   constructor() {
-    // Cached DOM elements
     this.cacheElements();
 
-    // App UIs
+    // Initialize App UIs (safe even if DOM parts are missing)
     this.codex = new CodexUI();
     this.inventory = new InventoryUI();
     this.quests = new QuestsUI();
     this.compiler = new CompilerUI();
     this.lessons = new LessonsUI();
 
-    // Compiler bubble tracking
     this.bubbleInterval = null;
+    this.selectedPerk = null;
 
-    // Attach events
     this.attachEvents();
     this.attachCompilerEvents();
 
-    // Global reference
     window.hud = this;
 
     this.updateHUD();
   }
 
   // -------------------------
-  // DOM ELEMENTS
+  // DOM CACHE
   // -------------------------
   cacheElements() {
-    this.playerBtn = document.getElementById('player-icon-btn');
-    this.overlay = document.getElementById('tablet-overlay');
-    this.tablet = document.getElementById('tablet-hud');
-    this.closeBtn = document.getElementById('tablet-close');
-    this.backBtn = document.getElementById('tablet-back');
-    this.tabletTitle = document.getElementById('tablet-title');
+    this.playerBtn = document.getElementById("tablet-open-btn");
+    this.overlay = document.getElementById("tablet-overlay");
+    this.tablet = document.getElementById("tablet-hud");
+    this.closeBtn = document.getElementById("tablet-close");
+    this.backBtn = document.getElementById("tablet-back");
+    this.tabletTitle = document.getElementById("tablet-title");
+    
+    this.perkDetailIcon = document.getElementById("perk-detail-icon");
+this.perkDetailName = document.getElementById("perk-detail-name");
+this.perkDetailDesc = document.getElementById("perk-detail-desc");
+this.perkEquipBtn = document.getElementById("perk-equip-btn");
+this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
 
-    this.quickInv = document.getElementById('quick-inv');
-    this.quickQuests = document.getElementById('quick-quests');
-    this.quickCodex = document.getElementById('quick-codex');
-    this.quickCompiler = document.getElementById('quick-compiler');
 
-    this.compilerBubble = document.getElementById('compiler-output-box');
+
+    this.quickInv = document.getElementById("quick-inv");
+    this.quickQuests = document.getElementById("quick-quests");
+    this.quickCodex = document.getElementById("quick-codex");
+    this.quickCompiler = document.getElementById("quick-compiler");
+
+    this.compilerBubble = document.getElementById("compiler-output-box");
   }
 
+  // -------------------------
+  // HUD UPDATE (SAFE)
+  // -------------------------
   updateHUD() {
   if (!GameState.player) return;
 
-  const hpPercent = (GameState.player.hp / GameState.player.max_hp) * 100;
-  const energyPercent = (GameState.player.energy / GameState.player.max_energy) * 100;
+  const { hp, max_hp, energy, max_energy, cryptos, perks } = GameState.player;
 
-  document.getElementById("playerHP-text").textContent = GameState.player.hp;
-  document.getElementById("playerEnergy-text").textContent = GameState.player.energy;
-  document.getElementById("cryptos-count").textContent = GameState.player.cryptos;
+  // HP / Energy / Crypto bars...
+  document.getElementById("playerHP-text") &&
+    (document.getElementById("playerHP-text").textContent = hp);
+  document.getElementById("playerEnergy-text") &&
+    (document.getElementById("playerEnergy-text").textContent = energy);
+  document.getElementById("cryptos-count") &&
+    (document.getElementById("cryptos-count").textContent = cryptos);
 
-  document.getElementById("hp-bar").style.width = hpPercent + "%";
-  document.getElementById("energy-bar").style.width = energyPercent + "%";
+  const hpBar = document.getElementById("hp-bar");
+  if (hpBar) hpBar.style.width = `${(hp / max_hp) * 100}%`;
+
+  const energyBar = document.getElementById("energy-bar");
+  if (energyBar) energyBar.style.width = `${(energy / max_energy) * 100}%`;
+
+  // --------------------------
+  // QUICK SLOT ICONS
+  // --------------------------
+  const slots = ["passive", "offense", "defense"];
+  slots.forEach((slot) => {
+    const iconImg = document.querySelector(`.quick-slot.${slot} .perk-icon img`);
+    if (!iconImg) return;
+
+    const perkId = GameState.player.perks[slot];
+if (perkId) {
+  iconImg.src = `/public/assets/icons/buffs/${perkId}.png`;
+} else {
+  iconImg.src = "/public/assets/icons/empty-slot.png";
 }
 
+  });
+
+  document.querySelectorAll(".quick-slot").forEach((slotEl) => {
+  slotEl.addEventListener("click", () => {
+    const type = slotEl.classList.contains("passive")
+      ? "passive"
+      : slotEl.classList.contains("offense")
+      ? "offense"
+      : "defense";
+
+    const perkId = GameState.player.perks[type];
+    if (!perkId) return;
+
+    if (type === "passive") {
+      // maybe just show details or info
+      const perkData = PassivePerks[perkId];
+      this.showPerkDetails({ id: perkId, type, ...perkData });
+    } else if (type === "offense") {
+      PerksManager.activateOffense(perkId);
+    } else if (type === "defense") {
+      PerksManager.activateDefense(perkId);
+    }
+
+    this.updateHUD(); // refresh cooldowns / energy
+  });
+});
+}
+
+
+
+
   // -------------------------
-  // EVENT LISTENERS
+  // EVENTS
   // -------------------------
   attachEvents() {
-    this.playerBtn?.addEventListener('click', () =>
-      this.overlay.classList.contains('hidden')
+    // Tablet toggle
+    this.playerBtn?.addEventListener("click", () =>
+      this.overlay?.classList.contains("hidden")
         ? this.openTablet()
         : this.closeTablet()
     );
 
-    this.backBtn?.addEventListener('click', () => this.closeAllApps());
-    this.closeBtn?.addEventListener('click', () => this.closeTablet());
+    this.closeBtn?.addEventListener("click", () => this.closeTablet());
+    this.backBtn?.addEventListener("click", () => this.closeAllApps());
 
-    this.overlay?.addEventListener('click', e => {
+    this.overlay?.addEventListener("click", e => {
       if (e.target === this.overlay) this.closeTablet();
     });
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') this.closeTablet();
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") this.closeTablet();
     });
 
-    this.quickInv?.addEventListener('click', () => this.quickOpen('app-inventory'));
-    this.quickQuests?.addEventListener('click', () => this.quickOpen('app-quests'));
-    this.quickCodex?.addEventListener('click', () => {
-      this.quickOpen('app-codex');
+    // Quick apps
+    this.quickInv?.addEventListener("click", () =>
+      this.quickOpen("app-inventory")
+    );
+    this.quickQuests?.addEventListener("click", () =>
+      this.quickOpen("app-quests")
+    );
+    this.quickCodex?.addEventListener("click", () => {
+      this.quickOpen("app-codex");
       this.codex?.loadCodexList();
     });
-    this.quickCompiler?.addEventListener('click', () => this.quickOpen('app-compiler'));
+    this.quickCompiler?.addEventListener("click", () =>
+      this.quickOpen("app-compiler")
+    );
 
-    document.querySelectorAll('.app-icon').forEach(icon => {
-      icon.addEventListener('click', () => {
+
+    //For initializing the Equip and Unequip function
+    this.perkEquipBtn?.addEventListener("click", () => {
+  if (!this.selectedPerk) return;
+
+  PerksManager.equip(this.selectedPerk);
+  this.updateHUD();
+  this.renderTabletPerks();
+  this.showPerkDetails(this.selectedPerk);
+});
+
+this.perkUnequipBtn?.addEventListener("click", () => {
+  if (!this.selectedPerk) return;
+
+  PerksManager.unequip(this.selectedPerk.type);
+  this.updateHUD();
+  this.renderTabletPerks();
+  this.showPerkDetails(this.selectedPerk);
+});
+
+
+    // App icons
+    document.querySelectorAll(".app-icon").forEach(icon => {
+      icon.addEventListener("click", () => {
         const appId = icon.dataset.app;
         this.openApp(appId);
-        if (appId === "app-codex") this.codex.loadCodexList('stories');
 
-        if (appId === "app-lessons") {
-      this.lessons.loadCategories();
-    }
+        if (appId === "app-codex") this.codex.loadCodexList("stories");
+        if (appId === "app-lessons") this.lessons.loadCategories();
       });
     });
-    const saveBtn = document.getElementById('save-btn');
-saveBtn?.addEventListener('click', async () => {
-  if (!GameState.player) return;
-
-  try {
-    const res = await fetch('http://localhost:3000/save-stats', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        player_id: GameState.player.id,
-        hp: GameState.player.hp,
-        energy: GameState.player.energy,
-        cryptos: GameState.player.cryptos
-      })
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      console.log('Player stats saved manually.');
-      alert('Game saved successfully!');
-    } else {
-      console.error('Failed to save stats:', data.error);
-    }
-  } catch (err) {
-    console.error('Network error while saving stats:', err);
-  }
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  const logoutPanel = document.getElementById("app-logout");
-  const logoutBtn = document.getElementById("logout-btn");
-
-  // Optional: open panel when icon is clicked
-  const logoutIcon = document.querySelector('.app-icon[data-app="app-logout"]');
-  if (logoutIcon) {
-    logoutIcon.addEventListener("click", () => {
-      logoutPanel.classList.remove("hidden");
-    });
-  }
-
-  // Close panel if needed (optional)
-  const closeBtn = logoutPanel.querySelector(".close-btn");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      logoutPanel.classList.add("hidden");
-    });
-  }
-
-  // Logout process
-  logoutBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to logout? Unsaved data may be lost.")) {
-      GameState.logout(); // clears localStorage
-      window.location.href = "index.html"; // redirect to login
-    }
-  });
-});
-
   }
 
   attachCompilerEvents() {
     document.addEventListener("compiler-output", e => {
-      const text = e.detail.text;
+      const text = e.detail?.text ?? "";
       this.showCompilerBubble(text);
       this.closeTablet();
-
       setTimeout(() => this.openTablet(), 6000);
     });
   }
-
-  
-
 
   // -------------------------
   // COMPILER BUBBLE
@@ -185,17 +213,16 @@ document.addEventListener("DOMContentLoaded", () => {
     this.compilerBubble.textContent = text;
     this.compilerBubble.classList.remove("hidden");
 
-    // Clear previous interval
     if (this.bubbleInterval) clearInterval(this.bubbleInterval);
 
     const updatePosition = () => {
       const player = GameState.player;
-      const canvas = document.querySelector('canvas');
+      const canvas = document.querySelector("canvas");
       if (!player || !canvas) return;
 
       const rect = canvas.getBoundingClientRect();
-      this.compilerBubble.style.left = rect.left + player.x + 'px';
-      this.compilerBubble.style.top = rect.top + player.y - 50 + 'px';
+      this.compilerBubble.style.left = rect.left + (player.x ?? 0) + "px";
+      this.compilerBubble.style.top = rect.top + (player.y ?? 0) - 50 + "px";
     };
 
     updatePosition();
@@ -203,43 +230,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setTimeout(() => {
       this.compilerBubble.classList.add("hidden");
-      if (this.bubbleInterval) clearInterval(this.bubbleInterval);
+      clearInterval(this.bubbleInterval);
     }, 6000);
   }
 
   // -------------------------
-  // TABLET LOGIC
+  // TABLET
   // -------------------------
   openTablet() {
-    this.overlay.classList.remove('hidden');
+    this.overlay?.classList.remove("hidden");
+    this.renderTabletPerks();
   }
 
   closeTablet() {
-    this.overlay.classList.add('hidden');
+    this.overlay?.classList.add("hidden");
     this.closeAllApps();
   }
 
   closeAllApps() {
-    document.querySelectorAll('.app-window, .tablet-panel').forEach(w => {
-      w.classList.add('hidden');
-      w.classList.remove('active');
+    document.querySelectorAll(".app-window, .tablet-panel").forEach(w => {
+      w.classList.add("hidden");
+      w.classList.remove("active");
     });
-    this.tabletTitle.textContent = 'Tablet Home';
-    this.backBtn.classList.add('hidden');
-    document.getElementById('tablet-home')?.classList.remove('hidden');
+
+    this.tabletTitle && (this.tabletTitle.textContent = "Tablet Home");
+    this.backBtn?.classList.add("hidden");
+    document.getElementById("tablet-home")?.classList.remove("hidden");
   }
 
-  openApp(appId, title = null) {
+  openApp(appId) {
     this.closeAllApps();
 
     const win = document.getElementById(appId);
     if (!win) return;
 
-    win.classList.remove('hidden');
-    win.classList.add('active');
-    this.tabletTitle.textContent = title || win.querySelector('h3')?.textContent || 'App';
-    this.backBtn.classList.remove('hidden');
-    document.getElementById('tablet-home')?.classList.add('hidden');
+    win.classList.remove("hidden");
+    win.classList.add("active");
+    this.tabletTitle.textContent =
+      win.querySelector("h3")?.textContent || "App";
+    this.backBtn?.classList.remove("hidden");
+    document.getElementById("tablet-home")?.classList.add("hidden");
   }
 
   quickOpen(appId) {
@@ -247,11 +277,129 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => this.openApp(appId), 10);
   }
 
+ // -------------------------
+// PERKS TABLET
+// -------------------------
+renderTabletPerks() {
+  console.log("[HUD] Rendering tablet perks");
+
+  const passiveList = document.getElementById("perk-passive-list");
+  const offenseList = document.getElementById("perk-offense-list");
+  const defenseList = document.getElementById("perk-defense-list");
+
+  if (!passiveList || !offenseList || !defenseList) return;
+
+  // Clear existing list
+  passiveList.innerHTML = "";
+  offenseList.innerHTML = "";
+  defenseList.innerHTML = "";
+
+  // Helper to create a perk item
+  const createPerkItem = (perk, id, type) => {
+    const item = document.createElement("div");
+    item.className = "perk-item";
+
+    const icon = document.createElement("img");
+    icon.src = `/public/assets/icons/buffs/${id}.png`;
+    icon.alt = perk.name;
+    icon.className = "perk-icon";
+    icon.style.imageRendering = "pixelated";
+
+    const info = document.createElement("div");
+    info.className = "perk-info";
+
+    const name = document.createElement("div");
+    name.className = "perk-name";
+    name.textContent = perk.name;
+
+    const desc = document.createElement("div");
+    desc.className = "perk-desc";
+    desc.textContent = perk.desc ?? perk.description ?? "";
+
+    info.append(name, desc);
+    item.append(icon, info);
+
+    // Clicking the perk shows details on the right
+    item.addEventListener("click", () => {
+      this.showPerkDetails({ id, type, ...perk });
+    });
+
+    return item;
+  };
+
+  // Populate Passive perks
+  Object.entries(PassivePerks).forEach(([id, perk]) => {
+    passiveList.appendChild(createPerkItem(perk, id, "passive"));
+  });
+
+  // Populate Offense perks
+  Object.entries(OffensePerks).forEach(([id, perk]) => {
+    offenseList.appendChild(createPerkItem(perk, id, "offense"));
+  });
+
+  // Populate Defense perks
+  Object.entries(DefensePerks).forEach(([id, perk]) => {
+    defenseList.appendChild(createPerkItem(perk, id, "defense"));
+  });
 }
 
+
+
+showPerkDetails(perk) {
+  console.log("[HUD] showPerkDetails:", perk);
+  this.selectedPerk = perk;
+
+  const icon = document.getElementById("perk-detail-icon");
+  const name = document.getElementById("perk-detail-name");
+  const desc = document.getElementById("perk-detail-desc");
+  const equipBtn = document.getElementById("perk-equip-btn");
+  const unequipBtn = document.getElementById("perk-unequip-btn");
+
+  icon.src = `/public/assets/icons/buffs/${perk.id}.png`;
+  icon.style.imageRendering = "pixelated";
+
+  name.textContent = perk.name;
+  desc.textContent = perk.desc ?? perk.description ?? "";
+
+  const equipped = PerksManager.isEquipped(perk.id);
+
+  equipBtn.disabled = equipped;
+  unequipBtn.disabled = !equipped;
+
+  // Equip button
+  equipBtn.onclick = () => {
+    console.log("[HUD] Equip clicked:", perk.id);
+    PerksManager.equip(perk);
+    this.updateHUD();          // refresh Quick Access slots
+    this.renderTabletPerks();  // refresh the perk list
+    this.showPerkDetails(perk); // refresh details panel
+  };
+
+  // Unequip button
+  unequipBtn.onclick = () => {
+    console.log("[HUD] Unequip clicked:", perk.type);
+    PerksManager.unequip(perk.type);
+    this.updateHUD();
+    this.renderTabletPerks();
+    this.showPerkDetails(perk);
+  };
+}
+
+
+
+
+}
+
+
+
+
 // -------------------------
-// GLOBAL HUD
+// INIT
 // -------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  new HUD();
+document.addEventListener("DOMContentLoaded", () => {
+  try {
+    new HUD();
+  } catch (e) {
+    console.error("[HUD] Init failed", e);
+  }
 });
