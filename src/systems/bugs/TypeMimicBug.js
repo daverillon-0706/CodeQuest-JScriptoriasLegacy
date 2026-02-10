@@ -1,43 +1,164 @@
+// src/systems/bugs/TypeMimicBug.js
 import Bug from "../Bug.js";
 
 export default class TypeMimicBug extends Bug {
   constructor(scene, x, y) {
-    super(scene, x, y, "mimic", { dmg: 1, detectRange: 2, speed: 40 });
+    const data = {
+      dmg: 2,
+      detectRange: 2,   // tiles
+      attackCooldown: 2000
+    };
 
-    // Animations
-    if(!scene.anims.exists("mimic-hidden")) {
-      scene.anims.create({ key:"mimic-hidden", frames: scene.anims.generateFrameNumbers("mimic",{ frames:[0] }), frameRate:1, repeat:-1 });
-    }
-    if(!scene.anims.exists("mimic-revealed")) {
-      scene.anims.create({ key:"mimic-revealed", frames: scene.anims.generateFrameNumbers("mimic",{ frames:[1,2] }), frameRate:2, repeat:-1 });
-    }
+    super(scene, x, y, "mimic", data);
 
-    // Initial state: hidden
-    this.state = "hidden";
-    this.play("mimic-hidden");
+    // --- States ---
+    this.isRevealed = false;
+    this.isAttacking = false;
+    this.cooldown = false;
 
-    // Random patrol velocity
-    this.vx = 0;
-    this.vy = 0;
+    // Idle frame (disguised)
+    this.setFrame(0);
+    this.body.setImmovable(true);
   }
 
-  reveal() {
-    if(this.state === "hidden") {
-      this.state = "revealed";
-      this.play("mimic-revealed");
-      // Start moving in random direction
-      this.vx = (Math.random() > 0.5 ? 1 : -1) * this.speed;
-      this.vy = (Math.random() > 0.5 ? 1 : -1) * this.speed;
+  update() {
+    const player = this.scene.player;
+    if (!player) return;
+    if (this.cooldown || this.isAttacking) return;
+
+    const dist = Phaser.Math.Distance.Between(
+      this.x, this.y,
+      player.x, player.y
+    );
+
+    if (dist <= this.typeData.detectRange * 16) {
+      this.revealAndAttack(player);
     }
   }
 
-  update(time, delta) {
-    if(this.state === "revealed") {
-      this.x += this.vx * delta / 1000;
-      this.y += this.vy * delta / 1000;
+  // ================= REVEAL =================
+  revealAndAttack(player) {
+  if (this.isRevealed) return;
 
-      if(this.body.blocked.left || this.body.blocked.right) this.vx *= -1;
-      if(this.body.blocked.up || this.body.blocked.down) this.vy *= -1;
+  this.isRevealed = true;
+  this.isAttacking = true;
+
+  console.log("Mimic revealed!");
+
+  // Reveal frame
+  this.setFrame(1);
+
+  // Warning flash
+  this.flashTween = this.scene.tweens.add({
+    targets: this,
+    alpha: 0.4,
+    duration: 120,
+    yoyo: true,
+    repeat: -1
+  });
+
+  // Delay before charge (telegraph)
+  this.scene.time.delayedCall(
+    this.typeData.revealDelay,
+    () => this.charge(player),
+    [],
+    this
+  );
+}
+
+charge(player) {
+  console.log("Mimic charging...");
+
+  // Stop flashing
+  if (this.flashTween) {
+    this.flashTween.stop();
+    this.setAlpha(1);
+  }
+
+  // Slow lunge
+  this.scene.physics.moveToObject(
+    this,
+    player,
+    this.typeData.chargeSpeed
+  );
+
+  // Bite timing window
+  this.scene.time.delayedCall(500, () => {
+    this.bite(player);
+  });
+}
+
+
+  // ================= BITE =================
+  bite(player) {
+    
+    console.log("Mimic bite!");
+
+    const dist = Phaser.Math.Distance.Between(
+      this.x,
+      this.y,
+      player.x,
+      player.y
+    );
+
+    if (dist <= 28 && !player.invincible) {
+      const dmg = this.typeData.dmg || 1;
+
+      player.customData.HP = Math.max(
+        player.customData.HP - dmg,
+        0
+      );
+
+      // Small camera shake
+    this.scene.cameras.main.shake(120, 0.004);
+      console.log("Player HP:", player.customData.HP);
+
+      if (window.updateHearts) {
+        window.updateHearts(player.customData.HP, 12);
+      }
+
+      // Hit reaction
+      player.invincible = true;
+      player.setTint(0xff0000);
+
+      this.scene.time.delayedCall(800, () => {
+        player.invincible = false;
+        player.clearTint();
+      });
     }
+
+    // Stop movement after bite
+    this.body.setVelocity(0);
+
+    // Reset state after attack
+    this.scene.time.delayedCall(500, () => {
+      this.resetMimic();
+    });
+  }
+
+  // ================= RESET =================
+  resetMimic() {
+    console.log("Mimic reset.");
+
+    this.setFrame(0);
+
+    this.isRevealed = false;
+    this.isAttacking = false;
+    this.cooldown = true;
+
+    // Cooldown before next ambush
+    this.scene.time.delayedCall(
+      this.typeData.attackCooldown,
+      () => {
+        this.cooldown = false;
+      }
+    );
+  }
+
+  // ================= OVERLAP HOOK =================
+  dealDamage(player) {
+    if (this.cooldown || this.isAttacking) return;
+
+    this.revealAndAttack(player);
   }
 }

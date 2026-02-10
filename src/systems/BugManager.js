@@ -1,106 +1,110 @@
-import Bug from "./Bug";
+// src/systems/BugManager.js
+import Bug from "./Bug.js";
+import SyntaxGolemBug from "./bugs/SyntaxGolemBug.js";
+import RangeSlimeBug from "./bugs/RangeSlimeBug.js";
+import TypeMimicBug from "./bugs/TypeMimicBug.js";
+import ReferenceWispBug from "./bugs/ReferenceWispBug.js";
 
 export default class BugManager {
   constructor(scene) {
     this.scene = scene;
     this.bugs = [];
-    this.maxBugs = 6; // cap
-    this.spawnRadius = 20; // in tiles
-    this.TILE_SIZE = scene.TILE_SIZE;
-  }
+    this.lockedBug = null;
 
-  update(time, delta) {
-    // Remove dead bugs
-    this.bugs = this.bugs.filter(bug => bug.active);
-
-    // If no bugs, spawn new batch
-    if (this.bugs.length === 0) {
-      this.spawnNearPlayer();
-    }
+    // 🔒 Max distance a bug can roam from spawn
+    this.LEASH_DISTANCE = 120; // pixels (~7 tiles)
   }
 
   addBug(bug) {
     this.bugs.push(bug);
-  }
 
-  spawnNearPlayer() {
-    const playerTileX = Math.floor(this.scene.player.x / this.TILE_SIZE);
-    const playerTileY = Math.floor(this.scene.player.y / this.TILE_SIZE);
-
-    const grasswalkTileset = this.scene.map.tilesets.find(ts => ts.name === "grasswalk");
-    if (!grasswalkTileset) return;
-
-    const firstGid = grasswalkTileset.firstgid;
-    const lastGid  = firstGid + grasswalkTileset.total - 1;
-
-    let spawned = 0;
-
-    while (spawned < this.maxBugs) {
-      // Random offset in tile space
-      const offsetX = Math.floor((Math.random() - 0.5) * 2 * this.spawnRadius);
-      const offsetY = Math.floor((Math.random() - 0.5) * 2 * this.spawnRadius);
-
-      const x = playerTileX + offsetX;
-      const y = playerTileY + offsetY;
-
-      const tile = this.scene.groundLayer.getTileAt(x, y);
-      if (!tile) continue;
-      if (tile.index < firstGid || tile.index > lastGid) continue;
-
-      const worldX = x * this.TILE_SIZE;
-      const worldY = (y + 1) * this.TILE_SIZE;
-
-      // Pick random bug type
-      const rand = Math.random();
-      let key, typeData;
-
-      if(rand < 0.25){ key='golem'; typeData={dmg:2, detectRange:2, errorCode:'SyntaxError: Unexpected token'}; }
-      else if(rand < 0.5){ key='wisp'; typeData={dmg:1, detectRange:5, errorCode:'ReferenceError: undefined'}; }
-      else if(rand < 0.75){ key='slime'; typeData={dmg:2, detectRange:7, errorCode:'RangeError: out of range'}; }
-      else { key='mimic'; typeData={dmg:1, detectRange:2, errorCode:'TypeError: cannot read property'}; }
-
-      const bug = new Bug(this.scene, worldX, worldY, key, typeData)
-        .setOrigin(0,1);
-
-      this.scene.anims.create({ 
-        key: `${key}-idle`, 
-        frames: this.scene.anims.generateFrameNumbers(key, { start:0, end:1 }),
-        frameRate: 2,
-        repeat: -1
-      });
-      bug.play(`${key}-idle`);
-
-      this.addBug(bug);
-      spawned++;
+    // Ensure physics body exists
+    if (!bug.body) {
+      this.scene.physics.add.existing(bug);
     }
+
+    // 🧭 Store spawn origin (for leash system)
+    bug.spawnX = bug.x;
+    bug.spawnY = bug.y;
   }
+
+  update(time, delta) {
+    this.bugs.forEach(bug => {
+      if (bug.update) bug.update(time, delta);
+
+      // =============================
+      // 🧭 LEASH SYSTEM
+      // =============================
+      if (bug.spawnX !== undefined) {
+        const dist = Phaser.Math.Distance.Between(
+          bug.x,
+          bug.y,
+          bug.spawnX,
+          bug.spawnY
+        );
+
+        if (dist > this.LEASH_DISTANCE) {
+          // Move bug back to spawn
+          this.scene.physics.moveTo(
+            bug,
+            bug.spawnX,
+            bug.spawnY,
+            40 // return speed
+          );
+
+          bug.isReturning = true;
+        } else {
+          bug.isReturning = false;
+        }
+      }
+    });
+  }
+
   updateHover(pointer) {
-  // Optional: highlight bugs under the cursor
-  const worldX = pointer.worldX;
-  const worldY = pointer.worldY;
+    const hoverBug = this.bugs.find(bug =>
+      bug.getBounds().contains(pointer.worldX, pointer.worldY)
+    );
 
-  this.bugs.forEach(bug => {
-    const dist = Phaser.Math.Distance.Between(worldX, worldY, bug.x, bug.y);
-    if(dist < this.TILE_SIZE) bug.setTint(0x00ff00);
-    else bug.clearTint();
-  });
-}
-
-tryLockOn(pointer) {
-  const worldX = pointer.worldX;
-  const worldY = pointer.worldY;
-
-  const bug = this.bugs.find(b => {
-    const dist = Phaser.Math.Distance.Between(worldX, worldY, b.x, b.y);
-    return dist < this.TILE_SIZE;
-  });
-
-  if(bug) {
-    this.lockedBug = bug;
-    console.log("Locked on:", bug.texture.key);
-  } else {
-    this.lockedBug = null;
+    if (hoverBug) hoverBug.setTint(0x00ff00);
   }
-}
 
+  tryLockOn(pointer) {
+    const bug = this.bugs.find(b =>
+      b.getBounds().contains(pointer.worldX, pointer.worldY)
+    );
+
+    if (bug) this.lockedBug = bug;
+  }
+
+  spawnBug(type, x, y) {
+    let bug;
+
+    switch (type) {
+      case "slime":
+        bug = new RangeSlimeBug(this.scene, x, y, "slime");
+        break;
+
+      case "wisp":
+        bug = new ReferenceWispBug(this.scene, x, y, "wisp");
+        break;
+
+      case "mimic":
+        bug = new TypeMimicBug(this.scene, x, y, "mimic");
+        break;
+
+      case "golem":
+        bug = new SyntaxGolemBug(this.scene, x, y, "golem");
+        break;
+
+      default:
+        console.warn("Unknown bug type:", type);
+        return;
+    }
+
+    // Add to systems
+    this.addBug(bug);
+    this.scene.bugGroup.add(bug);
+
+    return bug;
+  }
 }

@@ -59,37 +59,6 @@ game.scene.start("JScriptoriaCityScene", {
   username: GameState.player.username
 });
 
-/*
-// --------------------------
-// BattleScene helpers
-// --------------------------
-game.events.on("ready", () => {
-  const battle = game.scene.getScene("BattleScene");
-  if (battle) {
-    battle.scene.stop();
-    console.log("BattleScene stopped on boot.");
-  }
-});*/
-
-/*
-window.launchBattle = (data) => {
-  const battle = game.scene.getScene("BattleScene");
-  if (battle) {
-    game.scene.launch("BattleScene", data);
-    battle.scene.bringToTop();
-  }
-};*/
-/*
-window.endBattle = () => {
-  const battle = game.scene.getScene("BattleScene");
-  if (battle) {
-    battle.scene.stop();
-  }
-};*/
-
-// --------------------------
-// Prevent Phaser input while typing
-// --------------------------
 const codeInput = document.getElementById("player-code");
 
 if (codeInput) {
@@ -105,6 +74,7 @@ if (codeInput) {
 
   codeInput.addEventListener("keydown", (e) => e.stopPropagation());
 }
+
 
 // --------------------------
 // Auto-resize

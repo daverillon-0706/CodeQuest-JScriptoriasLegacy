@@ -7,9 +7,11 @@ import HoverManager from "../systems/HoverManager.js";
 import ChestSystem from "../systems/ChestSystem.js";
 import Bug from "../systems/Bug.js";
 import BugManager from "../systems/BugManager.js";
+import SyntaxGolemBug from "../systems/bugs/SyntaxGolemBug.js";
 import RangeSlimeBug from "../systems/bugs/RangeSlimeBug.js";
 import TypeMimicBug from "../systems/bugs/TypeMimicBug.js";
 import ReferenceWispBug from "../systems/bugs/ReferenceWispBug.js";
+import InternalRiftBug from "../systems/bugs/InternalRiftBug.js";
 import GameState from "../GameState.js";
 import { setupSceneTriggers } from "../utils/SceneTransitions.js";
 
@@ -30,6 +32,11 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.hoverManager = null;
 
     this.bugManager = null;
+    this.bugGroup = null; // <-- Physics group for bugs
+    this.rifts = [];
+    this.riftKiosks = [];
+
+    
   }
 
   // ================= PRELOAD =================
@@ -50,11 +57,11 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.load.spritesheet("chest", "/assets/icons/item/chest.png", { frameWidth:16, frameHeight:16 });
 
     // ---- Bug Sprites ----
-  this.load.spritesheet('golem', '/assets/sprites/bug/golem.png', { frameWidth: 16, frameHeight: 16, endFrame: 1 });
-  this.load.spritesheet('mimic', '/assets/sprites/bug/mimic.png', { frameWidth: 16, frameHeight: 16, endFrame: 2 });
-  this.load.spritesheet('slime', '/assets/sprites/bug/slime.png', { frameWidth: 16, frameHeight: 16, endFrame: 3 });
-  this.load.spritesheet('wisp', '/assets/sprites/bug/wisp.png', { frameWidth: 16, frameHeight: 16, endFrame: 3 });
-  this.load.spritesheet('rift', '/assets/sprites/bug/rift.png', { frameWidth: 16, frameHeight: 16, endFrame: 7 });
+    this.load.spritesheet('golem', '/assets/sprites/bug/golem.png', { frameWidth: 16, frameHeight: 16, endFrame: 1 });
+    this.load.spritesheet('mimic', '/assets/sprites/bug/mimic.png', { frameWidth: 16, frameHeight: 16, endFrame: 2 });
+    this.load.spritesheet('slime', '/assets/sprites/bug/slime.png', { frameWidth: 16, frameHeight: 16, endFrame: 6 });
+    this.load.spritesheet('wisp', '/assets/sprites/bug/wisp.png', { frameWidth: 16, frameHeight: 16, endFrame: 7 });
+    this.load.spritesheet('rift', '/assets/sprites/bug/rift.png', { frameWidth: 48, frameHeight: 32, endFrame: 7 });
   }
 
   // ================= CREATE =================
@@ -88,50 +95,23 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       .setDepth(5);
 
     this.player.customData = {
-      HP: data.playerHP ?? 100,
-      Energy: data.playerEnergy ?? 50,
+      HP: data.playerHP ?? 10,
+      Energy: data.playerEnergy ?? 3,
       Coins: data.playerCoins ?? 0
     };
     GameState.player = this.player;
 
     // ---- BUG SYSTEM ----
-    // ---- BugManager & Bugs ----
-  this.bugManager = new BugManager(this);
-  this.spawnBugsOnGrasswalk();
-/*
-  const bugsData = [
-    { key: 'golem', type: 'Syntax Golem', x: 200, y: 200, frames: { idle: [0,1] }, errorCode: "SyntaxError: Unexpected token" },
-    { key: 'slime', type: 'Range Slime', x: 300, y: 250, frames: { left: [2,3], right: [0,1] }, errorCode: "RangeError: Out of bounds" },
-    { key: 'wisp', type: 'Reference Wisp', x: 400, y: 300, frames: { idle: [0,1,2,3] }, errorCode: "ReferenceError: x is not defined" },
-    { key: 'mimic', type: 'Type Mimic', x: 500, y: 350, frames: { hidden: [0], revealed: [1,2] }, errorCode: "TypeError: Cannot read property" },
-    { key: 'rift', type: 'Internal Rift', x: 600, y: 400, frames: { idle: [0,1,2,3,4,5,6,7] }, errorCode: "Summon Bugs" }
-  ];*/
-/*
-    // Create animations
-    const anims = this.anims;
-    if(bData.frames.idle) {
-      anims.create({ key: `${bData.key}-idle`, frames: anims.generateFrameNumbers(bData.key, { frames: bData.frames.idle }), frameRate: 2, repeat: -1 });
-      bug.play(`${bData.key}-idle`);
-    }
-    if(bData.frames.left) {
-      anims.create({ key: `${bData.key}-left`, frames: anims.generateFrameNumbers(bData.key, { frames: bData.frames.left }), frameRate: 4, repeat: -1 });
-    }
-    if(bData.frames.right) {
-      anims.create({ key: `${bData.key}-right`, frames: anims.generateFrameNumbers(bData.key, { frames: bData.frames.right }), frameRate: 4, repeat: -1 });
-    }
-    if(bData.frames.revealed) {
-      anims.create({ key: `${bData.key}-revealed`, frames: anims.generateFrameNumbers(bData.key, { frames: bData.frames.revealed }), frameRate: 2, repeat: -1 });
-    }
-    if(bData.frames.hidden) {
-      anims.create({ key: `${bData.key}-hidden`, frames: anims.generateFrameNumbers(bData.key, { frames: bData.frames.hidden }), frameRate: 1, repeat: -1 });
-      bug.play(`${bData.key}-hidden`);
-    }
-*/
-  // ---- Input hover/lock-on ----
-  this.input.on('pointermove', pointer => this.bugManager.updateHover(pointer));
-  this.input.on('pointerdown', pointer => this.bugManager.tryLockOn(pointer));
+    this.bugGroup = this.physics.add.group(); // ← Group for physics
+    this.bugManager = new BugManager(this);
+    window.bugManager = this.bugManager;
 
-    
+    this.physics.world.createDebugGraphic();
+    this.spawnBugsOnGrasswalk();
+
+    // ---- Input hover/lock-on ----
+    this.input.on('pointermove', pointer => this.bugManager.updateHover(pointer));
+    this.input.on('pointerdown', pointer => this.bugManager.tryLockOn(pointer));
 
     // ---- CAMERA ----
     this.physics.world.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
@@ -140,13 +120,35 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       .setZoom(3);
 
     // ---- COLLIDERS ----
-    [this.buildingLayer, this.wallLayer, this.itemLayer].forEach(layer => this.physics.add.collider(this.player, layer));
+    [this.buildingLayer, this.wallLayer, this.itemLayer]
+      .forEach(layer => this.physics.add.collider(this.player, layer));
+
     this.overlayLayer.setDepth(1000);
+
+    // Enable wall collision
+    this.wallLayer.setCollisionByProperty({ collides: true });
+
+    // Bugs ↔ walls
+    this.physics.add.collider(
+  this.bugGroup,
+  this.wallLayer,
+  (bug, wall) => {
+    if (bug instanceof RangeSlimeBug && bug.isCharging) {
+      bug.stopCharge?.();
+    }
+  }
+);
+
 
     // ---- SYSTEMS ----
     this.createAnimations();
     this.createNPCs();
     this.playerController = new PlayerController(this,this.player,this.MOVE_SPEED);
+
+    //Summon Rift
+    this.createRiftSystemsFromMap();
+
+
 
     // ---- HUD ----
     this.playerHPEl = document.getElementById("playerHP-text");
@@ -194,8 +196,23 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
           playerCoins: this.player.customData.Coins
         });
       }
+    
+    // Rift interaction
+      const kiosk = this.getNearbyRiftKiosk();
+      if (kiosk) {
+        this.activateRiftFromKiosk(kiosk);
+        return;
+      }
+
     });
-  }
+
+    // ================= PLAYER ↔ BUG DAMAGE =================
+            this.physics.add.overlap(this.player, this.bugGroup, (player, bug) => {
+    if (bug.dealDamage) bug.dealDamage(player); // Each bug defines this
+    });
+
+    
+}
 
   // ================= UPDATE =================
   update(time, delta) {
@@ -205,6 +222,11 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   if(this.bugManager) {
     this.bugManager.update(time, delta);
 
+    // Call each bug's own update (movement, AI)
+    this.bugManager.bugs.forEach(bug => {
+      if (bug.update) bug.update(time, delta);
+    });
+
     // Lock-on highlight
     if(this.bugManager.lockedBug) {
       this.bugManager.lockedBug.setTint(0xff0000); // red
@@ -213,6 +235,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     }
   }
 }
+
 
   // ================= HUD =================
   updateHUD(){
@@ -230,6 +253,72 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if(!anims.exists("walk-left")) anims.create({ key:"walk-left", frames:anims.generateFrameNumbers("player_male",{start:6,end:8}), frameRate:12, repeat:-1 });
     if(!anims.exists("walk-up")) anims.create({ key:"walk-up", frames:anims.generateFrameNumbers("player_male",{start:9,end:11}), frameRate:12, repeat:-1 });
     if(!anims.exists("npc-idle-down")) anims.create({ key:"npc-idle-down", frames:[{key:"kaelen",frame:1}], frameRate:1, repeat:-1 });
+
+    //Bugs
+
+    //Slime
+    if(!anims.exists("slime-move-right")) anims.create({
+  key: "slime-move-right",
+  frames: anims.generateFrameNumbers("slime",{ start: 0, end: 1 }),
+  frameRate: 6,
+  repeat: -1
+});
+
+if(!anims.exists("slime-move-left")) anims.create({
+  key: "slime-move-left",
+  frames: anims.generateFrameNumbers("slime",{ start: 5, end: 6 }),
+  frameRate: 6,
+  repeat: -1
+});
+
+        // --- Wisp Right ---
+if(!anims.exists("wisp-move-right")) {
+  anims.create({
+    key: "wisp-move-right",
+    frames: anims.generateFrameNumbers("wisp", {
+      start: 0,
+      end: 3
+    }),
+    frameRate: 8,
+    repeat: -1
+  });
+}
+
+// --- Wisp Left ---
+if(!anims.exists("wisp-move-left")) {
+  anims.create({
+    key: "wisp-move-left",
+    frames: anims.generateFrameNumbers("wisp", {
+      start: 4,
+      end: 7
+    }),
+    frameRate: 8,
+    repeat: -1
+  });
+}
+
+// Mimic
+this.anims.create({
+  key: "mimicReveal",
+  frames: this.anims.generateFrameNumbers("mimic", {
+    frames: [1, 2]
+  }),
+  frameRate: 4,
+  repeat: -1
+});
+
+// Rift idle animation
+if (!anims.exists("rift-idle")) {
+  anims.create({
+    key: "rift-idle",
+    frames: anims.generateFrameNumbers("rift", { start: 0, end: 7 }),
+    frameRate: 6,
+    repeat: -1
+  });
+}
+
+
+
   }
 
   // ================= NPCs =================
@@ -254,75 +343,163 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     });
   }
 
+  // ================= BUG SPAWNING =================
+  spawnBugsOnGrasswalk() {
+    if (!this.groundLayer) return;
 
-   // ================= BUG SPAWNING =================
-    spawnBugsOnGrasswalk() {
-  if (!this.groundLayer) return;
+    const width  = this.map.width;
+    const height = this.map.height;
 
-  const width  = this.map.width;
-  const height = this.map.height;
+    // --- Grasswalk tileset range ---
+    const grasswalkTileset = this.map.tilesets.find(ts => ts.name === "grasswalk");
+    if (!grasswalkTileset) {
+      console.warn("Grasswalk tileset not found!");
+      return;
+    }
 
-  // Get grasswalk tileset range
-  const grasswalkTileset = this.map.tilesets.find(ts => ts.name === "grasswalk");
-  if (!grasswalkTileset) {
-    console.warn("Grasswalk tileset not found!");
-    return;
-  }
+    const firstGid = grasswalkTileset.firstgid;
+    const lastGid  = firstGid + grasswalkTileset.total - 1;
 
-  const firstGid = grasswalkTileset.firstgid;
-  const lastGid  = firstGid + grasswalkTileset.total - 1;
+    // --- Collect all grass tiles ---
+    const grassTiles = [];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const tile = this.groundLayer.getTileAt(x, y);
+        if (!tile) continue;
+        if (tile.index >= firstGid && tile.index <= lastGid) grassTiles.push({ x, y });
+      }
+    }
 
-  let spawnCount = 0;
-  const maxBugs = 15; // Cap total bugs on map
+    Phaser.Utils.Array.Shuffle(grassTiles);
 
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (spawnCount >= maxBugs) break;
+    const maxBugs = 30;
+    const spawnTotal = Math.min(maxBugs, grassTiles.length);
+    let spawnCount = 0;
 
-      const tile = this.groundLayer.getTileAt(x, y);
-      if (!tile) continue;
+    for (let i = 0; i < spawnTotal; i++) {
+      const { x, y } = grassTiles[i];
+      const worldXY = this.groundLayer.tileToWorldXY(x, y);
+      const worldX = worldXY.x;
+      const worldY = worldXY.y + this.TILE_SIZE;
 
-      // Only grasswalk tiles
-      if (tile.index < firstGid || tile.index > lastGid) continue;
-
-      // Spawn chance
-      if (Math.random() > 0.05) continue; // 5%
-
-      const worldX = x * this.TILE_SIZE;
-      const worldY = (y + 1) * this.TILE_SIZE;
-
-      // Pick random bug type
+      // --- Pick bug type ---
       const rand = Math.random();
-      let bug;
+let bug;
+if (rand < 0.25) bug = new SyntaxGolemBug(this, worldX, worldY, "golem", { dmg: 2, detectRange: 2 });
+else if (rand < 0.5) bug = new ReferenceWispBug(this, worldX, worldY, "wisp");
+else if (rand < 0.75) bug = new RangeSlimeBug(this, worldX, worldY, "slime");
+else bug = new TypeMimicBug(this, worldX, worldY, "mimic");
 
-      if (rand < 0.25) bug = new Bug(this, worldX, worldY, "golem", { dmg: 2, detectRange: 2 });
-      else if (rand < 0.5) bug = new ReferenceWispBug(this, worldX, worldY);
-      else if (rand < 0.75) bug = new RangeSlimeBug(this, worldX, worldY);
-      else bug = new TypeMimicBug(this, worldX, worldY);
+this.bugManager.addBug(bug);
+this.bugGroup.add(bug);
 
-      this.bugManager.addBug(bug);
       spawnCount++;
     }
+
+    console.log("Total bugs spawned:", spawnCount);
   }
 
-  console.log("Total bugs spawned:", spawnCount);
+  // ================= SPAWN RIFT =================
+// ================= RIFT SYSTEM =================
+  createRiftSystemsFromMap() {
+    const layer = this.map.getObjectLayer("rifts layer");
+    if (!layer) return;
+
+    //this.rifts = [];
+    //     this.riftKiosks = [];
+    
+
+    layer.objects.forEach(obj => {
+      // Rift spawns
+      if (obj.name === "rift_spawn") {
+  const riftName = obj.properties?.find(p => p.name === "riftName")?.value;
+  const rift = new InternalRiftBug(this, obj.x, obj.y, riftName);
+
+// Add to physics + tracking
+this.bugGroup.add(rift);
+this.rifts.push(rift);
+
+// 🔒 Hide & disable initially
+rift.setVisible(false);
+rift.body.enable = false;
+rift.isDormant = true; // custom flag (optional but useful)
+
+console.log("Registered Rift (hidden):", riftName);
+
+}
+
+
+      // Rift kiosks
+      if (obj.name === "rift_kiosk") {
+        const kioskName = obj.properties?.find(p => p.name === "kioskName")?.value;
+        this.riftKiosks.push({ x: obj.x, y: obj.y, kioskName, cooldown: false });
+        console.log("Loaded Kiosk:", kioskName);
+      }
+    });
+  }
+
+  getNearbyRiftKiosk() {
+  if (!this.riftKiosks) return null;
+
+  // Increase distance check for easier interaction
+  const INTERACT_RADIUS = 48; // 3 tiles
+  const playerX = this.player.x;
+  const playerY = this.player.y;
+
+  return this.riftKiosks.find(kiosk => {
+    const dist = Phaser.Math.Distance.Between(playerX, playerY, kiosk.x, kiosk.y);
+    console.log("Checking kiosk:", kiosk.kioskName, "Distance:", dist.toFixed(2));
+    return dist <= INTERACT_RADIUS;
+  });
 }
 
 
 
+  activateRiftFromKiosk(kiosk) {
+    if (!kiosk.kioskName) return;
+    if (kiosk.cooldown) {
+      console.log("Kiosk on cooldown:", kiosk.kioskName);
+      return;
+    }
 
-  // ================= SPAWN RIFT =================
-  spawnRift(monolithId, x, y){
-    const bugData = { dmg:0, detectRange:0, errorCode:'Summon Bugs', monolithId };
-    const rift = new Bug(this, x, y, 'rift', bugData);
+    const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
+    console.log("Looking for rift:", targetRiftName);
+this.rifts.forEach(r => console.log("Rift available:", `"${r.riftName}"`));
 
-    // Rift is 3 tiles wide and 2 tiles tall
-    rift.setOrigin(0,1);
-    rift.body.setSize(this.TILE_SIZE*3, this.TILE_SIZE*2);
+    const rift = this.rifts.find(r => r.riftName === targetRiftName);
 
-    rift.customData = { type:'rift', id:monolithId };
-    this.bugManager.addBug(rift);
-    return rift;
+    if (rift) {
+      console.log("Activating Rift:", targetRiftName);
+
+  // 👁️ Reveal rift if dormant
+  if (rift.isDormant) {
+    rift.setVisible(true);
+    rift.body.enable = true;
+    rift.isDormant = false;
+
+    // Optional spawn effect
+    rift.setScale(0);
+    this.tweens.add({
+      targets: rift,
+      scale: 1,
+      duration: 300,
+      ease: "Back.Out"
+    });
   }
+
+  rift.activate();
+
+      // Start cooldown
+      kiosk.cooldown = true;
+      this.time.delayedCall(2 * 60 * 1000, () => {
+        kiosk.cooldown = false;
+        console.log("Kiosk cooldown finished:", kiosk.kioskName);
+      });
+    } else {
+      console.warn("No Rift found for:", targetRiftName);
+    }
+  }
+
+
 
 }
