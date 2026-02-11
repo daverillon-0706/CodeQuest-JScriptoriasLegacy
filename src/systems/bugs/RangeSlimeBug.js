@@ -1,4 +1,5 @@
 import Bug from "../Bug.js";
+import GameState from "../../GameState.js";
 
 export default class RangeSlimeBug extends Bug {
   constructor(scene, x, y) {
@@ -65,20 +66,44 @@ else if (this.body.velocity.x < -5) {
   }
 
   dealDamage(player) {
+
     if (!player.invincible && this.isCharging && !this.hasHit) {
+
         console.log("Slime hits player!");
+
         const dmg = this.typeData.dmg || 2;
 
-        // Apply damage
-        player.customData.HP = Math.max(player.customData.HP - dmg, 0);
-        console.log(`Player HP: ${player.customData.HP}`);
+        // ----------------------------
+        // REAL HP SOURCE (GameState)
+        // ----------------------------
+        const gs = GameState.player;
+        if (!gs) return;
 
+        gs.hp = Math.max(gs.hp - dmg, 0);
+
+        console.log(`[Damage] Player HP after hit: ${gs.hp}`);
+
+        // ----------------------------
+        // Sync to sprite runtime data
+        // ----------------------------
+        player.customData.HP = gs.hp;
+
+        // Save progress
+        GameState.player = gs;
+
+        // ----------------------------
         // Update HUD
-        if (window.updateHearts) window.updateHearts(player.customData.HP, 12);
+        // ----------------------------
+        if (window.updateHearts) {
+            window.updateHearts(gs.hp, gs.max_hp ?? 12);
+        }
 
-        // Flash player
+        // ----------------------------
+        // Invincibility frames
+        // ----------------------------
         player.invincible = true;
         player.setTint(0xff0000);
+
         this.scene.time.addEvent({
             delay: 800,
             callback: () => {
@@ -87,17 +112,25 @@ else if (this.body.velocity.x < -5) {
             }
         });
 
-        // Shake camera
+        // ----------------------------
+        // Camera shake
+        // ----------------------------
         console.log("Camera shake!");
-        this.scene.cameras.main.shake(150, 0.01); // 150ms, small intensity
+        this.scene.cameras.main.shake(150, 0.01);
 
-        // Stop charging
+        // ----------------------------
+        // Stop charge after hit
+        // ----------------------------
         this.isCharging = false;
         this.hasHit = true;
-        this.body.setVelocity(0);  // stops movement after hit
+        this.body.setVelocity(0);
+
         console.log("Slime charge ended.");
     }
 }
+
+
+
 
 
 }

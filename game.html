@@ -426,11 +426,23 @@
       <h3>Settings</h3>
     </div>
 
-    <!-- ================= SAVE ================= -->
-    <div id="app-save" class="tablet-panel hidden">
-      <h3>Save Game</h3>
-      <button id="save-btn">Save Now</button>
-    </div>
+    <!-- ================= SAVE / LOAD ================= -->
+<div id="app-save" class="tablet-panel hidden">
+  <h3>Save / Load Game</h3>
+
+  <div class="save-load-grid">
+
+    <button id="save-btn" class="tablet-action-btn">
+      💾 Save Game
+    </button>
+
+    <button id="load-btn" class="tablet-action-btn">
+      📂 Load Game
+    </button>
+
+  </div>
+</div>
+
 
     <!-- ================= LOGOUT ================= -->
     <div id="app-logout" class="tablet-panel hidden">
@@ -521,6 +533,8 @@
 
     <!-- Correct Vite module import -->
     <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/ui/HUD/TabletSaveLoad.js"></script>
+
     <script src="/src/ui/HUD/HUD.js" type="module"></script>
     <script type="module" src="debug.js"></script>
 

@@ -1,30 +1,23 @@
 import Phaser from "phaser";
-//import HQInteriorScene from "./scenes/HQInteriorScene.js";
 import JScriptoriaCityScene from "./scenes/JScriptoriaCityScene.js";
-//import BattleScene from "./scenes/BattleScene.js";
-//import OrinsAcademyScene from "./scenes/OrinsAcademyScene.js";
-import PerksManager from "./systems/PerksManager.js";
 import GameState from "./GameState.js";
 
 // --------------------------
-// Ensure player is logged in (SINGLE CHECK)
+// Debug loaded player
+// --------------------------
+console.log("Loaded Player Before Boot:", GameState.player);
+
+// --------------------------
+// Ensure player exists
 // --------------------------
 if (!GameState.player) {
   alert("Please log in first!");
   window.location.href = "index.html";
-  throw new Error("No logged-in player."); // stops Phaser boot
+  throw new Error("No logged-in player.");
 }
 
 console.log("Using Phaser:", Phaser.VERSION);
 console.log("MAIN.JS LOADED (Vite)");
-
-// --------------------------
-// Initialize PerksManager (ONCE)
-// --------------------------
-if (!GameState.perks) {
-  GameState.perks = new PerksManager(GameState.player);
-  console.log("PerksManager initialized for player");
-}
 
 // --------------------------
 // Phaser config
@@ -42,7 +35,7 @@ const config = {
   pixelArt: true,
   physics: {
     default: "arcade",
-    arcade: { debug: false } // turn off for final build
+    arcade: { debug: false }
   },
   scene: [
     JScriptoriaCityScene
@@ -53,28 +46,28 @@ const game = new Phaser.Game(config);
 window.game = game;
 
 // --------------------------
-// Start first scene safely
+// Start scene
 // --------------------------
 game.scene.start("JScriptoriaCityScene", {
   username: GameState.player.username
 });
 
+// --------------------------
+// Compiler input focus fix
+// --------------------------
 const codeInput = document.getElementById("player-code");
 
 if (codeInput) {
   codeInput.addEventListener("focus", () => {
-    console.log("[Compiler] Focused -> Disabling game input");
     game.input.keyboard.enabled = false;
   });
 
   codeInput.addEventListener("blur", () => {
-    console.log("[Compiler] Blurred -> Enabling game input");
     game.input.keyboard.enabled = true;
   });
 
   codeInput.addEventListener("keydown", (e) => e.stopPropagation());
 }
-
 
 // --------------------------
 // Auto-resize

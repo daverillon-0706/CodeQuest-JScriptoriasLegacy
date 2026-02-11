@@ -1,22 +1,23 @@
 // src/systems/bugs/TypeMimicBug.js
 import Bug from "../Bug.js";
+import GameState from "../../GameState.js"; // adjust path if needed
 
 export default class TypeMimicBug extends Bug {
   constructor(scene, x, y) {
     const data = {
       dmg: 2,
-      detectRange: 2,   // tiles
-      attackCooldown: 2000
+      detectRange: 2,
+      attackCooldown: 2000,
+      revealDelay: 400,
+      chargeSpeed: 120
     };
 
     super(scene, x, y, "mimic", data);
 
-    // --- States ---
     this.isRevealed = false;
     this.isAttacking = false;
     this.cooldown = false;
 
-    // Idle frame (disguised)
     this.setFrame(0);
     this.body.setImmovable(true);
   }
@@ -36,62 +37,52 @@ export default class TypeMimicBug extends Bug {
     }
   }
 
-  // ================= REVEAL =================
   revealAndAttack(player) {
-  if (this.isRevealed) return;
+    if (this.isRevealed) return;
 
-  this.isRevealed = true;
-  this.isAttacking = true;
+    this.isRevealed = true;
+    this.isAttacking = true;
 
-  console.log("Mimic revealed!");
+    console.log("Mimic revealed!");
 
-  // Reveal frame
-  this.setFrame(1);
+    this.setFrame(1);
 
-  // Warning flash
-  this.flashTween = this.scene.tweens.add({
-    targets: this,
-    alpha: 0.4,
-    duration: 120,
-    yoyo: true,
-    repeat: -1
-  });
+    this.flashTween = this.scene.tweens.add({
+      targets: this,
+      alpha: 0.4,
+      duration: 120,
+      yoyo: true,
+      repeat: -1
+    });
 
-  // Delay before charge (telegraph)
-  this.scene.time.delayedCall(
-    this.typeData.revealDelay,
-    () => this.charge(player),
-    [],
-    this
-  );
-}
-
-charge(player) {
-  console.log("Mimic charging...");
-
-  // Stop flashing
-  if (this.flashTween) {
-    this.flashTween.stop();
-    this.setAlpha(1);
+    this.scene.time.delayedCall(
+      this.typeData.revealDelay,
+      () => this.charge(player),
+      [],
+      this
+    );
   }
 
-  // Slow lunge
-  this.scene.physics.moveToObject(
-    this,
-    player,
-    this.typeData.chargeSpeed
-  );
+  charge(player) {
+    console.log("Mimic charging...");
 
-  // Bite timing window
-  this.scene.time.delayedCall(500, () => {
-    this.bite(player);
-  });
-}
+    if (this.flashTween) {
+      this.flashTween.stop();
+      this.setAlpha(1);
+    }
 
+    this.scene.physics.moveToObject(
+      this,
+      player,
+      this.typeData.chargeSpeed
+    );
 
-  // ================= BITE =================
+    this.scene.time.delayedCall(500, () => {
+      this.bite(player);
+    });
+  }
+
   bite(player) {
-    
     console.log("Mimic bite!");
 
     const dist = Phaser.Math.Distance.Between(
@@ -104,20 +95,30 @@ charge(player) {
     if (dist <= 28 && !player.invincible) {
       const dmg = this.typeData.dmg || 1;
 
-      player.customData.HP = Math.max(
-        player.customData.HP - dmg,
-        0
-      );
+      // =============================
+      // REAL HP SOURCE (GameState)
+      // =============================
+      const gs = GameState.player;
+      if (!gs) return;
 
-      // Small camera shake
-    this.scene.cameras.main.shake(120, 0.004);
-      console.log("Player HP:", player.customData.HP);
+      gs.hp = Math.max(gs.hp - dmg, 0);
+      console.log("[Damage] Player HP after Mimic bite:", gs.hp);
 
+      // Sync runtime sprite
+      if (!player.customData) player.customData = {};
+      player.customData.HP = gs.hp;
+
+      // Persist save
+      GameState.player = gs;
+
+      // HUD
       if (window.updateHearts) {
-        window.updateHearts(player.customData.HP, 12);
+        window.updateHearts(gs.hp, gs.max_hp ?? 12);
       }
 
-      // Hit reaction
+      // Feedback
+      this.scene.cameras.main.shake(120, 0.004);
+
       player.invincible = true;
       player.setTint(0xff0000);
 
@@ -127,26 +128,21 @@ charge(player) {
       });
     }
 
-    // Stop movement after bite
     this.body.setVelocity(0);
 
-    // Reset state after attack
     this.scene.time.delayedCall(500, () => {
       this.resetMimic();
     });
   }
 
-  // ================= RESET =================
   resetMimic() {
     console.log("Mimic reset.");
 
     this.setFrame(0);
-
     this.isRevealed = false;
     this.isAttacking = false;
     this.cooldown = true;
 
-    // Cooldown before next ambush
     this.scene.time.delayedCall(
       this.typeData.attackCooldown,
       () => {
@@ -155,10 +151,8 @@ charge(player) {
     );
   }
 
-  // ================= OVERLAP HOOK =================
   dealDamage(player) {
     if (this.cooldown || this.isAttacking) return;
-
     this.revealAndAttack(player);
   }
 }

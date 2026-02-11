@@ -1,4 +1,5 @@
 import Bug from "../Bug.js";
+import GameState from "../../GameState.js";
 
 export default class SyntaxGolemBug extends Bug {
   constructor(scene, x, y) {
@@ -103,26 +104,48 @@ export default class SyntaxGolemBug extends Bug {
     );
 
     if (dist <= radius && !player.invincible) {
-      console.log("Player hit by Golem!");
+  console.log("Player hit by Golem!");
 
-      const dmg = this.typeData.dmg || 5;
-      player.customData.HP = Math.max(player.customData.HP - dmg, 0);
+  const dmg = this.typeData.dmg || 5;
 
-      console.log("Player HP:", player.customData.HP);
+  // ----------------------------
+  // REAL HP SOURCE (GameState)
+  // ----------------------------
+  const gs = GameState.player;
+  if (!gs) {
+    console.warn("GameState.player missing!");
+    return;
+  }
 
-      if (window.updateHearts) {
-        window.updateHearts(player.customData.HP, 12);
-      }
+  gs.hp = Math.max(gs.hp - dmg, 0);
 
-      // Hit reaction
-      player.invincible = true;
-      player.setTint(0xff0000);
+  console.log(`[Damage] Player HP after slam: ${gs.hp}`);
 
-      this.scene.time.delayedCall(800, () => {
-        player.invincible = false;
-        player.clearTint();
-      });
-    }
+  // Sync back to runtime sprite
+  if (!player.customData) player.customData = {};
+  player.customData.HP = gs.hp;
+
+  GameState.player = gs;
+
+  // ----------------------------
+  // HUD UPDATE
+  // ----------------------------
+  if (window.updateHearts) {
+    window.updateHearts(gs.hp, gs.max_hp ?? 12);
+  }
+
+  // ----------------------------
+  // HIT REACTION
+  // ----------------------------
+  player.invincible = true;
+  player.setTint(0xff0000);
+
+  this.scene.time.delayedCall(800, () => {
+    player.invincible = false;
+    player.clearTint();
+  });
+}
+
 
     // ================= RESET =================
     this.scene.time.delayedCall(800, () => {

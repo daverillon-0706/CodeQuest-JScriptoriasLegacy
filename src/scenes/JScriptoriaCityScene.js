@@ -95,11 +95,12 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       .setDepth(5);
 
     this.player.customData = {
-      HP: data.playerHP ?? 10,
-      Energy: data.playerEnergy ?? 3,
-      Coins: data.playerCoins ?? 0
+      HP: data.playerHP ?? GameState.player?.hp,
+      Energy: data.playerEnergy ?? GameState.player?.energy,
+      Coins: data.playerCoins ?? GameState.player?.cryptos
     };
-    GameState.player = this.player;
+    //GameState.player = this.player;
+    this.syncSpriteToGameState();
 
     // ---- BUG SYSTEM ----
     this.bugGroup = this.physics.add.group(); // ← Group for physics
@@ -500,6 +501,18 @@ this.rifts.forEach(r => console.log("Rift available:", `"${r.riftName}"`));
     }
   }
 
+  syncSpriteToGameState() {
+    const gs = GameState.player;
+
+    if (!gs) return;
+
+    // Update GameState with sprite's runtime data
+    gs.hp = this.player.customData.HP;
+    gs.energy = this.player.customData.Energy;
+    gs.cryptos = this.player.customData.Coins;
+
+    GameState.player = gs;
+}
 
 
 }
