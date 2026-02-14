@@ -36,7 +36,16 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.rifts = [];
     this.riftKiosks = [];
 
-    
+    // ---- MINIMAP ----
+// ---- HTML MINIMAP ----
+this.minimapCanvas = null;
+this.minimapCtx = null;
+this.minimapWidth = 280;
+this.minimapHeight = 280;
+this.mapScaleX = 1;
+this.mapScaleY = 1;
+
+
   }
 
   // ================= PRELOAD =================
@@ -120,6 +129,11 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       .startFollow(this.player,true,0.08,0.08)
       .setZoom(3);
 
+      // ---- MINIMAP ----
+this.createMinimap();
+this.drawMinimapMap(); // Draw static map once
+
+
     // ---- COLLIDERS ----
     [this.buildingLayer, this.wallLayer, this.itemLayer]
       .forEach(layer => this.physics.add.collider(this.player, layer));
@@ -156,6 +170,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.playerEnergyEl = document.getElementById("playerEnergy-text");
     this.playerCoinsEl = document.getElementById("cryptos-count");
     this.updateHUD();
+
+    // ---- HTML MINIMAP INIT ----
+this.initHTMLMinimap();
+
 
     // ---- DIALOGUE ----
     const dialogueBoxEl  = document.getElementById("dialogue-box");
@@ -235,6 +253,31 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       this.bugManager.bugs.forEach(bug => bug.clearTint());
     }
   }
+
+  // ---- MINIMAP UPDATE ----
+if (this.minimap) {
+  this.minimap.clear();
+  this.drawMinimapMap();
+  this.drawMinimapPlayer();
+  this.drawMinimapBugs();
+}
+
+// ---- HTML MINIMAP UPDATE ----
+if (this.minimapCtx) {
+  // Clear dynamic layer only
+  this.minimapCtx.clearRect(
+    0,
+    0,
+    this.minimapWidth,
+    this.minimapHeight
+  );
+
+  // Redraw
+  this.drawHTMLMinimapMap();
+  this.drawHTMLMinimapPlayer();
+  this.drawHTMLMinimapBugs();
+}
+
 }
 
 
@@ -514,5 +557,160 @@ this.rifts.forEach(r => console.log("Rift available:", `"${r.riftName}"`));
     GameState.player = gs;
 }
 
+// ================= MINIMAP =================
+createMinimap() {
+  this.minimap = this.add.graphics();
+  this.minimap.setScrollFactor(0);
+  this.minimap.setDepth(9999);
+
+  this.mapScaleX = this.minimapWidth / this.map.widthInPixels;
+  this.mapScaleY = this.minimapHeight / this.map.heightInPixels;
+}
+
+drawMinimapMap() {
+  if (!this.minimap) return;
+
+  // Background
+  this.minimap.fillStyle(0x000000, 0.6);
+  this.minimap.fillRect(
+    this.minimapX,
+    this.minimapY,
+    this.minimapWidth,
+    this.minimapHeight
+  );
+
+  // Walls
+  if (!this.wallLayer) return;
+
+  this.wallLayer.forEachTile(tile => {
+    if (tile.index === -1) return;
+
+    const x = this.minimapX + tile.pixelX * this.mapScaleX;
+    const y = this.minimapY + tile.pixelY * this.mapScaleY;
+
+    this.minimap.fillStyle(0x666666, 1);
+    this.minimap.fillRect(
+      x,
+      y,
+      tile.width * this.mapScaleX,
+      tile.height * this.mapScaleY
+    );
+  });
+
+  // Border
+  this.minimap.lineStyle(2, 0xffffff, 1);
+  this.minimap.strokeRect(
+    this.minimapX,
+    this.minimapY,
+    this.minimapWidth,
+    this.minimapHeight
+  );
+}
+
+drawMinimapPlayer() {
+  if (!this.player) return;
+
+  const x = this.minimapX + this.player.x * this.mapScaleX;
+  const y = this.minimapY + this.player.y * this.mapScaleY;
+
+  this.minimap.fillStyle(0x00ff00, 1);
+  this.minimap.fillCircle(x, y, 3);
+}
+
+drawMinimapBugs() {
+  if (!this.bugGroup) return;
+
+  this.bugGroup.children.iterate(bug => {
+    if (!bug || !bug.active) return;
+
+    const x = this.minimapX + bug.x * this.mapScaleX;
+    const y = this.minimapY + bug.y * this.mapScaleY;
+
+    this.minimap.fillStyle(0xff0000, 1);
+    this.minimap.fillCircle(x, y, 2);
+  });
+}
+
+// ================= HTML MINIMAP INIT =================
+initHTMLMinimap() {
+  this.minimapCanvas = document.getElementById("minimapCanvas");
+  if (!this.minimapCanvas) {
+    console.warn("Minimap canvas not found!");
+    return;
+  }
+
+  this.minimapCtx = this.minimapCanvas.getContext("2d");
+
+  // Map → minimap scale
+  this.mapScaleX = this.minimapWidth / this.map.widthInPixels;
+  this.mapScaleY = this.minimapHeight / this.map.heightInPixels;
+
+  // Draw static map once
+  this.drawHTMLMinimapMap();
+}
+
+drawHTMLMinimapMap() {
+  if (!this.minimapCtx) return;
+
+  const ctx = this.minimapCtx;
+
+  // Background
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(0, 0, this.minimapWidth, this.minimapHeight);
+
+  if (!this.wallLayer) return;
+
+  this.wallLayer.forEachTile(tile => {
+    if (tile.index === -1) return;
+
+    const x = tile.pixelX * this.mapScaleX;
+    const y = tile.pixelY * this.mapScaleY;
+
+    ctx.fillStyle = "#666";
+    ctx.fillRect(
+      x,
+      y,
+      tile.width * this.mapScaleX,
+      tile.height * this.mapScaleY
+    );
+  });
+
+  // Border
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, this.minimapWidth, this.minimapHeight);
+}
+
+drawHTMLMinimapPlayer() {
+  if (!this.minimapCtx || !this.player) return;
+
+  const ctx = this.minimapCtx;
+
+  const x = this.player.x * this.mapScaleX;
+  const y = this.player.y * this.mapScaleY;
+
+  ctx.fillStyle = "#00ff00";
+  ctx.beginPath();
+  ctx.arc(x, y, 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+drawHTMLMinimapBugs() {
+  if (!this.minimapCtx || !this.bugGroup) return;
+
+  const ctx = this.minimapCtx;
+
+  this.bugGroup.children.iterate(bug => {
+    if (!bug || !bug.active) return;
+
+    const x = bug.x * this.mapScaleX;
+    const y = bug.y * this.mapScaleY;
+
+    ctx.fillStyle = "#ff0000";
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
 
 }

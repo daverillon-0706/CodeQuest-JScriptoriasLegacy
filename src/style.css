@@ -335,19 +335,51 @@ body {
 }
 
 /* ---------- Top-right Player Stats Block ---------- */
+/* ================= MINIMAP CONTAINER ================= */
 .hud-top-right {
   position: absolute;
   top: 12px;
   right: 12px;
   z-index: 11000;
+
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  color: #eee;
-  font-family: "Press Start 2P", monospace;
+  flex-direction: column;   /* Stack canvas + label */
+  align-items: flex-end;   /* Align to right */
+
+  gap: 6px;
+  pointer-events: none;    /* Prevent blocking clicks */
 }
 
-/* Left column of stats */
+/* ================= MINIMAP CANVAS ================= */
+#minimapCanvas {
+  width: 280px;
+  height: 280px;
+
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #ffffff;
+
+  image-rendering: pixelated; /* Retro look */
+  box-shadow: 0 0 8px rgba(0,0,0,0.8);
+}
+
+/* ================= MAP NAME LABEL ================= */
+#map-name {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: #eee;
+
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 8px;
+
+  border: 1px solid #ffffff;
+  text-align: right;
+
+  max-width: 160px;
+  line-height: 1.4;
+}
+
+
+/* Left column of stats 
 .hud-top-right .stats-left {
   min-width: 300px;
   background: rgba(6,6,8,0.65);
@@ -356,7 +388,7 @@ body {
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
-
+*/
 /* rows */
 .bar-row {
   display:flex;
