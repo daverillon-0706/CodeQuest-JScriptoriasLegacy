@@ -15,32 +15,30 @@ export function importSaveFile(playerSprite = null) {
       try {
         const data = JSON.parse(event.target.result);
 
-        // Verify token
         if (!verifySaveToken(data)) {
           alert("Invalid or tampered save file.");
           return;
         }
 
-        // Apply payload to GameState
         GameState.player = data.payload;
 
-        const gs = GameState.player;
+        // Save active slot in localStorage
+        localStorage.setItem("activeSaveFile", file.name);
+        localStorage.setItem(file.name, event.target.result);
 
-        // Clamp HP & Energy
+        const gs = GameState.player;
         gs.hp = Math.min(gs.hp, gs.max_hp);
         gs.energy = Math.min(gs.energy, gs.max_energy);
 
-        // Update HUD if functions exist
-        if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp ?? 12);
-        if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy ?? 3);
+        if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+        if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
 
-        // Update player sprite position if provided
         if (playerSprite) {
           const pos = gs.worldState.position || { x: 100, y: 100 };
           playerSprite.setPosition(pos.x, pos.y);
         }
 
-        console.log("[LoadFile] Player data loaded:", JSON.stringify(gs, null, 2));
+        console.log("[LoadFile] Player data loaded:", gs);
         alert("Save Loaded Successfully!");
 
       } catch (err) {

@@ -6,10 +6,15 @@ const STORAGE_KEY = "codequest-player";
 const DEFAULT_PLAYER = {
   saveVersion: 2,
 
-  hp: 5,
-  max_hp: 5,
-  energy: 3,
-  max_energy: 3,
+  // Identity (add these too)
+  name: "",
+  token: "",
+
+  // Starting stats (match new player)
+  hp: 3,
+  max_hp: 3,
+  energy: 10,
+  max_energy: 10,
   cryptos: 0,
 
   perks: {
@@ -36,9 +41,10 @@ const DEFAULT_PLAYER = {
   worldState: {
     chestsOpened: [],
     questsCompleted: [],
-    position: { x: 100, y: 100 } // default spawn
+    position: { x: 100, y: 100 }
   }
 };
+
 
 const GameState = {
 

@@ -120,73 +120,164 @@
 <!--user login -->
   <div class="login-card">
     <h1>CodeQuest</h1>
-    <input id="username" type="text" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
-    <button id="loginBtn">Login</button>
-    <button id="registerBtn">Register</button>
-    <small>Enter your credentials to start your adventure.</small>
+    <input id="playerName" type="text" placeholder="Enter your name">
+
+    <button id="newGameBtn">New Game</button>
+
+    <input id="saveFileInput" type="file" accept=".json">
+    <button id="continueBtn">Continue</button>
+
+    <small>Start a new journey or continue your saved adventure.</small>
   </div>
 
+<script type="module">
+import GameState from "./src/GameState.js";
+import {addSaveToken} from "./src/utils/saveToken.js";
+import {verifySaveToken} from "./src/utils/saveToken.js";
+
+// -------------------
+// ELEMENTS
+// -------------------
+const nameInput  = document.getElementById("playerName");
+const newGameBtn = document.getElementById("newGameBtn");
+const continueBtn = document.getElementById("continueBtn");
+const fileInput = document.getElementById("saveFileInput");
+
+// -------------------
+// TOKEN GENERATOR
+// -------------------
+function generateToken(){
+  return crypto.randomUUID() + "-" + Date.now();
+}
+
+// -------------------
+// NEW GAME
+// -------------------
+newGameBtn.addEventListener("click", () => {
+
+  const name = nameInput.value.trim();
+  if(!name) return alert("Enter your name first.");
+
+  const token = generateToken();
+
+  const newPlayer = {
+    saveVersion: 2,
+
+    // Identity
+    name,
+    token,
+
+    // Core stats
+    hp: 3,
+    max_hp: 3,
+    energy: 10,
+    max_energy: 10,
+    cryptos: 0,
+
+    perks: {
+      passive: null,
+      offense: null,
+      defense: null,
+      consumables: [null, null]
+    },
+
+    perkInventory: [],
+
+    items: {
+      keyItems: [],
+      consumables: []
+    },
+
+    lessonsUnlocked: [],
+
+    codexProgress: {
+      enemiesScanned: [],
+      loreUnlocked: []
+    },
+
+    worldState: {
+      chestsOpened: [],
+      questsCompleted: [],
+      position: { x:100, y:100 }
+    }
+  };
+
+  // Save locally
+  GameState.player = newPlayer;
+
+  // Save active session locally
+localStorage.setItem(
+  "codequest_active_save",
+  JSON.stringify(newPlayer)
+);
+
+  // Wrap with security token
+  const wrapped = addSaveToken(newPlayer);
+
+  // Download save file
+  const blob = new Blob(
+    [JSON.stringify(wrapped, null, 2)],
+    { type:"application/json" }
+  );
+
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}_save.codequest.json`;
+  a.click();
+
+  alert("Save file created! Keep it safe.");
+
+  window.location.href = "game.html";
+});
+
+// -------------------
+// CONTINUE GAME
+// -------------------
+continueBtn.addEventListener("click", () => {
+
+  const file = fileInput.files[0];
+  if(!file) return alert("Select a save file.");
+
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+
+      // Validate token wrapper
+      if(!verifySaveToken(data)){
+        alert("Invalid or corrupted save file.");
+        return;
+      }
+
+      GameState.player = data.payload;
+
+      if(data.payload.token !== data.token){
+  alert("Save tampered.");
+  return;
+
+      // Save active session locally
+localStorage.setItem(
+  "codequest_active_save",
+  JSON.stringify(newPlayer)
+);
+}
+
+      alert("Save loaded successfully!");
+      window.location.href = "game.html";
+
+    }catch{
+      alert("Failed to load save.");
+    }
+  };
+
+  reader.readAsText(file);
+});
+</script>
+
+
   <script type="module">
-    import GameState from './src/GameState.js';
-
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const loginBtn = document.getElementById('loginBtn');
-    const registerBtn = document.getElementById('registerBtn');
-
-    loginBtn.addEventListener('click', async () => {
-      const username = usernameInput.value;
-      const player_password = passwordInput.value;
-
-      if (!username || !player_password) return alert("Fill both fields");
-
-      try {
-        const res = await fetch('http://localhost:3000/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, player_password })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          GameState.player = data.player;
-          window.location.href = 'game.html';
-        } else {
-          alert(data.error || "Login failed");
-        }
-
-      } catch (err) {
-        console.error(err);
-        alert("Server error");
-      }
-    });
-
-    registerBtn.addEventListener('click', async () => {
-      const username = usernameInput.value;
-      const player_password = passwordInput.value;
-      const email = prompt("Enter your email:");
-
-      if (!username || !player_password || !email) return alert("Fill all fields");
-
-      try {
-        const res = await fetch('http://localhost:3000/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, player_password, email })
-        });
-
-        const data = await res.json();
-        if (data.success) alert("Registration successful! You may now login.");
-        else alert(data.error || "Registration failed");
-      } catch (err) {
-        console.error(err);
-        alert("Server error");
-      }
-    });
-
-    // Particle background effect
+      // Particle background effect
     const canvas = document.getElementById('particleCanvas');
     const ctx = canvas.getContext('2d');
     let width = canvas.width = window.innerWidth;
@@ -232,5 +323,7 @@
     }
     animate();
   </script>
+  
+
 </body>
 </html>
