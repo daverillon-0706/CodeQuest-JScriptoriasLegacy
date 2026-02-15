@@ -1,6 +1,5 @@
-// src/systems/bugs/TypeMimicBug.js
 import Bug from "../Bug.js";
-import GameState from "../../GameState.js"; // adjust path if needed
+import GameState from "../../GameState.js";
 
 export default class TypeMimicBug extends Bug {
   constructor(scene, x, y) {
@@ -11,13 +10,11 @@ export default class TypeMimicBug extends Bug {
       revealDelay: 400,
       chargeSpeed: 120
     };
-
     super(scene, x, y, "mimic", data);
 
     this.isRevealed = false;
     this.isAttacking = false;
     this.cooldown = false;
-
     this.setFrame(0);
     this.body.setImmovable(true);
   }
@@ -27,11 +24,7 @@ export default class TypeMimicBug extends Bug {
     if (!player) return;
     if (this.cooldown || this.isAttacking) return;
 
-    const dist = Phaser.Math.Distance.Between(
-      this.x, this.y,
-      player.x, player.y
-    );
-
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
     if (dist <= this.typeData.detectRange * 16) {
       this.revealAndAttack(player);
     }
@@ -42,9 +35,6 @@ export default class TypeMimicBug extends Bug {
 
     this.isRevealed = true;
     this.isAttacking = true;
-
-    console.log("Mimic revealed!");
-
     this.setFrame(1);
 
     this.flashTween = this.scene.tweens.add({
@@ -64,91 +54,123 @@ export default class TypeMimicBug extends Bug {
   }
 
   charge(player) {
-    console.log("Mimic charging...");
-
     if (this.flashTween) {
       this.flashTween.stop();
       this.setAlpha(1);
     }
 
-    this.scene.physics.moveToObject(
-      this,
-      player,
-      this.typeData.chargeSpeed
-    );
+    const targetX = player.x;
+    const targetY = player.y;
 
-    this.scene.time.delayedCall(500, () => {
-      this.bite(player);
-    });
-  }
+    this.scene.physics.moveTo(this, targetX, targetY, this.typeData.chargeSpeed);
 
-  bite(player) {
-    console.log("Mimic bite!");
+    this.chargeEvent = this.scene.time.addEvent({
+      delay: 50,
+      loop: true,
+      callback: () => {
+        const distToTarget = Phaser.Math.Distance.Between(this.x, this.y, targetX, targetY);
+        if (distToTarget <= 4) {
+          this.body.setVelocity(0);
+          this.chargeEvent.remove(false);
 
-    const dist = Phaser.Math.Distance.Between(
-      this.x,
-      this.y,
-      player.x,
-      player.y
-    );
+          const distToPlayer = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+          if (distToPlayer <= 28 && !player.invincible) {
+            const dmg = 3;
+            this.scene.soundManager.play("player_hit");
 
-    if (dist <= 28 && !player.invincible) {
-      const dmg = this.typeData.dmg || 1;
+            const gs = GameState.player;
+            if (!gs) return;
+            gs.hp = Math.max(gs.hp - dmg, 0);
+            player.customData.HP = gs.hp;
+            GameState.player = gs;
 
-      // =============================
-      // REAL HP SOURCE (GameState)
-      // =============================
-      const gs = GameState.player;
-      if (!gs) return;
+            if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp ?? 12);
 
-      gs.hp = Math.max(gs.hp - dmg, 0);
-      console.log("[Damage] Player HP after Mimic bite:", gs.hp);
+            this.scene.cameras.main.shake(120, 0.004);
+            player.invincible = true;
+            player.setTint(0xff0000);
+            this.scene.time.delayedCall(800, () => {
+              player.invincible = false;
+              player.clearTint();
+            });
 
-      // Sync runtime sprite
-      if (!player.customData) player.customData = {};
-      player.customData.HP = gs.hp;
-
-      // Persist save
-      GameState.player = gs;
-
-      // HUD
-      if (window.updateHearts) {
-        window.updateHearts(gs.hp, gs.max_hp ?? 12);
+            this.startChase(player);
+          } else {
+            this.resetMimic();
+          }
+        }
       }
-
-      // Feedback
-      this.scene.cameras.main.shake(120, 0.004);
-
-      player.invincible = true;
-      player.setTint(0xff0000);
-
-      this.scene.time.delayedCall(800, () => {
-        player.invincible = false;
-        player.clearTint();
-      });
-    }
-
-    this.body.setVelocity(0);
-
-    this.scene.time.delayedCall(500, () => {
-      this.resetMimic();
     });
   }
+
+  startChase(player) {
+    const MAX_CHASE_DIST = 150;
+    const CHASE_SPEED = 40;
+    let frameToggle = false;
+
+    this.chaseEvent = this.scene.time.addEvent({
+        delay: 50,
+        loop: true,
+        callback: () => {
+            if (!player.active) return;
+
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+            if (dist > MAX_CHASE_DIST) {
+                this.body.setVelocity(0);
+                this.chaseEvent.remove(false);
+                this.resetMimic();
+                return;
+            }
+
+            // Calculate normalized direction vector toward player
+            const dx = player.x - this.x;
+            const dy = player.y - this.y;
+            const magnitude = Math.hypot(dx, dy);
+            if (magnitude > 0) {
+                const vx = (dx / magnitude) * CHASE_SPEED;
+                const vy = (dy / magnitude) * CHASE_SPEED;
+                this.body.setVelocity(vx, vy);
+            }
+
+            // Animate
+            frameToggle = !frameToggle;
+            this.setFrame(frameToggle ? 1 : 2);
+
+            // Only deal damage on actual overlap
+            if (!player.invincible && Phaser.Geom.Intersects.RectangleToRectangle(this.getBounds(), player.getBounds())) {
+                const dmg = 1;
+                this.scene.soundManager.play("player_hit");
+
+                const gs = GameState.player;
+                if (!gs) return;
+                gs.hp = Math.max(gs.hp - dmg, 0);
+                player.customData.HP = gs.hp;
+                GameState.player = gs;
+
+                if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp ?? 12);
+
+                this.scene.cameras.main.shake(120, 0.004);
+                player.invincible = true;
+                player.setTint(0xff0000);
+                this.scene.time.delayedCall(800, () => {
+                    player.invincible = false;
+                    player.clearTint();
+                });
+            }
+        }
+    });
+}
+
 
   resetMimic() {
-    console.log("Mimic reset.");
-
     this.setFrame(0);
     this.isRevealed = false;
     this.isAttacking = false;
     this.cooldown = true;
 
-    this.scene.time.delayedCall(
-      this.typeData.attackCooldown,
-      () => {
-        this.cooldown = false;
-      }
-    );
+    this.scene.time.delayedCall(this.typeData.attackCooldown, () => {
+      this.cooldown = false;
+    });
   }
 
   dealDamage(player) {

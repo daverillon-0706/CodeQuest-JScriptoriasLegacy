@@ -57,44 +57,98 @@ this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
     this.compilerBubble = document.getElementById("compiler-output-box");
   }
 
+  // =========================================================
+  // ❤️ HEART RENDERER
+  // =========================================================
+  renderHearts(hp, maxHp) {
+    const container = document.getElementById("hearts-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    for (let i = 0; i < maxHp; i++) {
+      const heart = document.createElement("img");
+
+      heart.src =
+        i < hp
+          ? "/public/assets/ui/heart_full.png"
+          : "/public/assets/ui/heart_empty.png";
+
+      heart.className = "heart-icon";
+      heart.style.imageRendering = "pixelated";
+
+      container.appendChild(heart);
+    }
+  }
+
+  // =========================================================
+  // ⚡ ENERGY RENDERER
+  // =========================================================
+  renderEnergy(energy, maxEnergy) {
+    const container = document.getElementById("energy-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    for (let i = 0; i < maxEnergy; i++) {
+      const orb = document.createElement("img");
+
+      orb.src =
+        i < energy
+          ? "/public/assets/ui/energy_full.png"
+          : "/public/assets/ui/energy_empty.png";
+
+      orb.className = "energy-icon";
+      orb.style.imageRendering = "pixelated";
+
+      container.appendChild(orb);
+    }
+  }
   // -------------------------
   // HUD UPDATE (SAFE)
   // -------------------------
   updateHUD() {
-  if (!GameState.player) return;
+  const player = GameState.player;
+    if (!player) return;
 
-  const { hp, max_hp, energy, max_energy, cryptos, perks } = GameState.player;
+    const { hp, max_hp, energy, max_energy, cryptos } = player;
 
-  // HP / Energy / Crypto bars...
-  document.getElementById("playerHP-text") &&
-    (document.getElementById("playerHP-text").textContent = hp);
-  document.getElementById("playerEnergy-text") &&
-    (document.getElementById("playerEnergy-text").textContent = energy);
-  document.getElementById("cryptos-count") &&
-    (document.getElementById("cryptos-count").textContent = cryptos);
+    // -------------------------
+    // TEXT VALUES
+    // -------------------------
+    document.getElementById("playerHP-text") &&
+      (document.getElementById("playerHP-text").textContent = hp);
 
-  const hpBar = document.getElementById("hp-bar");
-  if (hpBar) hpBar.style.width = `${(hp / max_hp) * 100}%`;
+    document.getElementById("playerEnergy-text") &&
+      (document.getElementById("playerEnergy-text").textContent = energy);
 
-  const energyBar = document.getElementById("energy-bar");
-  if (energyBar) energyBar.style.width = `${(energy / max_energy) * 100}%`;
+    document.getElementById("cryptos-count") &&
+      (document.getElementById("cryptos-count").textContent = cryptos);
+
+    // -------------------------
+    // SPRITE RENDERING
+    // -------------------------
+    this.renderHearts(hp, max_hp);
+    this.renderEnergy(energy, max_energy);
+
 
   // --------------------------
-  // QUICK SLOT ICONS
-  // --------------------------
-  const slots = ["passive", "offense", "defense"];
-  slots.forEach((slot) => {
-    const iconImg = document.querySelector(`.quick-slot.${slot} .perk-icon img`);
-    if (!iconImg) return;
+    // QUICK SLOT ICONS
+    // --------------------------
+    const slots = ["passive", "offense", "defense"];
 
-    const perkId = GameState.player.perks[slot];
-if (perkId) {
-  iconImg.src = `/public/assets/icons/buffs/${perkId}.png`;
-} else {
-  iconImg.src = "/public/assets/icons/empty-slot.png";
-}
+    slots.forEach((slot) => {
+      const iconImg = document.querySelector(
+        `.quick-slot.${slot} .perk-icon img`
+      );
+      if (!iconImg) return;
 
-  });
+      const perkId = GameState.player.perks[slot];
+
+      iconImg.src = perkId
+        ? `/public/assets/icons/buffs/${perkId}.png`
+        : "/public/assets/icons/empty-slot.png";
+    });
 
   document.querySelectorAll(".quick-slot").forEach((slotEl) => {
   slotEl.addEventListener("click", () => {

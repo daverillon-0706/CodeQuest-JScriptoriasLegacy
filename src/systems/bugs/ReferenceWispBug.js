@@ -1,5 +1,7 @@
 import Bug from "../Bug.js";
 import GameState from "../../GameState.js";
+import SoundManager from "../SoundManager.js";
+
 
 export default class ReferenceWispBug extends Bug {
   constructor(scene, x, y) {
@@ -51,58 +53,39 @@ export default class ReferenceWispBug extends Bug {
     const now = this.scene.time.now;
 
     if (!player.invincible && (now - this.lastHit > this.hitCooldown)) {
-        console.log("Wisp hits player!");
+    console.log("Wisp hits player!");
 
-        const dmg = this.typeData.dmg || 1;
+    // Play sound
+    this.scene.soundManager.play("player_hit");
 
-        // 🔧 APPLY DAMAGE TO GAMESTATE FIRST (SOURCE OF TRUTH)
-        //GameState.player.HP = Math.max(GameState.player.HP - dmg, 0);
+    const dmg = this.typeData.dmg || 1;
 
-        // ----------------------------
-        // REAL HP SOURCE (GameState)
-        // ----------------------------
-        const gs = GameState.player;
-        if (!gs) return;
+    // Update GameState
+    const gs = GameState.player;
+    if (!gs) return;
+    gs.hp = Math.max(gs.hp - dmg, 0);
+    player.customData.HP = gs.hp;
+    GameState.player = gs;
 
-        gs.hp = Math.max(gs.hp - dmg, 0);
+    // HUD
+    if (window.updateHearts) window.updateHearts(gs.hp, 12);
 
-        console.log(`[Damage] Player HP after hit: ${gs.hp}`);
-
-        // 🔧 SYNC BACK TO PLAYER RUNTIME DATA
-        player.customData.HP = gs.hp;
-
-        GameState.player = gs;
-        
-        console.log(`Player HP: ${GameState.player.HP}`);
-
-        // 🧾 Debug snapshot of save data
-        console.log(
-            "Save Snapshot:",
-            JSON.stringify(GameState.player, null, 2)
-        );
-
-        // Update HUD
-        if (window.updateHearts) {
-            window.updateHearts(GameState.player.HP, 12);
+    // Flash + invincibility
+    player.invincible = true;
+    player.setTint(0xff0000);
+    this.scene.time.addEvent({
+        delay: 800,
+        callback: () => {
+            player.invincible = false;
+            player.clearTint();
         }
+    });
 
-        // Flash + invincibility
-        player.invincible = true;
-        player.setTint(0xff0000);
+    // Camera shake
+    this.scene.cameras.main.shake(120, 0.008);
 
-        this.scene.time.addEvent({
-            delay: 800,
-            callback: () => {
-                player.invincible = false;
-                player.clearTint();
-            }
-        });
+    this.lastHit = now;
+}
 
-        // Camera shake
-        console.log("Camera shake!");
-        this.scene.cameras.main.shake(120, 0.008);
-
-        this.lastHit = now;
-    }
 }
 }

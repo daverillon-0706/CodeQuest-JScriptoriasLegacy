@@ -1,5 +1,6 @@
 import Bug from "../Bug.js";
 import GameState from "../../GameState.js";
+import SoundManager from "../SoundManager.js";
 
 export default class RangeSlimeBug extends Bug {
   constructor(scene, x, y) {
@@ -67,67 +68,55 @@ else if (this.body.velocity.x < -5) {
 
   dealDamage(player) {
 
-    if (!player.invincible && this.isCharging && !this.hasHit) {
+  if (!player.invincible && this.isCharging && !this.hasHit) {
 
-        console.log("Slime hits player!");
+    console.log("Slime hits player!");
 
-        const dmg = this.typeData.dmg || 2;
+    const dmg = this.typeData.dmg || 2;
 
-        // ----------------------------
-        // REAL HP SOURCE (GameState)
-        // ----------------------------
-        const gs = GameState.player;
-        if (!gs) return;
+    // Play sound
+    this.scene.soundManager.play("player_hit");
 
-        gs.hp = Math.max(gs.hp - dmg, 0);
+    // Damage player
+    const gs = GameState.player;
+    if (!gs) return;
 
-        console.log(`[Damage] Player HP after hit: ${gs.hp}`);
+    gs.hp = Math.max(gs.hp - dmg, 0);
+    player.customData.HP = gs.hp;
 
-        // ----------------------------
-        // Sync to sprite runtime data
-        // ----------------------------
-        player.customData.HP = gs.hp;
-
-        // Save progress
-        GameState.player = gs;
-
-        // ----------------------------
-        // Update HUD
-        // ----------------------------
-        if (window.updateHearts) {
-            window.updateHearts(gs.hp, gs.max_hp ?? 12);
-        }
-
-        // ----------------------------
-        // Invincibility frames
-        // ----------------------------
-        player.invincible = true;
-        player.setTint(0xff0000);
-
-        this.scene.time.addEvent({
-            delay: 800,
-            callback: () => {
-                player.invincible = false;
-                player.clearTint();
-            }
-        });
-
-        // ----------------------------
-        // Camera shake
-        // ----------------------------
-        console.log("Camera shake!");
-        this.scene.cameras.main.shake(150, 0.01);
-
-        // ----------------------------
-        // Stop charge after hit
-        // ----------------------------
-        this.isCharging = false;
-        this.hasHit = true;
-        this.body.setVelocity(0);
-
-        console.log("Slime charge ended.");
+    // Update HUD (SAFE)
+    if (window.updateHearts) {
+      window.updateHearts(gs.hp);
     }
+
+    // I-frames
+    player.invincible = true;
+    player.setTint(0xff0000);
+
+    this.scene.time.addEvent({
+      delay: 800,
+      callback: () => {
+        player.invincible = false;
+        player.clearTint();
+      }
+    });
+
+    // Camera shake
+    this.scene.cameras.main.shake(150, 0.01);
+
+    // Stop charge
+    this.isCharging = false;
+    this.hasHit = true;
+    this.body.setVelocity(0);
+
+    this.scene.time.delayedCall(1000, () => {
+      this.hasHit = false;
+    });
+
+    console.log("Slime charge ended.");
+  }
 }
+
 
 
 

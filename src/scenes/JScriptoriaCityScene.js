@@ -5,6 +5,7 @@ import DialogueManager from "../systems/DialogueManager.js";
 import PlayerController from "../systems/PlayerController.js";
 import HoverManager from "../systems/HoverManager.js";
 import ChestSystem from "../systems/ChestSystem.js";
+import SoundManager from "../systems/SoundManager.js";
 import Bug from "../systems/Bug.js";
 import BugManager from "../systems/BugManager.js";
 import SyntaxGolemBug from "../systems/bugs/SyntaxGolemBug.js";
@@ -71,6 +72,13 @@ this.mapScaleY = 1;
     this.load.spritesheet('slime', '/assets/sprites/bug/slime.png', { frameWidth: 16, frameHeight: 16, endFrame: 6 });
     this.load.spritesheet('wisp', '/assets/sprites/bug/wisp.png', { frameWidth: 16, frameHeight: 16, endFrame: 7 });
     this.load.spritesheet('rift', '/assets/sprites/bug/rift.png', { frameWidth: 48, frameHeight: 32, endFrame: 7 });
+
+    // Audio and Sound Effects
+    this.load.audio("player_hit", "assets/sfx/player/player_hit.wav");
+    this.load.audio("player_hit", "assets/sfx/player/player_heal.wav");
+    this.load.audio("player_hit", "assets/sfx/player/energy_gain.wav");
+    this.load.audio("player_hit", "assets/sfx/player/energy_use.wav");
+    this.load.audio("player_hit", "assets/sfx/player/cryptos.wav");
   }
 
   // ================= CREATE =================
@@ -154,11 +162,21 @@ this.drawMinimapMap(); // Draw static map once
   }
 );
 
+// ================= SFX =================
+this.load.audio("player_hit", "/assets/sfx/player/player_hit.wav");
+this.load.audio("player_heal", "/assets/sfx/player/player_heal.wav");
+this.load.audio("energy_gain", "/assets/sfx/player/energy_gain.wav");
+this.load.audio("energy_use", "/assets/sfx/player/energy_use.wav");
+this.load.audio("cryptos", "/assets/sfx/cryptos.wav");
+
 
     // ---- SYSTEMS ----
     this.createAnimations();
     this.createNPCs();
     this.playerController = new PlayerController(this,this.player,this.MOVE_SPEED);
+
+    // ---- SOUND MANAGER ----
+    this.soundManager = new SoundManager(this);
 
     //Summon Rift
     this.createRiftSystemsFromMap();
@@ -226,9 +244,21 @@ this.initHTMLMinimap();
     });
 
     // ================= PLAYER ↔ BUG DAMAGE =================
-            this.physics.add.overlap(this.player, this.bugGroup, (player, bug) => {
-    if (bug.dealDamage) bug.dealDamage(player); // Each bug defines this
+    this.physics.add.overlap(this.player, this.bugGroup, (player, bug) => {
+  if (bug.dealDamage && !player.isHit) {
+    bug.dealDamage(player);
+
+    this.soundManager.play("player_hit", { volume: 0.4 });
+
+    player.isHit = true;
+
+    this.time.delayedCall(300, () => {
+      player.isHit = false;
     });
+  }
+});
+
+
 
     
 }

@@ -94,19 +94,23 @@ export default class SyntaxGolemBug extends Bug {
     });
 
     // ================= DAMAGE =================
-    const player = this.scene.player;
+    // ================= DAMAGE =================
+const player = this.scene.player;
 
-    const dist = Phaser.Math.Distance.Between(
-      this.x,
-      this.y,
-      player.x,
-      player.y
-    );
+const dist = Phaser.Math.Distance.Between(
+  this.x,
+  this.y,
+  player.x,
+  player.y
+);
 
-    if (dist <= radius && !player.invincible) {
+if (dist <= radius && !player.invincible) {
   console.log("Player hit by Golem!");
 
   const dmg = this.typeData.dmg || 5;
+
+  // 🔊 Play hit sound
+  this.scene.soundManager.play("player_hit"); // <-- added
 
   // ----------------------------
   // REAL HP SOURCE (GameState)
@@ -118,13 +122,11 @@ export default class SyntaxGolemBug extends Bug {
   }
 
   gs.hp = Math.max(gs.hp - dmg, 0);
-
   console.log(`[Damage] Player HP after slam: ${gs.hp}`);
 
   // Sync back to runtime sprite
   if (!player.customData) player.customData = {};
   player.customData.HP = gs.hp;
-
   GameState.player = gs;
 
   // ----------------------------
@@ -145,6 +147,7 @@ export default class SyntaxGolemBug extends Bug {
     player.clearTint();
   });
 }
+
 
 
     // ================= RESET =================
