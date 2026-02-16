@@ -4,44 +4,47 @@ import GameState from "../../GameState.js";
 export default class SyntaxGolemBug extends Bug {
   constructor(scene, x, y) {
     const data = {
-      dmg: 5,
-      detectRadius: 3,
-      slamRadius: 3,
-      chargeTime: 2000
+      dmg: 3,
+      detectRadius: 3,   // tiles
+      slamRadius: 3,     // AoE tiles
+      chargeTime: 2000,  // ms
+      cooldownTime: 3000
     };
-
     super(scene, x, y, "golem", data);
 
+    this.typeData = data;
     this.isCharging = false;
     this.cooldown = false;
-    this.hasSlammed = false; // <-- NEW safeguard
+    this.hasSlammed = false;
+    this.chargeTimer = null;
+    this.resetTimer = null;
 
-    this.setFrame(0);
+
     this.body.setImmovable(true);
+    this.setFrame(0);
   }
 
   update() {
+    if (this.isDead) return;
+
     const player = this.scene.player;
-    if (!player) return;
-    if (this.isCharging || this.cooldown) return;
+    if (!player || this.isCharging || this.cooldown) return;
 
-    const dist = Phaser.Math.Distance.Between(
-      this.x, this.y,
-      player.x, player.y
-    );
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
 
+    // Normal charge detection
     if (dist <= this.typeData.detectRadius * 16) {
       this.startCharge();
     }
   }
 
-  // ================= CHARGE =================
   startCharge() {
+    if (this.isCharging) return;
+
     this.isCharging = true;
-    this.hasSlammed = false; // reset per attack
+    this.hasSlammed = false;
 
-    console.log("Golem charging...");
-
+    // Flashing warning
     this.flashTween = this.scene.tweens.add({
       targets: this,
       alpha: 0.3,
@@ -50,42 +53,36 @@ export default class SyntaxGolemBug extends Bug {
       repeat: -1
     });
 
-    this.scene.time.delayedCall(
-      this.typeData.chargeTime,
-      () => this.slam(),
-      [],
-      this
-    );
+    // Charge timer
+    this.chargeTimer = this.scene.time.delayedCall(
+  this.typeData.chargeTime,
+  () => this.slam(),
+  [],
+  this
+);
+
   }
 
-  // ================= SLAM =================
-  slam() {
-    if (this.hasSlammed) return; // <-- BLOCK multi-slam
-    this.hasSlammed = true;
+    slam() {
+      if (this.isDead) return;
+      if (!this.scene) return;
+      if (!this.body) return;
+      if (this.hasSlammed) return;
 
-    console.log("GOLEM SLAM!");
+      this.hasSlammed = true;
 
     if (this.flashTween) {
       this.flashTween.stop();
       this.setAlpha(1);
     }
 
-    this.setFrame(1);
-
-    // Screen shake
+    this.setFrame(1); // Slam frame
     this.scene.cameras.main.shake(300, 0.01);
 
-    // AoE visual
     const radius = this.typeData.slamRadius * 16;
 
-    const circle = this.scene.add.circle(
-      this.x,
-      this.y,
-      radius,
-      0xff0000,
-      0.35
-    );
-
+    // AoE visual
+    const circle = this.scene.add.circle(this.x, this.y, radius, 0xff0000, 0.35);
     this.scene.tweens.add({
       targets: circle,
       alpha: 0,
@@ -93,90 +90,94 @@ export default class SyntaxGolemBug extends Bug {
       onComplete: () => circle.destroy()
     });
 
-    // ================= DAMAGE =================
-    // ================= DAMAGE =================
-const player = this.scene.player;
+    // Damage player if in radius
+    const player = this.scene.player;
+    if (player && Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y) <= radius && !player.invincible) {
+      const dmg = this.typeData.dmg;
+      const gs = GameState.player;
+      if (!gs) return;
+      gs.hp = Math.max(gs.hp - dmg, 0);
+      player.customData.HP = gs.hp;
+      GameState.player = gs;
 
-const dist = Phaser.Math.Distance.Between(
-  this.x,
-  this.y,
-  player.x,
-  player.y
-);
+      if (this.scene.updateHUD) this.scene.updateHUD();
+      if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
 
-if (dist <= radius && !player.invincible) {
-  console.log("Player hit by Golem!");
-
-  const dmg = this.typeData.dmg || 5;
-
-  // 🔊 Play hit sound
-  this.scene.soundManager.play("player_hit"); // <-- added
-
-  // ----------------------------
-  // REAL HP SOURCE (GameState)
-  // ----------------------------
-  const gs = GameState.player;
-  if (!gs) {
-    console.warn("GameState.player missing!");
-    return;
-  }
-
-  gs.hp = Math.max(gs.hp - dmg, 0);
-  console.log(`[Damage] Player HP after slam: ${gs.hp}`);
-
-  // Sync back to runtime sprite
-  if (!player.customData) player.customData = {};
-  player.customData.HP = gs.hp;
-  GameState.player = gs;
-
-  // ----------------------------
-  // HUD UPDATE
-  // ----------------------------
-  if (window.updateHearts) {
-    window.updateHearts(gs.hp, gs.max_hp ?? 12);
-  }
-
-  // ----------------------------
-  // HIT REACTION
-  // ----------------------------
-  player.invincible = true;
-  player.setTint(0xff0000);
-
-  this.scene.time.delayedCall(800, () => {
-    player.invincible = false;
-    player.clearTint();
-  });
-}
-
-
-
-    // ================= RESET =================
-    this.scene.time.delayedCall(800, () => {
-      this.setFrame(0);
-      this.isCharging = false;
-      this.cooldown = true;
-
-      // Cooldown timer
-      this.scene.time.delayedCall(3000, () => {
-        this.cooldown = false;
+      player.invincible = true;
+      player.setTint(0xff0000);
+      this.scene.time.delayedCall(800, () => {
+        player.invincible = false;
+        player.clearTint();
       });
-    });
+
+      this.scene.soundManager.play("player_hit");
+    }
+
+    // Reset
+    this.resetTimer = this.scene.time.delayedCall(800, () => {
+  if (this.isDead || !this.scene) return;
+
+  this.setFrame(0);
+  this.isCharging = false;
+  this.cooldown = true;
+
+  this.scene.time.delayedCall(
+    this.typeData.cooldownTime,
+    () => {
+      if (!this.isDead) this.cooldown = false;
+    }
+  );
+});
+
   }
 
-  // ================= OVERLAP HOOK =================
+  // Immediate slam if player touches
   dealDamage(player) {
-    // Prevent overlap from forcing slams
-    if (this.isCharging || this.cooldown) return;
+    if (this.hasSlammed || this.cooldown) return;
 
-    const dist = Phaser.Math.Distance.Between(
-      this.x,
-      this.y,
-      player.x,
-      player.y
-    );
+    const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
 
     if (dist <= this.typeData.detectRadius * 16) {
-      this.startCharge();
+      // Cancel charge timer if exists
+      if (this.flashTween) {
+        this.flashTween.stop();
+        this.setAlpha(1);
+      }
+
+      this.slam(); // Slam immediately
     }
   }
+  takeDamage(amount) {
+  if (this.isDead) return;
+
+  this.isDead = true;
+
+  // Stop flash warning
+  if (this.flashTween) {
+    this.flashTween.stop();
+    this.setAlpha(1);
+  }
+
+  // Cancel charge timer
+  if (this.chargeTimer) {
+    this.chargeTimer.remove(false);
+    this.chargeTimer = null;
+  }
+
+  // Cancel reset timer
+  if (this.resetTimer) {
+    this.resetTimer.remove(false);
+    this.resetTimer = null;
+  }
+
+  // Stop movement
+  if (this.body) {
+    this.body.setVelocity(0, 0);
+    this.body.enable = false;
+  }
+
+  // Destroy safely
+  this.destroy();
+}
+
 }

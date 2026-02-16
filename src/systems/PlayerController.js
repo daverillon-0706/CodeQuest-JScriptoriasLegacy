@@ -1,9 +1,14 @@
 // src/systems/PlayerController.js
+import Bullet from "./weapons/bullet.js";
+
+
 export default class PlayerController {
   constructor(scene, player, moveSpeed = 80) {
     this.scene = scene;
     this.player = player;
     this.MOVE_SPEED = moveSpeed;
+    this.frozen = false; // ← New flag: frozen when coding
+
 
     // Arrow keys
     this.cursors = scene.input.keyboard.createCursorKeys();
@@ -11,16 +16,55 @@ export default class PlayerController {
       Phaser.Input.Keyboard.KeyCodes.SHIFT
     );
 
-    // Nearby NPC (or interactable) detection
+    // 🔫 Attack key (SPACE = blaster trigger later)
+    this.attackKey = scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.SPACE
+    );
+
+    // 🧭 Facing direction tracker
+    this.dir = "down";
+
+    // ⚔️ Attack state
+    this.isAttacking = false;
+
+    // 🧱 Attack frame mapping
+    this.attackFrames = {
+      down:  { idle: 1,  attack: 12 },
+      right: { idle: 4,  attack: 13 },
+      left:  { idle: 7,  attack: 14 },
+      up:    { idle: 10, attack: 15 }
+    };
+
+    // Nearby NPC detection
     this.canTalkTo = null;
 
-    // ---- DEBUG: POSITION LOGGER ----
-    this.debugPosition = false; // toggle per scene
+    // ---- DEBUG ----
+    this.debugPosition = false;
     this._debugTimer = 0;
   }
 
   update(npcs = []) {
     if (!this.player) return;
+
+
+    // 🚫 Skip movement if frozen (coding)
+    if (this.frozen) {
+      this.player.body.setVelocity(0, 0);
+      return this.canTalkTo; // still detect nearby NPCs if needed
+    }
+    
+    // =========================
+    // ⚔️ ATTACK INPUT
+    // =========================
+    if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
+      this.attack();
+    }
+
+    // 🚫 Stop movement while attacking
+    if (this.isAttacking) {
+      this.player.body.setVelocity(0);
+      return;
+    }
 
     // ---- Reset velocity ----
     this.player.body.setVelocity(0);
@@ -34,18 +78,24 @@ export default class PlayerController {
     if (this.cursors.left.isDown) {
       this.player.body.setVelocityX(-speed);
       anim = "walk-left";
-    } else if (this.cursors.right.isDown) {
+      this.dir = "left";        // 🧭 track facing
+    } 
+    else if (this.cursors.right.isDown) {
       this.player.body.setVelocityX(speed);
       anim = "walk-right";
+      this.dir = "right";
     }
 
     // ---- Vertical movement ----
     if (this.cursors.up.isDown) {
       this.player.body.setVelocityY(-speed);
       anim = "walk-up";
-    } else if (this.cursors.down.isDown) {
+      this.dir = "up";
+    } 
+    else if (this.cursors.down.isDown) {
       this.player.body.setVelocityY(speed);
       anim = "walk-down";
+      this.dir = "down";
     }
 
     // ---- Normalize diagonal movement ----
@@ -53,8 +103,12 @@ export default class PlayerController {
 
     // ---- Play animation ----
     if (anim) this.player.anims.play(anim, true);
-    else this.player.anims.stop();
-
+    else {
+      // Idle frame based on direction
+      const idleFrame = this.attackFrames[this.dir].idle;
+      this.player.anims.stop();
+      this.player.setFrame(idleFrame);
+    }
     // ---- Detect nearby NPCs ----
     let closestDist = Infinity;
     this.canTalkTo = null;
@@ -73,18 +127,90 @@ export default class PlayerController {
       }
     });
 
-    // ---- DEBUG: PLAYER POSITION LOG ----
+    // ---- DEBUG ----
     this.logPlayerPosition(this.scene.game.loop.delta);
 
     return this.canTalkTo;
   }
+
+  // =========================
+// ⚔️ ATTACK FUNCTION
+// =========================
+attack() {
+  if (this.isAttacking) return;
+
+  this.isAttacking = true;
+
+  const frames = this.attackFrames[this.dir];
+
+  // Stop movement
+  this.player.body.setVelocity(0);
+  this.player.anims.stop();
+
+  // Show attack frame
+  this.player.setFrame(frames.attack);
+
+  // Return to idle after 300ms
+  this.scene.time.delayedCall(300, () => {
+    this.player.setFrame(frames.idle);
+    this.isAttacking = false;
+  });
+
+  // --- Determine bullet spawn position ---
+  const offset = 1;
+  let bx = this.player.x;
+  let by = this.player.y;
+
+  switch(this.dir) {
+    case "left":  bx -= offset; break;
+    case "right": bx += offset; break;
+    case "up":    by -= offset; break;
+    case "down":  by += offset; break;
+  }
+
+  // --- Spawn bullet like a bug ---
+  const b = this.scene.bulletGroup.get(bx, by, this.player.frame.name);
+if (!b) return;
+b.setActive(true);
+b.setVisible(true);
+b.body.enable = true;
+b.fire(this.player.frame.name);
+this.scene.blasterSFX.play();
+
+
+
+  // Optional: debug log
+  console.log(`[Bullet] Spawned at (${bx}, ${by}) facing ${this.dir} | Player frame: ${this.player.frame.name} | Bullet frame: ${b.frame.name} | Velocity: ${b.body.velocity.x}, ${b.body.velocity.y}`);
+}
+
+// =========================
+// ❄️ Freeze / Unfreeze
+// =========================
+freeze() {
+  this.frozen = true;
+  if (this.player && this.player.body) {
+    this.player.body.setVelocity(0, 0);
+  }
+}
+
+unfreeze() {
+  this.frozen = false;
+}
+
+
+
+
+
+
+
+
 
   // ---- DEBUG HELPER ----
   logPlayerPosition(delta) {
     if (!this.debugPosition) return;
 
     this._debugTimer += delta;
-    if (this._debugTimer < 500) return; // log every 0.5s
+    if (this._debugTimer < 500) return;
 
     this._debugTimer = 0;
 

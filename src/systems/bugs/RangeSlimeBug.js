@@ -1,125 +1,109 @@
 import Bug from "../Bug.js";
 import GameState from "../../GameState.js";
-import SoundManager from "../SoundManager.js";
 
 export default class RangeSlimeBug extends Bug {
   constructor(scene, x, y) {
     const data = {
       dmg: 2,
       detectRange: 7,
-      moveTime: 5000,
+      moveCooldown: 2000,
+      speed: 60,
+      idleSpeed: 20,
       errorCode: "RangeError: index out of range"
     };
     super(scene, x, y, "slime", data);
+
     this.typeData = data;
-
-    // Physics setup
     this.body.setCollideWorldBounds(true);
-    this.body.setBounce(1, 1);
+    this.body.setBounce(1, 1); // bounce off walls
+    this.setRandomIdleVelocity();
 
-    // Random initial velocity
-    const speed = 20 + Math.random() * 30;
-    const angle = Math.random() * Math.PI * 2;
-    this.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
-
-    // Animation
-    //this.anims.play('slime-idle-right');
     this.lastMove = 0;
+    this.isCharging = false;
+    this.hasHit = false;
 
-    // Flags
-    this.isCharging = false;  // whether slime is currently charging
-    this.hasHit = false;      // prevents multiple hits per charge
+    // Colliders with world layers
+    const layers = [scene.buildingLayer, scene.wallLayer, scene.itemLayer];
+    layers.forEach(layer => scene.physics.add.collider(this, layer, this.handleWallCollision, null, this));
+  }
+
+  setRandomIdleVelocity() {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = this.typeData.idleSpeed;
+    this.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+  }
+
+  handleWallCollision(slime, wall) {
+    if (this.isCharging) {
+      // Stop charging if it hits a wall
+      this.isCharging = false;
+      this.body.setVelocity(0);
+      this.hasHit = true;
+      this.scene.time.delayedCall(1000, () => { this.hasHit = false; });
+    } else {
+      // Bounce / change idle direction slightly
+      this.setRandomIdleVelocity();
+    }
   }
 
   update(time) {
+    if (this.isDead) return;
+    
     const player = this.scene.player;
     if (!player) return;
 
-    // Charge logic
-    if (time - this.lastMove > this.typeData.moveTime) {
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const dist = Math.hypot(dx, dy);
+
+    // Start charging if player is near
+    if (!this.isCharging && dist <= this.typeData.detectRange * 16 && (time - this.lastMove > this.typeData.moveCooldown)) {
       this.lastMove = time;
-
-      const dx = player.x - this.x;
-      const dy = player.y - this.y;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist <= this.typeData.detectRange * 16) {
-        console.log("Range Slime starts charging!");
-        const speed = 60;
-        this.scene.physics.moveToObject(this, player, speed);
-        this.isCharging = true;
-        this.hasHit = false;
-      }
+      this.isCharging = true;
+      this.hasHit = false;
+      this.scene.physics.moveToObject(this, player, this.typeData.speed);
     }
 
-    // Animate based on velocity
-if (this.body.velocity.x > 5) {
-  if (this.anims.currentAnim?.key !== "slime-move-right") {
-    this.anims.play("slime-move-right", true);
-  }
-}
-else if (this.body.velocity.x < -5) {
-  if (this.anims.currentAnim?.key !== "slime-move-left") {
-    this.anims.play("slime-move-left", true);
-  }
-}
+    // Animation
+    if (Math.abs(this.body.velocity.x) > Math.abs(this.body.velocity.y)) {
+      if (this.body.velocity.x > 0) this.anims.play("slime-move-right", true);
+      else this.anims.play("slime-move-left", true);
+    } else {
+      this.anims.stop();
+    }
 
+    // Idle wandering
+    if (!this.isCharging && this.body.velocity.length() < 1) {
+      this.setRandomIdleVelocity();
+    }
   }
 
   dealDamage(player) {
+    if (!player.invincible && this.isCharging && !this.hasHit) {
+      const dmg = this.typeData.dmg || 2;
 
-  if (!player.invincible && this.isCharging && !this.hasHit) {
+      const gs = GameState.player;
+      if (!gs) return;
+      gs.hp = Math.max(gs.hp - dmg, 0);
+      player.customData.HP = gs.hp;
 
-    console.log("Slime hits player!");
+      if (this.scene.updateHUD) this.scene.updateHUD();
+      if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
 
-    const dmg = this.typeData.dmg || 2;
-
-    // Play sound
-    this.scene.soundManager.play("player_hit");
-
-    // Damage player
-    const gs = GameState.player;
-    if (!gs) return;
-
-    gs.hp = Math.max(gs.hp - dmg, 0);
-    player.customData.HP = gs.hp;
-
-    // Update HUD (SAFE)
-    if (window.updateHearts) {
-      window.updateHearts(gs.hp);
-    }
-
-    // I-frames
-    player.invincible = true;
-    player.setTint(0xff0000);
-
-    this.scene.time.addEvent({
-      delay: 800,
-      callback: () => {
+      player.invincible = true;
+      player.setTint(0xff0000);
+      this.scene.time.delayedCall(800, () => {
         player.invincible = false;
         player.clearTint();
-      }
-    });
+      });
 
-    // Camera shake
-    this.scene.cameras.main.shake(150, 0.01);
+      this.scene.cameras.main.shake(150, 0.01);
 
-    // Stop charge
-    this.isCharging = false;
-    this.hasHit = true;
-    this.body.setVelocity(0);
+      this.isCharging = false;
+      this.hasHit = true;
+      this.body.setVelocity(0);
 
-    this.scene.time.delayedCall(1000, () => {
-      this.hasHit = false;
-    });
-
-    console.log("Slime charge ended.");
+      this.scene.time.delayedCall(1000, () => { this.hasHit = false; });
+    }
   }
-}
-
-
-
-
-
-
 }

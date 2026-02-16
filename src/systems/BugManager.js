@@ -1,5 +1,5 @@
 // src/systems/BugManager.js
-import Bug from "./Bug.js";
+//import Bug from "./Bug.js";
 import SyntaxGolemBug from "./bugs/SyntaxGolemBug.js";
 import RangeSlimeBug from "./bugs/RangeSlimeBug.js";
 import TypeMimicBug from "./bugs/TypeMimicBug.js";
@@ -29,36 +29,48 @@ export default class BugManager {
   }
 
   update(time, delta) {
-    this.bugs.forEach(bug => {
-      if (bug.update) bug.update(time, delta);
 
-      // =============================
-      // 🧭 LEASH SYSTEM
-      // =============================
-      if (bug.spawnX !== undefined) {
-        const dist = Phaser.Math.Distance.Between(
-          bug.x,
-          bug.y,
+  // 🧹 Remove destroyed bugs
+  this.bugs = this.bugs.filter(bug => bug.active);
+
+  this.bugs.forEach(bug => {
+
+    if (!bug.active || !bug.body) return;
+
+    // Run bug AI
+    if (bug.update) bug.update(time, delta);
+
+    // =============================
+    // 🧭 LEASH SYSTEM
+    // =============================
+    if (bug.spawnX !== undefined) {
+
+      const dist = Phaser.Math.Distance.Between(
+        bug.x,
+        bug.y,
+        bug.spawnX,
+        bug.spawnY
+      );
+
+      if (dist > this.LEASH_DISTANCE) {
+
+        this.scene.physics.moveTo(
+          bug,
           bug.spawnX,
-          bug.spawnY
+          bug.spawnY,
+          40
         );
 
-        if (dist > this.LEASH_DISTANCE) {
-          // Move bug back to spawn
-          this.scene.physics.moveTo(
-            bug,
-            bug.spawnX,
-            bug.spawnY,
-            40 // return speed
-          );
+        bug.isReturning = true;
 
-          bug.isReturning = true;
-        } else {
-          bug.isReturning = false;
-        }
+      } else {
+        bug.isReturning = false;
       }
-    });
-  }
+    }
+
+  });
+}
+
 
   updateHover(pointer) {
     const hoverBug = this.bugs.find(bug =>

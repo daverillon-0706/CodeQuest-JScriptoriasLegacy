@@ -15,6 +15,7 @@ import ReferenceWispBug from "../systems/bugs/ReferenceWispBug.js";
 import InternalRiftBug from "../systems/bugs/InternalRiftBug.js";
 import GameState from "../GameState.js";
 import { setupSceneTriggers } from "../utils/SceneTransitions.js";
+import Bullet from "../systems/weapons/bullet.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -28,24 +29,32 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.npcs = [];
     this.canTalkTo = null;
 
+    // ---- SYSTEMS ----
     this.playerController = null;
     this.dialogueManager = null;
     this.hoverManager = null;
+    //this.player.isCoding = false;
+    //this.compilerWindow = null;
+    //this.codingKeyHandler = null;
+    //this.codingDamageHandler = null;
 
+
+
+    // ---- BUGS ----
     this.bugManager = null;
     this.bugGroup = null; // <-- Physics group for bugs
     this.rifts = [];
     this.riftKiosks = [];
 
     // ---- MINIMAP ----
-// ---- HTML MINIMAP ----
-this.minimapCanvas = null;
-this.minimapCtx = null;
-this.minimapWidth = 280;
-this.minimapHeight = 280;
-this.mapScaleX = 1;
-this.mapScaleY = 1;
-
+    this.minimapCanvas = null;
+    this.minimapCtx = null;
+    this.minimapWidth = 280;
+    this.minimapHeight = 280;
+    this.mapScaleX = 1;
+    this.mapScaleY = 1;
+    this.minimapX = 0;
+    this.minimapY = 0;
 
   }
 
@@ -73,12 +82,16 @@ this.mapScaleY = 1;
     this.load.spritesheet('wisp', '/assets/sprites/bug/wisp.png', { frameWidth: 16, frameHeight: 16, endFrame: 7 });
     this.load.spritesheet('rift', '/assets/sprites/bug/rift.png', { frameWidth: 48, frameHeight: 32, endFrame: 7 });
 
+    // Weapons
+    this.load.spritesheet("bullet", "/assets/sprites/player/bullet.png", { frameWidth: 8, frameHeight: 8 });
+
     // Audio and Sound Effects
     this.load.audio("player_hit", "assets/sfx/player/player_hit.wav");
-    this.load.audio("player_hit", "assets/sfx/player/player_heal.wav");
-    this.load.audio("player_hit", "assets/sfx/player/energy_gain.wav");
-    this.load.audio("player_hit", "assets/sfx/player/energy_use.wav");
-    this.load.audio("player_hit", "assets/sfx/player/cryptos.wav");
+    this.load.audio("player_heal", "assets/sfx/player/player_heal.wav");
+    this.load.audio("energy_gain", "assets/sfx/player/energy_gain.wav");
+    this.load.audio("energy_use", "assets/sfx/player/energy_use.wav");
+    this.load.audio("cryptos", "assets/sfx/player/cryptos.wav");
+    this.load.audio("blaster", "assets/sfx/player/blaster.wav");
   }
 
   // ================= CREATE =================
@@ -117,7 +130,13 @@ this.mapScaleY = 1;
       Coins: data.playerCoins ?? GameState.player?.cryptos
     };
     //GameState.player = this.player;
-    this.syncSpriteToGameState();
+    this.syncGameStateToSprite();
+    this.updateHUD();
+
+    this.player.isCoding = false;
+    this.compilerWindow = null;
+    this.codingKeyHandler = null;
+    this.codingDamageHandler = null;
 
     // ---- BUG SYSTEM ----
     this.bugGroup = this.physics.add.group(); // ← Group for physics
@@ -129,9 +148,23 @@ this.mapScaleY = 1;
 
     // ---- Input hover/lock-on ----
     this.input.on('pointermove', pointer => this.bugManager.updateHover(pointer));
-    this.input.on('pointerdown', pointer => this.bugManager.tryLockOn(pointer));
+    // Rift click check
 
-    // ---- CAMERA ----
+    this.input.on('pointerdown', pointer => {
+    this.rifts.forEach(rift => {
+        const bounds = rift.getBounds();
+        if (Phaser.Geom.Rectangle.Contains(bounds, pointer.x, pointer.y)) {
+            // Only open compiler if rift is visible, active, and not already debugging
+            if (!rift.isDormant && !rift.isDebugging) {
+                this.openRiftCompiler(rift);
+            }
+        }
+    });
+});
+
+
+
+// ---- CAMERA ----
     this.physics.world.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
     this.cameras.main.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels)
       .startFollow(this.player,true,0.08,0.08)
@@ -168,30 +201,52 @@ this.load.audio("player_heal", "/assets/sfx/player/player_heal.wav");
 this.load.audio("energy_gain", "/assets/sfx/player/energy_gain.wav");
 this.load.audio("energy_use", "/assets/sfx/player/energy_use.wav");
 this.load.audio("cryptos", "/assets/sfx/cryptos.wav");
-
+this.blasterSFX = this.sound.add("blaster", {
+  volume: 0.5
+});
 
     // ---- SYSTEMS ----
     this.createAnimations();
     this.createNPCs();
     this.playerController = new PlayerController(this,this.player,this.MOVE_SPEED);
+    // Group to manage all bullets
+    this.bulletGroup = this.physics.add.group({
+      classType: Bullet,
+      runChildUpdate: true
+    } );
 
+// Bullet ↔ Bugs collision
+this.physics.add.overlap(
+  this.bulletGroup,
+  this.bugGroup,
+  (bullet, bug) => {
+
+    // Ignore rifts only
+    if (bug.isRift) return;
+
+    console.log("Bullet hit:", bug.constructor.name);
+
+    bullet.destroy();
+
+    // One-shot kill
+    if (bug.destroy) {
+      bug.destroy();
+    }
+  }
+);
     // ---- SOUND MANAGER ----
     this.soundManager = new SoundManager(this);
 
     //Summon Rift
     this.createRiftSystemsFromMap();
 
-
-
     // ---- HUD ----
     this.playerHPEl = document.getElementById("playerHP-text");
     this.playerEnergyEl = document.getElementById("playerEnergy-text");
     this.playerCoinsEl = document.getElementById("cryptos-count");
-    this.updateHUD();
-
+  
     // ---- HTML MINIMAP INIT ----
-this.initHTMLMinimap();
-
+    this.initHTMLMinimap();
 
     // ---- DIALOGUE ----
     const dialogueBoxEl  = document.getElementById("dialogue-box");
@@ -243,6 +298,9 @@ this.initHTMLMinimap();
 
     });
 
+    //this.input.keyboard.on("keydown-F", () => {
+    this.player.anims.play("attack-down");
+    //});
     // ================= PLAYER ↔ BUG DAMAGE =================
     this.physics.add.overlap(this.player, this.bugGroup, (player, bug) => {
   if (bug.dealDamage && !player.isHit) {
@@ -258,15 +316,15 @@ this.initHTMLMinimap();
   }
 });
 
-
-
-    
 }
 
   // ================= UPDATE =================
   update(time, delta) {
   if(!this.playerController) return;
   this.playerController.update(this.npcs);
+
+  
+
 
   if(this.bugManager) {
     this.bugManager.update(time, delta);
@@ -326,6 +384,35 @@ if (this.minimapCtx) {
     if(!anims.exists("walk-right")) anims.create({ key:"walk-right", frames:anims.generateFrameNumbers("player_male",{start:3,end:5}), frameRate:12, repeat:-1 });
     if(!anims.exists("walk-left")) anims.create({ key:"walk-left", frames:anims.generateFrameNumbers("player_male",{start:6,end:8}), frameRate:12, repeat:-1 });
     if(!anims.exists("walk-up")) anims.create({ key:"walk-up", frames:anims.generateFrameNumbers("player_male",{start:9,end:11}), frameRate:12, repeat:-1 });
+    // ---- ATTACK ANIMS ----
+this.anims.create({
+  key: "attack-down",
+  frames: [{ key: "player_male", frame: 12 }],
+  frameRate: 1,
+  repeat: 0
+});
+
+this.anims.create({
+  key: "attack-right",
+  frames: [{ key: "player_male", frame: 13 }],
+  frameRate: 1,
+  repeat: 0
+});
+
+this.anims.create({
+  key: "attack-left",
+  frames: [{ key: "player_male", frame: 14 }],
+  frameRate: 1,
+  repeat: 0
+});
+
+this.anims.create({
+  key: "attack-up",
+  frames: [{ key: "player_male", frame: 15 }],
+  frameRate: 1,
+  repeat: 0
+});
+
     if(!anims.exists("npc-idle-down")) anims.create({ key:"npc-idle-down", frames:[{key:"kaelen",frame:1}], frameRate:1, repeat:-1 });
 
     //Bugs
@@ -498,6 +585,13 @@ rift.setVisible(false);
 rift.body.enable = false;
 rift.isDormant = true; // custom flag (optional but useful)
 
+rift.setInteractive({ useHandCursor: true });
+rift.on('pointerdown', () => {
+    if (!rift.isDormant && !rift.isDebugging) {
+        this.openRiftCompiler(rift);
+    }
+});
+
 console.log("Registered Rift (hidden):", riftName);
 
 }
@@ -532,60 +626,173 @@ console.log("Registered Rift (hidden):", riftName);
   activateRiftFromKiosk(kiosk) {
     if (!kiosk.kioskName) return;
     if (kiosk.cooldown) {
-      console.log("Kiosk on cooldown:", kiosk.kioskName);
-      return;
+        console.log("Kiosk on cooldown:", kiosk.kioskName);
+        return;
     }
 
     const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
     console.log("Looking for rift:", targetRiftName);
-this.rifts.forEach(r => console.log("Rift available:", `"${r.riftName}"`));
 
     const rift = this.rifts.find(r => r.riftName === targetRiftName);
 
     if (rift) {
-      console.log("Activating Rift:", targetRiftName);
+        console.log("Summoning Rift:", targetRiftName);
 
-  // 👁️ Reveal rift if dormant
-  if (rift.isDormant) {
-    rift.setVisible(true);
-    rift.body.enable = true;
-    rift.isDormant = false;
+        // Reveal rift if hidden
+        if (rift.isDormant) {
+            rift.setVisible(true);
+            rift.body.enable = true;
+            rift.isDormant = false;
+            rift.setScale(0);
+            this.tweens.add({
+                targets: rift,
+                scale: 1,
+                duration: 300,
+                ease: "Back.Out"
+            });
+            rift.activate();
+        }
 
-    // Optional spawn effect
-    rift.setScale(0);
-    this.tweens.add({
-      targets: rift,
-      scale: 1,
-      duration: 300,
-      ease: "Back.Out"
-    });
-  }
+        // ✅ DO NOT open compiler automatically
+        // The compiler will only open when player clicks the rift
 
-  rift.activate();
-
-      // Start cooldown
-      kiosk.cooldown = true;
-      this.time.delayedCall(2 * 60 * 1000, () => {
-        kiosk.cooldown = false;
-        console.log("Kiosk cooldown finished:", kiosk.kioskName);
-      });
+        // Start kiosk cooldown
+        kiosk.cooldown = true;
+        this.time.delayedCall(2 * 60 * 1000, () => {
+            kiosk.cooldown = false;
+            console.log("Kiosk cooldown finished:", kiosk.kioskName);
+        });
     } else {
-      console.warn("No Rift found for:", targetRiftName);
+        console.warn("No Rift found for:", targetRiftName);
     }
-  }
-
-  syncSpriteToGameState() {
-    const gs = GameState.player;
-
-    if (!gs) return;
-
-    // Update GameState with sprite's runtime data
-    gs.hp = this.player.customData.HP;
-    gs.energy = this.player.customData.Energy;
-    gs.cryptos = this.player.customData.Coins;
-
-    GameState.player = gs;
 }
+
+  // Open the Rift compiler
+   openRiftCompiler(rift) {
+    if(this.isCompilerOpen) return;
+    this.isCompilerOpen = true;
+    this.player.isCoding = true;
+    this.playerController.freeze();
+    rift.isDebugging = true;
+
+    rift.currentChallenge = rift.currentChallenge ?? 0;
+    rift.totalChallenges = rift.totalChallenges ?? 5;
+
+    // Create container
+    const container = document.createElement("div");
+    container.id = `rift-debug-${rift.riftName}`;
+    Object.assign(container.style, {
+        position: "absolute",
+        left: "50px",
+        top: "50px",
+        width: "400px",
+        height: "300px",
+        background: "rgba(0,0,0,0.9)",
+        border: "2px solid #0f0",
+        padding: "10px",
+        color: "#0f0",
+        fontFamily: "monospace",
+        overflowY: "scroll",
+        zIndex: 10000
+    });
+
+    // Textarea for code
+    const textarea = document.createElement("textarea");
+    textarea.style.width = "100%";
+    textarea.style.height = "220px";
+    textarea.style.background = "#111";
+    textarea.style.color = "#0f0";
+    textarea.value = rift.getCodeSamples(rift.riftType).join("\n");
+    container.appendChild(textarea);
+
+    // Compile button
+    const compileBtn = document.createElement("button");
+    compileBtn.textContent = "Compile";
+    compileBtn.style.marginTop = "10px";
+    compileBtn.onclick = () => {
+        try {
+            new Function(textarea.value); // syntax check
+            rift.currentChallenge++;
+            if (rift.currentChallenge >= rift.totalChallenges) {
+                this.defeatRift(rift);
+            } else {
+                alert(`✅ Challenge ${rift.currentChallenge} completed!`);
+                this.soundManager.play("energy_gain");
+            }
+        } catch(e){
+            alert(`❌ Compilation error: ${e.message}`);
+            this.player.customData.HP -= 4;
+            this.updateHUD();
+            if (this.player.customData.HP <= 0) this.closeRiftCompiler(rift);
+        }
+    };
+    container.appendChild(compileBtn);
+
+    // Close button
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Close";
+    closeBtn.style.marginLeft = "10px";
+    closeBtn.onclick = () => {
+        this.closeRiftCompiler(rift);
+        alert("🛑 Compiler closed by player!");
+    };
+    container.appendChild(closeBtn);
+
+    document.body.appendChild(container);
+    this.compilerWindow = container;
+
+    // ===== Emergency close if player takes damage =====
+    this.codingDamageHandler = this.physics.add.overlap(
+        this.player,
+        this.bugGroup,
+        (player, bug) => {
+            if (player.isCoding && bug.dealDamage) {
+                bug.dealDamage(player);
+                this.soundManager.play("player_hit", { volume: 0.4 });
+                alert("⚠ You were attacked! Compiler closed!");
+                this.closeRiftCompiler(rift);
+            }
+        }
+    );
+}
+
+
+
+// Close coding window
+closeRiftCompiler(rift) {
+    if (!this.player.isCoding) return;
+
+    this.player.isCoding = false;
+    this.playerController.unfreeze(); // re-enable movement
+
+    if (this.compilerWindow) {
+        this.compilerWindow.remove();
+        this.compilerWindow = null;
+    }
+
+    // Remove the temporary damage handler
+    if (this.codingDamageHandler) {
+        this.physics.world.removeCollider(this.codingDamageHandler);
+        this.codingDamageHandler = null;
+    }
+    rift.isDebugging = false;
+
+    // Reset compiler open flag
+    this.isCompilerOpen = false;
+
+    // Optional callback on the rift
+    if (rift && rift.onCodingClosed) rift.onCodingClosed();
+}
+
+  syncGameStateToSprite() {
+  const gs = GameState.player;
+  if (!gs) return;
+
+  this.player.customData.HP     = gs.hp;
+  this.player.customData.Energy = gs.energy;
+  this.player.customData.Coins  = gs.cryptos;
+}
+
 
 // ================= MINIMAP =================
 createMinimap() {
@@ -741,6 +948,20 @@ drawHTMLMinimapBugs() {
     ctx.arc(x, y, 2, 0, Math.PI * 2);
     ctx.fill();
   });
+}
+
+onBulletHitBug(bullet, bug) {
+  if (!bullet.active || !bug.active) return;
+
+  // Destroy bullet
+  bullet.destroy();
+
+  // Damage or kill bug
+  if (bug.takeDamage) {
+    bug.takeDamage(1);
+  } else {
+    bug.destroy(); // fallback if no HP system yet
+  }
 }
 
 }
