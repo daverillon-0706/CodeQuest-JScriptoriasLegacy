@@ -66,25 +66,52 @@ export default class ReferenceWispBug extends Bug {
     if (!player.invincible && (now - this.lastHit > this.hitCooldown)) {
       const dmg = this.typeData.dmg || 1;
 
-      const gs = GameState.player;
-      if (!gs) return;
-      gs.hp = Math.max(gs.hp - dmg, 0);
-      player.customData.HP = gs.hp;
-      GameState.player = gs;
+    const gs = GameState.player;
+    if (!gs) return;
 
-      if (this.scene.updateHUD) this.scene.updateHUD();
-      if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+    // =========================
+    // APPLY DAMAGE
+    // =========================
+    gs.hp = Math.max(gs.hp - dmg, 0);
+    player.customData.HP = gs.hp;
+    GameState.player = gs;
 
-      // Player invincibility + flash
-      player.invincible = true;
-      player.setTint(0xff0000);
-      this.scene.time.delayedCall(800, () => {
-        player.invincible = false;
-        player.clearTint();
-      });
+    // =========================
+    // UPDATE UI
+    // =========================
+    if (this.scene.updateHUD) this.scene.updateHUD();
+    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
 
-      this.scene.cameras.main.shake(120, 0.008);
-      this.lastHit = now;
+    // =========================
+    // INVINCIBILITY + FEEDBACK
+    // =========================
+    player.invincible = true;
+    player.setTint(0xff0000);
+
+    this.scene.time.delayedCall(800, () => {
+      player.invincible = false;
+      player.clearTint();
+    });
+
+    this.scene.cameras.main.shake(150, 0.01);
+
+    // =========================
+    // CHARGE / HIT RESET
+    // =========================
+    this.isCharging = false;
+    this.hasHit = true;
+    if (this.body) this.body.setVelocity(0);
+
+    this.scene.time.delayedCall(1000, () => {
+      this.hasHit = false;
+    });
+
+    // =========================
+    // GAME OVER CHECK
+    // =========================
+    if (gs.hp <= 0) {
+      this.scene.onPlayerGameOver();
     }
+  }
   }
 }

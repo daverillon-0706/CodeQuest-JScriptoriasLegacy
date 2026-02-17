@@ -112,30 +112,46 @@ export default class TypeMimicBug extends Bug {
   });
 }
 
+dealInitialDamage(player) {
+  if (this.isDead) return;
 
+  const dmg = this.typeData.dmg || 3; // mimic first hit damage
+  const gs = GameState.player;
+  if (!gs) return;
 
-  dealInitialDamage(player) {
-    if (this.isDead) return;
+  // =========================
+  // APPLY DAMAGE
+  // =========================
+  gs.hp = Math.max(gs.hp - dmg, 0);
+  player.customData.HP = gs.hp;
+  GameState.player = gs;
 
-    const dmg = 3;
-    this.scene.soundManager.play("player_hit");
+  // =========================
+  // UPDATE UI
+  // =========================
+  if (this.scene.updateHUD) this.scene.updateHUD();
+  if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
 
-    const gs = GameState.player;
-    if (!gs) return;
-    gs.hp = Math.max(gs.hp - dmg, 0);
-    player.customData.HP = gs.hp;
-    GameState.player = gs;
+  // =========================
+  // INVINCIBILITY + FEEDBACK
+  // =========================
+  player.invincible = true;
+  player.setTint(0xff0000);
+  this.scene.time.delayedCall(800, () => {
+    player.invincible = false;
+    player.clearTint();
+  });
 
-    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+  this.scene.cameras.main.shake(150, 0.01);
+  this.scene.soundManager.play("player_hit");
 
-    this.scene.cameras.main.shake(120, 0.004);
-    player.invincible = true;
-    player.setTint(0xff0000);
-    this.scene.time.delayedCall(800, () => {
-      player.invincible = false;
-      player.clearTint();
-    });
+  // =========================
+  // GAME OVER CHECK
+  // =========================
+  if (gs.hp <= 0) {
+    this.scene.onPlayerGameOver();
   }
+}
 
   startChase(player) {
   if (this.isDead) return;
@@ -175,27 +191,46 @@ export default class TypeMimicBug extends Bug {
   });
 }
 
+dealChaseDamage(player) {
+  if (this.isDead) return;
 
-  dealChaseDamage(player) {
-    const dmg = 1;
-    this.scene.soundManager.play("player_hit");
+  const dmg = this.typeData.dmg || 1; // chase damage
+  const gs = GameState.player;
+  if (!gs) return;
 
-    const gs = GameState.player;
-    if (!gs) return;
-    gs.hp = Math.max(gs.hp - dmg, 0);
-    player.customData.HP = gs.hp;
-    GameState.player = gs;
+  // =========================
+  // APPLY DAMAGE
+  // =========================
+  gs.hp = Math.max(gs.hp - dmg, 0);
+  player.customData.HP = gs.hp;
+  GameState.player = gs;
 
-    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+  // =========================
+  // UPDATE UI
+  // =========================
+  if (this.scene.updateHUD) this.scene.updateHUD();
+  if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
 
-    this.scene.cameras.main.shake(120, 0.004);
-    player.invincible = true;
-    player.setTint(0xff0000);
-    this.scene.time.delayedCall(800, () => {
-      player.invincible = false;
-      player.clearTint();
-    });
+  // =========================
+  // INVINCIBILITY + FEEDBACK
+  // =========================
+  player.invincible = true;
+  player.setTint(0xff0000);
+  this.scene.time.delayedCall(800, () => {
+    player.invincible = false;
+    player.clearTint();
+  });
+
+  this.scene.cameras.main.shake(120, 0.008);
+  this.scene.soundManager.play("player_hit");
+
+  // =========================
+  // GAME OVER CHECK
+  // =========================
+  if (gs.hp <= 0) {
+    this.scene.onPlayerGameOver();
   }
+}
 
   resetMimic() {
     this.setFrame(0);

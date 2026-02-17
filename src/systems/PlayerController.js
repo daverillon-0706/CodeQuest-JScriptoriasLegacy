@@ -196,15 +196,6 @@ freeze() {
 unfreeze() {
   this.frozen = false;
 }
-
-
-
-
-
-
-
-
-
   // ---- DEBUG HELPER ----
   logPlayerPosition(delta) {
     if (!this.debugPosition) return;

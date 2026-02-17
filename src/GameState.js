@@ -42,6 +42,10 @@ const DEFAULT_PLAYER = {
     chestsOpened: [],
     questsCompleted: [],
     position: { x: 100, y: 100 }
+  },
+
+  riftProgress: {
+
   }
 };
 

@@ -1,5 +1,6 @@
 import Bug from "../Bug.js";
 import GameState from "../../GameState.js";
+import { Game } from "phaser";
 
 export default class RangeSlimeBug extends Bug {
   constructor(scene, x, y) {
@@ -79,31 +80,58 @@ export default class RangeSlimeBug extends Bug {
   }
 
   dealDamage(player) {
-    if (!player.invincible && this.isCharging && !this.hasHit) {
-      const dmg = this.typeData.dmg || 2;
+  if (!player.invincible && this.isCharging && !this.hasHit) {
 
-      const gs = GameState.player;
-      if (!gs) return;
-      gs.hp = Math.max(gs.hp - dmg, 0);
-      player.customData.HP = gs.hp;
+    const dmg = this.typeData.dmg || 2;
 
-      if (this.scene.updateHUD) this.scene.updateHUD();
-      if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+    const gs = GameState.player;
+    if (!gs) return;
 
-      player.invincible = true;
-      player.setTint(0xff0000);
-      this.scene.time.delayedCall(800, () => {
-        player.invincible = false;
-        player.clearTint();
-      });
+    // =========================
+    // APPLY DAMAGE
+    // =========================
+    gs.hp = Math.max(gs.hp - dmg, 0);
+    player.customData.HP = gs.hp;
+    GameState.player = gs;
 
-      this.scene.cameras.main.shake(150, 0.01);
+    // =========================
+    // UPDATE UI
+    // =========================
+    if (this.scene.updateHUD) this.scene.updateHUD();
+    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
 
-      this.isCharging = false;
-      this.hasHit = true;
-      this.body.setVelocity(0);
+    // =========================
+    // INVINCIBILITY + FEEDBACK
+    // =========================
+    player.invincible = true;
+    player.setTint(0xff0000);
 
-      this.scene.time.delayedCall(1000, () => { this.hasHit = false; });
+    this.scene.time.delayedCall(800, () => {
+      player.invincible = false;
+      player.clearTint();
+    });
+
+    this.scene.cameras.main.shake(150, 0.01);
+
+    // =========================
+    // CHARGE RESET
+    // =========================
+    this.isCharging = false;
+    this.hasHit = true;
+    this.body.setVelocity(0);
+
+    this.scene.time.delayedCall(1000, () => {
+      this.hasHit = false;
+    });
+
+    // =========================
+    // GAME OVER CHECK
+    // =========================
+    if (gs.hp <= 0) {
+      this.scene.onPlayerGameOver();
     }
   }
+}
+
+
 }

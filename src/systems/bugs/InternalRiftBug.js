@@ -1,34 +1,92 @@
 // src/systems/bugs/InternalRiftBug.js
 import Bug from "../Bug.js";
+import { RiftChallenges } from "../../ui/data/riftChallenges.js";
+import GameState from "../../GameState.js";
+
 
 export default class InternalRiftBug extends Bug {
   constructor(scene, x, y, riftName) {
-    const data = {
-      summonCount: 4,
-      cooldown: 10000, // 2 minutes
-      spawnRadiusX: 48,
-      spawnRadiusY: 32
+  const data = {
+    summonCount: 4,
+    cooldown: 10000,
+    spawnRadiusX: 48,
+    spawnRadiusY: 32
+  };
+
+  // 1️⃣ Call parent constructor first
+  super(scene, x, y, "rift", data);
+
+  // 2️⃣ Assign properties after super
+  this.riftName = riftName;
+
+  this.challengePool = RiftChallenges[this.riftName] || [];
+
+  this.body.setImmovable(true);
+  this.body.setAllowGravity(false);
+  this.setOrigin(0.5, 1);
+
+  this.isActive = false;
+  this.onCooldown = false;
+  this.isRift = true;
+  this.isInvincible = true;
+  this.challengeIndex = 0;
+  this.completed = false;
+  this.maxChallenges = 5;
+
+  this.hoverBlocks = [];
+
+  // ==== INIT FROM GameState ====
+  const gsRift = GameState.player.riftProgress[this.riftName];
+  if (gsRift) {
+    this.challengeIndex = gsRift.challengeIndex;
+    this.completed = gsRift.completed;
+    this.hasKey = gsRift.hasKey || false;
+  } else {
+    GameState.player.riftProgress[this.riftName] = {
+      completed: false,
+      challengeIndex: 0,
+      hasKey: false
     };
-
-    super(scene, x, y, "rift", data);
-
-    this.body.setImmovable(true);
-    this.body.setAllowGravity(false);
-    this.setOrigin(0.5, 1);
-
-    this.riftName = riftName;
-    this.isActive = false;
-    this.onCooldown = false;
-    this.isRift = true;
-    this.isInvincible = true;
-
-    this.hoverBlocks = [];
-
-    this.anims.play("rift-idle", true);
   }
+
+  this.anims.play("rift-idle", true);
+}
+
+
+advanceChallenge() {
+  if (this.completed) return;
+
+  this.challengeIndex++;
+
+  const gsRift = GameState.player.riftProgress[this.riftName];
+  gsRift.challengeIndex = this.challengeIndex;
+
+  if (this.challengeIndex >= this.maxChallenges) {
+    this.completed = true;
+    gsRift.completed = true;
+    gsRift.hasKey = true; // grant keystone
+    console.log(`🗝️ Rift ${this.riftName} fully completed!`);
+  }
+
+  GameState.player.riftProgress[this.riftName] = gsRift;
+
+  console.log(
+    `🧩 Rift ${this.riftName} progress:`,
+    this.challengeIndex,
+    "/",
+    this.maxChallenges
+  );
+}
 
   activate() {
   if (this.isActive) return;
+
+  console.log(
+  "Rift Progress:",
+  this.challengeIndex,
+  "/",
+  this.maxChallenges
+);
 
   console.log("🕳️ Rift opened:", this.riftName);
 
@@ -156,12 +214,13 @@ startSummonLoop() {
 
       // Open scene compiler when clicked
       if (
-        pointer.isDown &&
-        !this.scene.isCompilerOpen &&
-        !this.isDormant
-      ) {
-      this.scene.openRiftCompiler(this);
-    }
+  pointer.isDown &&
+  !this.scene.isCompilerOpen &&
+  !this.isDormant
+) {
+  this.openCompiler();
+}
+
 
 
     } else {
@@ -183,4 +242,31 @@ startSummonLoop() {
 
     return codeSamples[this.riftName] || ["// unknown rift type"];
   }
+
+  openCompiler() {
+  if (this.completed) return;
+
+  const challenge =
+    this.challengePool[this.challengeIndex];
+
+  this.scene.openRiftCompiler({
+    rift: this,
+    challenge
+  });
+}
+
+advanceChallenge() {
+  if (this.completed) return;
+
+  this.challengeIndex++;
+
+  console.log(
+    `🧩 Rift ${this.riftName} progress:`,
+    this.challengeIndex,
+    "/",
+    this.maxChallenges
+  );
+}
+
+
 }

@@ -138,6 +138,24 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.codingKeyHandler = null;
     this.codingDamageHandler = null;
 
+    this.player.takeDamage = (amount = 1) => {
+
+  this.player.customData.HP -= amount;
+
+  if (this.player.customData.HP < 0) {
+    this.player.customData.HP = 0;
+  }
+  this.syncGameStateToSprite();
+  this.updateHUD();
+
+  console.log("Player HP:", this.player.customData.HP);
+
+  // Game Over check
+  if (this.player.customData.HP <= 0) {
+    this.onPlayerGameOver();
+  }
+};
+
     // ---- BUG SYSTEM ----
     this.bugGroup = this.physics.add.group(); // ← Group for physics
     this.bugManager = new BugManager(this);
@@ -195,6 +213,10 @@ this.drawMinimapMap(); // Draw static map once
   }
 );
 
+// Rift logic
+this.rifts = [];
+this.createRiftSystemsFromMap();
+
 // ================= SFX =================
 this.load.audio("player_hit", "/assets/sfx/player/player_hit.wav");
 this.load.audio("player_heal", "/assets/sfx/player/player_heal.wav");
@@ -238,7 +260,7 @@ this.physics.add.overlap(
     this.soundManager = new SoundManager(this);
 
     //Summon Rift
-    this.createRiftSystemsFromMap();
+    //this.createRiftSystemsFromMap();
 
     // ---- HUD ----
     this.playerHPEl = document.getElementById("playerHP-text");
@@ -367,15 +389,12 @@ if (this.minimapCtx) {
 }
 
 }
-
-
   // ================= HUD =================
   updateHUD(){
     if(this.playerHPEl) this.playerHPEl.textContent = this.player.customData.HP;
     if(this.playerEnergyEl) this.playerEnergyEl.textContent = this.player.customData.Energy;
     if(this.playerCoinsEl) this.playerCoinsEl.textContent = this.player.customData.Coins;
   }
-
   // ================= ANIMATIONS =================
   createAnimations(){
     const anims = this.anims;
@@ -413,12 +432,10 @@ this.anims.create({
   repeat: 0
 });
 
-    if(!anims.exists("npc-idle-down")) anims.create({ key:"npc-idle-down", frames:[{key:"kaelen",frame:1}], frameRate:1, repeat:-1 });
+if(!anims.exists("npc-idle-down")) anims.create({ key:"npc-idle-down", frames:[{key:"kaelen",frame:1}], frameRate:1, repeat:-1 });
 
-    //Bugs
-
-    //Slime
-    if(!anims.exists("slime-move-right")) anims.create({
+//Bugs
+if(!anims.exists("slime-move-right")) anims.create({
   key: "slime-move-right",
   frames: anims.generateFrameNumbers("slime",{ start: 0, end: 1 }),
   frameRate: 6,
@@ -431,7 +448,6 @@ if(!anims.exists("slime-move-left")) anims.create({
   frameRate: 6,
   repeat: -1
 });
-
         // --- Wisp Right ---
 if(!anims.exists("wisp-move-right")) {
   anims.create({
@@ -444,7 +460,6 @@ if(!anims.exists("wisp-move-right")) {
     repeat: -1
   });
 }
-
 // --- Wisp Left ---
 if(!anims.exists("wisp-move-left")) {
   anims.create({
@@ -457,7 +472,6 @@ if(!anims.exists("wisp-move-left")) {
     repeat: -1
   });
 }
-
 // Mimic
 this.anims.create({
   key: "mimicReveal",
@@ -467,7 +481,6 @@ this.anims.create({
   frameRate: 4,
   repeat: -1
 });
-
 // Rift idle animation
 if (!anims.exists("rift-idle")) {
   anims.create({
@@ -478,10 +491,7 @@ if (!anims.exists("rift-idle")) {
   });
 }
 
-
-
-  }
-
+}
   // ================= NPCs =================
   createNPCs(){
     const npcLayer = this.map.getObjectLayer("NPC Objects");
@@ -584,7 +594,7 @@ this.rifts.push(rift);
 rift.setVisible(false);
 rift.body.enable = false;
 rift.isDormant = true; // custom flag (optional but useful)
-
+rift.body.enable = false; // only if body exists
 rift.setInteractive({ useHandCursor: true });
 rift.on('pointerdown', () => {
     if (!rift.isDormant && !rift.isDebugging) {
@@ -605,7 +615,6 @@ console.log("Registered Rift (hidden):", riftName);
       }
     });
   }
-
   getNearbyRiftKiosk() {
   if (!this.riftKiosks) return null;
 
@@ -620,15 +629,9 @@ console.log("Registered Rift (hidden):", riftName);
     return dist <= INTERACT_RADIUS;
   });
 }
-
-
-
-  activateRiftFromKiosk(kiosk) {
+  // Activate Rift from Kiosk
+activateRiftFromKiosk(kiosk) {
     if (!kiosk.kioskName) return;
-    if (kiosk.cooldown) {
-        console.log("Kiosk on cooldown:", kiosk.kioskName);
-        return;
-    }
 
     const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
     console.log("Looking for rift:", targetRiftName);
@@ -636,13 +639,26 @@ console.log("Registered Rift (hidden):", riftName);
     const rift = this.rifts.find(r => r.riftName === targetRiftName);
 
     if (rift) {
+        // Prevent multiple overlapping activations
+        if (rift.isActive) {
+            console.log("Rift already active:", targetRiftName);
+            return;
+        }
+
         console.log("Summoning Rift:", targetRiftName);
 
         // Reveal rift if hidden
         if (rift.isDormant) {
             rift.setVisible(true);
+
+            // Ensure physics body exists
+            if (!rift.body) {
+                this.physics.world.enable(rift);
+            }
+
             rift.body.enable = true;
             rift.isDormant = false;
+
             rift.setScale(0);
             this.tweens.add({
                 targets: rift,
@@ -650,26 +666,18 @@ console.log("Registered Rift (hidden):", riftName);
                 duration: 300,
                 ease: "Back.Out"
             });
-            rift.activate();
         }
 
-        // ✅ DO NOT open compiler automatically
-        // The compiler will only open when player clicks the rift
+        // Activate the rift
+        rift.activate();
 
-        // Start kiosk cooldown
-        kiosk.cooldown = true;
-        this.time.delayedCall(2 * 60 * 1000, () => {
-            kiosk.cooldown = false;
-            console.log("Kiosk cooldown finished:", kiosk.kioskName);
-        });
     } else {
         console.warn("No Rift found for:", targetRiftName);
     }
 }
-
-  // Open the Rift compiler
    openRiftCompiler(rift) {
     if(this.isCompilerOpen) return;
+    this.activeRift = rift;
     this.isCompilerOpen = true;
     this.player.isCoding = true;
     this.playerController.freeze();
@@ -743,47 +751,46 @@ console.log("Registered Rift (hidden):", riftName);
 
     // ===== Emergency close if player takes damage =====
     this.codingDamageHandler = this.physics.add.overlap(
-        this.player,
-        this.bugGroup,
-        (player, bug) => {
-            if (player.isCoding && bug.dealDamage) {
-                bug.dealDamage(player);
-                this.soundManager.play("player_hit", { volume: 0.4 });
-                alert("⚠ You were attacked! Compiler closed!");
-                this.closeRiftCompiler(rift);
-            }
+    this.player,
+    this.bugGroup,
+    (player, bug) => {
+        if (!player.isCoding) return; // skip if compiler already closed
+        if (bug.dealDamage) {
+            bug.dealDamage(player);
+            this.soundManager.play("player_hit", { volume: 0.4 });
+            this.closeRiftCompiler(rift);
         }
-    );
+    }
+);
+
 }
-
-
-
-// Close coding window
-closeRiftCompiler(rift) {
-    if (!this.player.isCoding) return;
+  closeRiftCompiler(rift) {
+    // Prevent double execution
+    if (!this.isCompilerOpen) return;
 
     this.player.isCoding = false;
-    this.playerController.unfreeze(); // re-enable movement
+    this.playerController.unfreeze();
 
+    // Remove compiler DOM element
     if (this.compilerWindow) {
-        this.compilerWindow.remove();
+        document.body.removeChild(this.compilerWindow);
         this.compilerWindow = null;
     }
+
+    this.isCompilerOpen = false;
 
     // Remove the temporary damage handler
     if (this.codingDamageHandler) {
         this.physics.world.removeCollider(this.codingDamageHandler);
         this.codingDamageHandler = null;
     }
-    rift.isDebugging = false;
 
-    // Reset compiler open flag
-    this.isCompilerOpen = false;
+    // Reset rift debugging flag
+    if (rift) rift.isDebugging = false;
 
-    // Optional callback on the rift
+    // Optional callback
     if (rift && rift.onCodingClosed) rift.onCodingClosed();
 }
-
   syncGameStateToSprite() {
   const gs = GameState.player;
   if (!gs) return;
@@ -792,7 +799,6 @@ closeRiftCompiler(rift) {
   this.player.customData.Energy = gs.energy;
   this.player.customData.Coins  = gs.cryptos;
 }
-
 
 // ================= MINIMAP =================
 createMinimap() {
@@ -803,7 +809,6 @@ createMinimap() {
   this.mapScaleX = this.minimapWidth / this.map.widthInPixels;
   this.mapScaleY = this.minimapHeight / this.map.heightInPixels;
 }
-
 drawMinimapMap() {
   if (!this.minimap) return;
 
@@ -843,7 +848,6 @@ drawMinimapMap() {
     this.minimapHeight
   );
 }
-
 drawMinimapPlayer() {
   if (!this.player) return;
 
@@ -853,7 +857,6 @@ drawMinimapPlayer() {
   this.minimap.fillStyle(0x00ff00, 1);
   this.minimap.fillCircle(x, y, 3);
 }
-
 drawMinimapBugs() {
   if (!this.bugGroup) return;
 
@@ -867,7 +870,6 @@ drawMinimapBugs() {
     this.minimap.fillCircle(x, y, 2);
   });
 }
-
 // ================= HTML MINIMAP INIT =================
 initHTMLMinimap() {
   this.minimapCanvas = document.getElementById("minimapCanvas");
@@ -885,7 +887,6 @@ initHTMLMinimap() {
   // Draw static map once
   this.drawHTMLMinimapMap();
 }
-
 drawHTMLMinimapMap() {
   if (!this.minimapCtx) return;
 
@@ -917,7 +918,6 @@ drawHTMLMinimapMap() {
   ctx.lineWidth = 2;
   ctx.strokeRect(0, 0, this.minimapWidth, this.minimapHeight);
 }
-
 drawHTMLMinimapPlayer() {
   if (!this.minimapCtx || !this.player) return;
 
@@ -931,7 +931,6 @@ drawHTMLMinimapPlayer() {
   ctx.arc(x, y, 3, 0, Math.PI * 2);
   ctx.fill();
 }
-
 drawHTMLMinimapBugs() {
   if (!this.minimapCtx || !this.bugGroup) return;
 
@@ -949,7 +948,6 @@ drawHTMLMinimapBugs() {
     ctx.fill();
   });
 }
-
 onBulletHitBug(bullet, bug) {
   if (!bullet.active || !bug.active) return;
 
@@ -961,6 +959,159 @@ onBulletHitBug(bullet, bug) {
     bug.takeDamage(1);
   } else {
     bug.destroy(); // fallback if no HP system yet
+  }
+}
+onPlayerGameOver() {
+    console.log("Triggering Game Over");
+
+    // Freeze gameplay
+    this.playerController.freeze();
+
+    // Close compiler if open
+    if (this.isCompilerOpen && this.activeRift) {
+        this.closeRiftCompiler(this.activeRift);
+    }
+
+    // Stop bug movement
+    this.bugGroup.children.iterate(bug => {
+        if (bug) bug.setVelocity(0, 0);
+    });
+
+    // Reset ALL rifts safely
+    this.rifts.forEach(rift => {
+
+        // 🛑 Stop summon loop
+        if (rift.summonEvent) {
+            rift.summonEvent.remove();
+            rift.summonEvent = null;
+        }
+
+        // 🔄 Reset active state
+        rift.isActive = false;
+
+        // 🔁 Reset progress ONLY if not completed
+        if (!rift.completed) {
+            rift.challengeIndex = 0;
+
+            const gsRift =
+                GameState.player.riftProgress[rift.riftName];
+
+            if (gsRift) {
+                gsRift.challengeIndex = 0;
+            }
+        }
+
+        // 👁️ Hide + disable physics
+        rift.setVisible(false);
+
+        if (rift.body) {
+            rift.body.enable = false;
+        }
+
+        rift.isDormant = true;
+    });
+this.rifts.forEach(rift => {
+    if (rift && rift.destroy) {
+        rift.destroy();
+    }
+});
+
+this.rifts = [];
+    // Delay → show game over UI
+    this.time.delayedCall(1000, () => {
+        this.showGameOverScreen();
+    });
+}
+
+showGameOverScreen() {
+  // Prevent duplicates
+  if (this.gameOverUI) return;
+
+  const container = document.createElement("div");
+  this.gameOverUI = container;   // 🔥 store reference
+  Object.assign(container.style, {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.9)",
+    color: "#f00",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    fontFamily: "monospace",
+    zIndex: 20000,
+    gap: "12px"
+  });
+
+  // Title
+  const title = document.createElement("h1");
+  title.textContent = "💀 GAME OVER";
+  container.appendChild(title);
+
+  // ===== Retry Button =====
+  const retryBtn = document.createElement("button");
+retryBtn.textContent = "Retry";
+retryBtn.onclick = () => {
+
+  this.removeGameOverUI();   // 🔥 clear overlay first
+
+  this.playerController.unfreeze();
+
+  this.scene.restart({
+    spawn: "MalePlayer"
+  });
+};
+container.appendChild(retryBtn);
+
+
+  // ===== Continue Button =====
+  const continueBtn = document.createElement("button");
+  continueBtn.textContent = "Continue";
+  continueBtn.onclick = () => {
+    this.removeGameOverUI();           // remove overlay
+    this.playerController.unfreeze();   // allow movement again
+
+    // Load last save from GameState
+    if (GameState.player) {
+      const gs = GameState.player;
+
+      // Reset player sprite properties to last save
+      this.player.setPosition(gs.x || this.player.x, gs.y || this.player.y);
+      this.player.customData.HP = gs.hp;
+      this.player.customData.max_hp = gs.max_hp;
+      this.player.customData.Energy = gs.energy;
+      this.player.customData.Coins = gs.cryptos;
+
+      this.updateHUD();
+      if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+
+      console.log("Continued from last save!");
+    }
+  };
+  container.appendChild(continueBtn);
+
+  // ===== Return to Main Menu =====
+  const mainMenuBtn = document.createElement("button");
+  mainMenuBtn.textContent = "Return to Main Menu";
+  mainMenuBtn.onclick = () => {
+    this.removeGameOverUI();               // remove overlay
+    this.playerController.unfreeze();
+
+    // Go back to index.html (Login menu) for now
+    window.location.href = "index.html";
+  };
+  container.appendChild(mainMenuBtn);
+
+  // Add container to DOM
+  document.body.appendChild(container);
+}
+removeGameOverUI() {
+  if (this.gameOverUI) {
+    this.gameOverUI.remove();
+    this.gameOverUI = null;
   }
 }
 
