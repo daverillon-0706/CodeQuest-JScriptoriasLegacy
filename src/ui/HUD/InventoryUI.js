@@ -8,7 +8,7 @@ export default class InventoryUI {
     this.invDetails = document.getElementById('inventory-details');
     this.invName = document.getElementById('inv-item-name');
     this.invDesc = document.getElementById('inv-item-desc');
-    this.invIcon = document.querySelector('#inv-item-icon img');
+    this.invIcon = document.querySelector('.inv-item-icon img');
     this.invClose = document.getElementById('inv-details-close');
 
     this.currentTab = 'key';
@@ -27,6 +27,10 @@ export default class InventoryUI {
 
     this.loadInventory(this.currentTab);
   }
+  
+  reload() {
+  this.loadInventory(this.currentTab);
+}
 
   loadInventory(tab = 'key') {
     this.currentTab = tab;

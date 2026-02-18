@@ -1,5 +1,6 @@
 // src/ui/HUD/HUD.js
 import { PassivePerks, OffensePerks, DefensePerks } from "../data/perkData.js";
+import { syncInventory } from "../../utils/syncInventory.js";
 import CodexUI from "./CodexUI.js";
 import InventoryUI from "./InventoryUI.js";
 import QuestsUI from "./QuestsUI.js";
@@ -10,25 +11,35 @@ import PerksManager from "../../systems/PerksManager.js";
 
 export default class HUD {
   constructor() {
-    this.cacheElements();
+  this.cacheElements();
 
-    // Initialize App UIs (safe even if DOM parts are missing)
-    this.codex = new CodexUI();
-    this.inventory = new InventoryUI();
-    this.quests = new QuestsUI();
-    this.compiler = new CompilerUI();
-    this.lessons = new LessonsUI();
+  // Initialize App UIs
+  this.codex = new CodexUI();
+  this.inventory = new InventoryUI(); // ✅ initialize once
+  this.quests = new QuestsUI();
+  this.compiler = new CompilerUI();
+  this.lessons = new LessonsUI();
 
-    this.bubbleInterval = null;
-    this.selectedPerk = null;
+  // Optional: sync inventory once at startup
+  syncInventory();
 
-    this.attachEvents();
-    this.attachCompilerEvents();
+  this.bubbleInterval = null;
+  this.selectedPerk = null;
 
-    window.hud = this;
+  this.attachEvents();
+  this.attachCompilerEvents();
 
-    this.updateHUD();
+  window.hud = this;
+
+  this.updateHUD();
+  
+  window.addEventListener("gamestate-updated", () => {
+  syncInventory();
+  if (document.getElementById("app-inventory")?.classList.contains("active")) {
+    this.inventory.loadInventory(); // refresh UI instead of new InventoryUI()
   }
+});
+}
 
   // -------------------------
   // DOM CACHE
@@ -175,10 +186,6 @@ this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
   });
 });
 }
-
-
-
-
   // -------------------------
   // EVENTS
   // -------------------------
@@ -313,18 +320,38 @@ this.perkUnequipBtn?.addEventListener("click", () => {
   }
 
   openApp(appId) {
-    this.closeAllApps();
+  this.closeAllApps();
 
-    const win = document.getElementById(appId);
-    if (!win) return;
+  const win = document.getElementById(appId);
+  if (!win) return;
 
-    win.classList.remove("hidden");
-    win.classList.add("active");
-    this.tabletTitle.textContent =
-      win.querySelector("h3")?.textContent || "App";
-    this.backBtn?.classList.remove("hidden");
-    document.getElementById("tablet-home")?.classList.add("hidden");
+  // =========================
+  // INVENTORY LOAD PIPELINE
+  // =========================
+  if (appId === "app-inventory") {
+
+    syncInventory(); // update UI state from GameState
+    this.inventory.loadInventory(); // refresh the grid instead of creating new instance;
+
+    console.log(
+      "[HUD] Inventory synced & loaded"
+    );
   }
+
+  // =========================
+
+  win.classList.remove("hidden");
+  win.classList.add("active");
+
+  this.tabletTitle.textContent =
+    win.querySelector("h3")?.textContent || "App";
+
+  this.backBtn?.classList.remove("hidden");
+  document
+    .getElementById("tablet-home")
+    ?.classList.add("hidden");
+}
+
 
   quickOpen(appId) {
     this.openTablet();

@@ -2,13 +2,14 @@
 import Bug from "../Bug.js";
 import { RiftChallenges } from "../../ui/data/riftChallenges.js";
 import GameState from "../../GameState.js";
+import { normalizeRiftName } from "../../ui/data/riftIdMap.js";
 
 
 export default class InternalRiftBug extends Bug {
   constructor(scene, x, y, riftName) {
   const data = {
     summonCount: 4,
-    cooldown: 10000,
+    cooldown: 50000,
     spawnRadiusX: 48,
     spawnRadiusY: 32
   };
@@ -18,8 +19,24 @@ export default class InternalRiftBug extends Bug {
 
   // 2️⃣ Assign properties after super
   this.riftName = riftName;
+  const key =
+  normalizeRiftName(this.riftName);
 
-  this.challengePool = RiftChallenges[this.riftName] || [];
+this.challengePool =
+  RiftChallenges[key] ?? [];
+
+console.log("=== RIFT INIT DEBUG ===");
+console.log("Display Name:", this.riftName);
+console.log("Normalized Key:", key);
+console.log(
+  "Pool exists?",
+  !!RiftChallenges[key]
+);
+console.log(
+  "Pool length:",
+  this.challengePool.length
+);
+console.log("========================");
 
   this.body.setImmovable(true);
   this.body.setAllowGravity(false);
@@ -31,7 +48,7 @@ export default class InternalRiftBug extends Bug {
   this.isInvincible = true;
   this.challengeIndex = 0;
   this.completed = false;
-  this.maxChallenges = 5;
+  this.maxChallenges = this.challengePool.length;
 
   this.hoverBlocks = [];
 
@@ -39,7 +56,7 @@ export default class InternalRiftBug extends Bug {
   const gsRift = GameState.player.riftProgress[this.riftName];
   if (gsRift) {
     this.challengeIndex = gsRift.challengeIndex;
-    this.completed = gsRift.completed;
+    this.completed = gsRift.completed ?? false;
     this.hasKey = gsRift.hasKey || false;
   } else {
     GameState.player.riftProgress[this.riftName] = {
@@ -52,59 +69,92 @@ export default class InternalRiftBug extends Bug {
   this.anims.play("rift-idle", true);
 }
 
-
+// In InternalRiftBug.js
 advanceChallenge() {
-  if (this.completed) return;
+    console.log("---- advanceChallenge START ----");
+    console.log("this:", this);
+    console.log("current challenge BEFORE:", this.challengeIndex);
+    console.log("totalChallenges:", this.totalChallenges);
 
-  this.challengeIndex++;
+    if (this.completed) {
+        console.warn("Rift already completed. Abort advanceChallenge.");
+        console.log("---- advanceChallenge END ----");
+        return;
+    }
 
-  const gsRift = GameState.player.riftProgress[this.riftName];
-  gsRift.challengeIndex = this.challengeIndex;
+    // Increment safely, but do not exceed totalChallenges
+    this.challengeIndex = Math.min(
+        (this.challengeIndex ?? 0) + 1,
+        this.totalChallenges
+    );
+    console.log("currentChallenge AFTER increment:", this.challengeIndex);
 
-  if (this.challengeIndex >= this.maxChallenges) {
-    this.completed = true;
-    gsRift.completed = true;
-    gsRift.hasKey = true; // grant keystone
-    console.log(`🗝️ Rift ${this.riftName} fully completed!`);
-  }
+    // Update GameState
+    const gsRift = GameState.player.riftProgress[this.riftName] ?? {};
+    gsRift.challengeIndex = this.challengeIndex;
 
-  GameState.player.riftProgress[this.riftName] = gsRift;
+    // Check for completion
+    if (this.challengeIndex >= this.totalChallenges) {
+        console.log("🏁 Rift completed!");
+        this.completed = true;
+        gsRift.completed = true;
+        gsRift.hasKey = true;
+    }
 
-  console.log(
-    `🧩 Rift ${this.riftName} progress:`,
-    this.challengeIndex,
-    "/",
-    this.maxChallenges
-  );
+    // Sync back to GameState
+    GameState.player.riftProgress[this.riftName] = gsRift;
+
+    // Ensure compiler UI uses the same index
+    this.currentChallenge = this.challengeIndex;
+
+    console.log("Progress saved:", this.challengeIndex, "/", this.totalChallenges);
+    console.log("Completed flag:", this.completed);
+    console.log("---- advanceChallenge END ----");
 }
+
+
+
+
+
 
   activate() {
-  if (this.isActive) return;
+    if (this.isActive) return;
 
-  console.log(
-  "Rift Progress:",
-  this.challengeIndex,
-  "/",
-  this.maxChallenges
-);
+    // ==== DEBUG LOGS ====
+    console.log("---- ACTIVATE RIFT START ----");
+    console.log("Rift Progress:", this.challengeIndex, "/", this.maxChallenges);
+    console.log("🕳️ Rift opened:", this.riftName);
 
-  console.log("🕳️ Rift opened:", this.riftName);
+    // Ensure the challenge pool exists
+    const key = normalizeRiftName(this.riftName);
+    if (!this.challengePool || this.challengePool.length === 0) {
+        this.challengePool = RiftChallenges[key] ?? [];
+        console.log("Initialized challengePool for:", key);
+        console.log("challengePool length:", this.challengePool.length);
+    }
 
-  this.isActive = true;
+    // Ensure totalChallenges is set
+    this.totalChallenges = this.totalChallenges ?? this.challengePool.length;
+    console.log("totalChallenges:", this.totalChallenges);
 
-  // Camera feedback
-  this.scene.cameras.main.shake(250, 0.005);
+    this.isActive = true;
 
-  if (this.scene.riftParticles) {
-    this.scene.riftParticles.emitParticleAt(this.x, this.y, 20);
-  }
+    // Camera feedback
+    this.scene.cameras.main.shake(250, 0.005);
 
-  // 🔥 Initial summon
-  this.summonBugs();
+    if (this.scene.riftParticles) {
+        this.scene.riftParticles.emitParticleAt(this.x, this.y, 20);
+    }
 
-  // 🔁 Start looping summon every cooldown
-  this.startSummonLoop();
+    // 🔥 Initial summon
+    this.summonBugs();
+
+    // 🔁 Start looping summon every cooldown
+    this.startSummonLoop();
+
+    console.log("---- ACTIVATE RIFT END ----");
 }
+
 
 summonBugs() {
     const bugManager = this.scene.bugManager;
@@ -255,18 +305,19 @@ startSummonLoop() {
   });
 }
 
-advanceChallenge() {
-  if (this.completed) return;
+// Call this when the compiler confirms correct solution
+onChallengeSolved() {
+  console.log(`✅ Challenge ${this.challengeIndex + 1} solved!`);
+  this.advanceChallenge();
 
-  this.challengeIndex++;
-
-  console.log(
-    `🧩 Rift ${this.riftName} progress:`,
-    this.challengeIndex,
-    "/",
-    this.maxChallenges
-  );
+  // If not finished, open next challenge automatically
+  if (!this.completed) {
+    this.openCompiler();
+  } else {
+    console.log(`🎉 All challenges for ${this.riftName} completed!`);
+  }
 }
+
 
 
 }

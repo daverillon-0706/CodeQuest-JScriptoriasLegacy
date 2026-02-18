@@ -152,12 +152,12 @@
 </data>
  </layer>
  <objectgroup id="10" name="rifts layer">
-  <object id="16" name="rift_spawn" x="576.667" y="48" width="48" height="32">
+  <object id="16" name="rift_spawn" x="934.667" y="112" width="48" height="32">
    <properties>
-    <property name="riftName" value="Syntax Monolith"/>
+    <property name="riftName" value="Syntax"/>
    </properties>
   </object>
-  <object id="17" name="rift_kiosk" x="656" y="111.5" width="16" height="32">
+  <object id="17" name="rift_kiosk" x="1168" y="113.5" width="16" height="32">
    <properties>
     <property name="kioskName" value="Syntax Kiosk"/>
    </properties>

@@ -116,14 +116,14 @@
                         {
                          "name":"riftName",
                          "type":"string",
-                         "value":"Syntax Monolith"
+                         "value":"Syntax"
                         }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":48,
-                 "x":576.667,
-                 "y":48
+                 "x":934.667,
+                 "y":112
                 }, 
                 {
                  "height":32,
@@ -139,8 +139,8 @@
                  "type":"",
                  "visible":true,
                  "width":16,
-                 "x":656,
-                 "y":111.5
+                 "x":1168,
+                 "y":113.5
                 }],
          "opacity":1,
          "type":"objectgroup",

@@ -97,7 +97,8 @@ const GameState = {
       items: value.items ?? DEFAULT_PLAYER.items,
       lessonsUnlocked: value.lessonsUnlocked ?? [],
       codexProgress: value.codexProgress ?? DEFAULT_PLAYER.codexProgress,
-      worldState: value.worldState ?? DEFAULT_PLAYER.worldState
+      worldState: value.worldState ?? DEFAULT_PLAYER.worldState,
+      riftProgress:value.riftProgress ?? {}
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
