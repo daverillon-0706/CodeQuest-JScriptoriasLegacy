@@ -5,10 +5,10 @@ import { inventoryData } from '/src/ui/data/inventoryData.js';
 import { inventoryState } from '/src/ui/data/inventoryState.js';
 import { syncInventory } from '../../utils/syncInventory.js';
 import { ITEM_ICONS } from '/src/ui/data/itemIcons.js';
+import ConsumablesManager from '../../systems/ConsumablesManager.js';
 
 export default class InventoryUI {
   constructor() {
-    // DOM elements
     this.invTabs = document.querySelectorAll('.inv-tab');
     this.invGrid = document.getElementById('inventory-grid');
     this.invDetails = document.getElementById('inventory-details');
@@ -47,31 +47,56 @@ export default class InventoryUI {
 
   // Setup quick-access consumable button behavior
   setupQuickAccess() {
-    const self = this;
-    document.querySelectorAll('#quick-access .quick-slot.item').forEach(slot => {
-  slot.addEventListener('click', () => {
-    const consumableId = slot.dataset.id;
-    if (!consumableId) return; // nothing equipped
+  // Get the current player perks
+  const player = GameState.player;
+  if (!player) return;
 
-    const used = GameState.useConsumable(consumableId, 1);
-    if (used) {
-      alert(`✅ Used ${inventoryData.cons[consumableId].name} from Quick Access`);
-      syncInventory();
-      inventoryUI.reload();
-    } else {
-      alert(`❌ No ${inventoryData.cons[consumableId].name} left!`);
-    }
+  // Loop over both quick-access consumable slots
+  player.perks.consumables = player.perks.consumables || [null, null];
+
+  player.perks.consumables.forEach((consumableId, index) => {
+    const slotEl = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
+    if (!slotEl) return;
+
+    // Set data-id and icon
+    slotEl.dataset.id = consumableId ?? '';
+    const imgEl = slotEl.querySelector('.perk-icon img');
+    if (imgEl) imgEl.src = consumableId ? ITEM_ICONS[consumableId] ?? '' : '';
+
+    // Click listener to use the consumable
+    slotEl.onclick = () => {
+      if (!consumableId) return;
+      const scene = window.currentScene;
+      const success = ConsumablesManager.use(consumableId, scene);
+
+      const consumableData = inventoryData.cons[consumableId];
+      if (!consumableData) return alert("❌ Consumable not found!");
+
+      if (success) {
+        alert(`✅ Used ${consumableData.name} from Quick Access`);
+
+        // Remove from slot if depleted
+        const updatedPlayer = GameState.player;
+        const slotIdx = updatedPlayer.perks.consumables.findIndex(c => c === consumableId);
+        if (slotIdx !== -1) {
+          updatedPlayer.perks.consumables[slotIdx] = null;
+        }
+        GameState.player = updatedPlayer;
+
+        syncInventory();
+        this.reload();
+      } else {
+        alert(`❌ No ${consumableData.name} left!`);
+      }
+    };
   });
-});
-
-  }
+}
 
   // Load inventory items for a given tab
   loadInventory(tab = 'key') {
     this.currentTab = tab;
     this.invGrid.innerHTML = '';
 
-    // Ensure inventory state matches GameState
     syncInventory();
 
     const data = inventoryData[tab];
@@ -91,7 +116,6 @@ export default class InventoryUI {
       img.classList.add('inv-icon');
       slot.appendChild(img);
 
-      // Show count for consumables
       if (tab === 'cons') {
         const count = document.createElement('span');
         count.classList.add('inv-count');
@@ -99,7 +123,6 @@ export default class InventoryUI {
         slot.appendChild(count);
       }
 
-      // Click to open details
       slot.addEventListener('click', () =>
         this.openItemDetails(item, id, tab === 'cons' ? state[id] : null)
       );
@@ -108,19 +131,17 @@ export default class InventoryUI {
     });
   }
 
-  // Open item details (inventory right panel)
+  // Open item details (right panel)
   openItemDetails(item, id = null, amount = null) {
     this.invName.textContent = item.name;
-    this.invDesc.textContent =
-      item.desc + (amount !== null ? `\nQuantity: ${amount}` : '');
+    this.invDesc.textContent = item.desc + (amount !== null ? `\nQuantity: ${amount}` : '');
 
     this.invIcon.src = ITEM_ICONS[id] ?? '';
     this.invIcon.style.display = 'block';
     this.invDetails.classList.remove('hidden');
 
-    // Only for consumables
     if (this.currentTab === 'cons') {
-      // --- Use Button ---
+      // Use Button
       let btn = document.getElementById('inv-use-btn');
       if (!btn) {
         btn = document.createElement('button');
@@ -130,7 +151,9 @@ export default class InventoryUI {
         this.invDetails.appendChild(btn);
       }
       btn.onclick = () => {
-        const success = GameState.useConsumable(id, 1);
+        const scene = window.currentScene;
+        const success = ConsumablesManager.use(id, scene);
+
         if (success) {
           alert(`✅ Used ${item.name}`);
           syncInventory();
@@ -141,7 +164,7 @@ export default class InventoryUI {
         }
       };
 
-      // --- Equip to Quick Access Button ---
+      // Equip to Quick Access Button
       let equipBtn = document.getElementById('inv-equip-btn');
       if (!equipBtn) {
         equipBtn = document.createElement('button');
@@ -151,19 +174,22 @@ export default class InventoryUI {
         this.invDetails.appendChild(equipBtn);
       }
       equipBtn.onclick = () => {
-  // Find first available quick-access slot
-  const slot = document.querySelector(
-    `#quick-access .quick-slot.item[data-slot="item-1"], 
-     #quick-access .quick-slot.item[data-slot="item-2"]`
-  );
+  const player = GameState.player;
+  if (!player || !player.perks) return;
 
-  if (!slot) return;
+  player.perks.consumables = player.perks.consumables || [null, null];
 
-  slot.dataset.id = item.id; // Set the equipped consumable
-  slot.querySelector('.perk-icon img').src = `/codequest-game/public/assets/icons/item/consumables/${item.icon}`;
+  const slotIndex = player.perks.consumables.findIndex(c => !c);
+  if (slotIndex === -1) return alert("❌ No empty Quick Access slots!");
+
+  player.perks.consumables[slotIndex] = id;
+  GameState.player = player; // persist changes
+
+  // Refresh quick-access icons & click listeners
+  this.setupQuickAccess();
+
   alert(`✅ Equipped ${item.name} to Quick Access`);
 };
-
     }
   }
 }

@@ -54,6 +54,11 @@ document.body.appendChild(this.coordDisplay);
     // ---- DEBUG ----
     this.debugPosition = false;
     this._debugTimer = 0;
+
+    // 🔫 Fire rate system
+this.baseFireRate = 300; // ms between shots (normal speed)
+this.fireRate = this.baseFireRate;
+this.lastShotTime = 0;
   }
 
   update(npcs = []) {
@@ -77,15 +82,17 @@ this.coordDisplay.textContent = `px: ${px}, ${py} | tile: ${tileX}, ${tileY}`;
     // =========================
     // ⚔️ ATTACK INPUT
     // =========================
-    if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
-      this.attack();
-    }
+    const now = this.scene.time.now;
+
+if (this.attackKey.isDown && now > this.lastShotTime + this.fireRate) {
+  this.lastShotTime = now;
+  this.attack();
+}
 
     // 🚫 Stop movement while attacking
     if (this.isAttacking) {
-      this.player.body.setVelocity(0);
-      return;
-    }
+  this.player.body.setVelocity(0);
+}
 
     // ---- Reset velocity ----
     this.player.body.setVelocity(0);
@@ -172,7 +179,7 @@ attack() {
   this.player.setFrame(frames.attack);
 
   // Return to idle after 300ms
-  this.scene.time.delayedCall(300, () => {
+  this.scene.time.delayedCall(this.fireRate, () => {
     this.player.setFrame(frames.idle);
     this.isAttacking = false;
   });

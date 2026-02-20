@@ -19,6 +19,8 @@ import { KEYSTONE_MAP } from "../ui/data/keystoneMap.js";
 import { KEY_ITEM_ORDER } from "../ui/data/keyItems.js";
 import Bullet from "../systems/weapons/bullet.js";
 import ShopSystem from "../systems/ShopSystem.js";
+import PerksManager from "../systems/PerksManager.js";
+import { OffensePerks, DefensePerks } from "../ui/data/perkData.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -119,11 +121,12 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       Energy: data.playerEnergy ?? GameState.player?.energy,
       Coins: data.playerCoins ?? GameState.player?.cryptos
     };
+    if (!this.player.activePerks) {
+  this.player.activePerks = {};
+}
     //GameState.player = this.player;
     this.syncGameStateToSprite();
     this.updateHUD();
-
-
     this.player.isCoding = false;
     this.compilerWindow = null;
     this.codingKeyHandler = null;
@@ -139,6 +142,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   this.syncGameStateToSprite();
   this.updateHUD();
 
+  
   console.log("Player HP:", this.player.customData.HP);
 
   // Game Over check
@@ -146,6 +150,21 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.onPlayerGameOver();
   }
 };
+// ---- DEFAULT PERKS ----
+
+if (GameState.player) {
+  if (!GameState.player.perks?.offense) {
+    PerksManager.equip(OffensePerks.pixel_gun);
+    console.log("Equipped default offense perk: Pixel Gun");
+  }
+
+  if (!GameState.player.perks?.defense) {
+    PerksManager.equip(DefensePerks.magic_mushroom);
+    console.log("Equipped default defense perk: Magic Mushroom");
+  }
+}
+
+PerksManager.setScene(this);
 
 // Shop System Logic
 this.shopSystem = new ShopSystem(this);
@@ -219,6 +238,9 @@ this.blasterSFX = this.sound.add("blaster", {volume: 0.5});
     this.createAnimations();
     this.createNPCs();
     this.playerController = new PlayerController(this,this.player,this.MOVE_SPEED);
+    PerksManager.setScene(this);
+    window.currentScene = this;
+
     // Group to manage all bullets
     this.bulletGroup = this.physics.add.group({
       classType: Bullet,
@@ -350,6 +372,7 @@ this.physics.add.overlap(
       this.bugManager.bugs.forEach(bug => bug.clearTint());
     }
   }
+  //this.handlePerkEffects();
 
   // ---- MINIMAP UPDATE ----
 if (this.minimap) {
@@ -1340,4 +1363,28 @@ removeGameOverUI() {
     this.gameOverUI = null;
   }
 }
+/*
+handlePerkEffects() {
+  const player = this.player;
+  if (!player?.effects?.enemyDebuffLock) return;
+
+  const radius = 6 * 32; // 6 tiles, assuming 32px tiles
+
+  console.log("[Perk] CTRL+ALT+DEL triggered");
+
+  this.enemies.getChildren().forEach(enemy => {
+    const distance = Phaser.Math.Distance.Between(
+      player.x, player.y,
+      enemy.x, enemy.y
+    );
+
+    if (distance <= radius) {
+      enemy.destroy();
+    }
+  });
+
+  // Remove effect so it runs only once
+  delete player.effects.enemyDebuffLock;
+}
+*/
 }

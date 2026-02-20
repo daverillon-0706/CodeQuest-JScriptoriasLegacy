@@ -1,5 +1,5 @@
 // src/ui/HUD/HUD.js
-import { PassivePerks, OffensePerks, DefensePerks } from "../data/perkData.js";
+import { PassivePerks, OffensePerks, DefensePerks } from "../data/perkData.js"
 import { syncInventory } from "../../utils/syncInventory.js";
 import CodexUI from "./CodexUI.js";
 import InventoryUI from "./InventoryUI.js";
@@ -8,6 +8,7 @@ import CompilerUI from "./CompilerUI.js";
 import LessonsUI from "./LessonsUI.js";
 import GameState from "../../GameState.js";
 import PerksManager from "../../systems/PerksManager.js";
+import ConsumablesManager from "../../systems/ConsumablesManager.js";
 
 export default class HUD {
   constructor() {
@@ -120,71 +121,139 @@ this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
   // -------------------------
   updateHUD() {
   const player = GameState.player;
-    if (!player) return;
+  if (!player) return;
 
-    const { hp, max_hp, energy, max_energy, cryptos } = player;
+  const { hp, max_hp, energy, max_energy, cryptos } = player;
 
-    // -------------------------
-    // TEXT VALUES
-    // -------------------------
-    document.getElementById("playerHP-text") &&
-      (document.getElementById("playerHP-text").textContent = hp);
+  // -------------------------
+  // TEXT VALUES
+  // -------------------------
+  document.getElementById("playerHP-text") &&
+    (document.getElementById("playerHP-text").textContent = hp);
 
-    document.getElementById("playerEnergy-text") &&
-      (document.getElementById("playerEnergy-text").textContent = energy);
+  document.getElementById("playerEnergy-text") &&
+    (document.getElementById("playerEnergy-text").textContent = energy);
 
-    document.getElementById("cryptos-count") &&
-      (document.getElementById("cryptos-count").textContent = cryptos);
+  document.getElementById("cryptos-count") &&
+    (document.getElementById("cryptos-count").textContent = cryptos);
 
-    // -------------------------
-    // SPRITE RENDERING
-    // -------------------------
-    this.renderHearts(hp, max_hp);
-    this.renderEnergy(energy, max_energy);
+  // -------------------------
+  // SPRITE RENDERING
+  // -------------------------
+  this.renderHearts(hp, max_hp);
+  this.renderEnergy(energy, max_energy);
+
+  // --------------------------
+  // QUICK SLOT ICONS: PERKS
+  // --------------------------
+  const perkSlots = ["passive", "offense", "defense"];
+  perkSlots.forEach((slot) => {
+  const perkId = player.perks[slot];
+  const iconImg = document.querySelector(`.quick-slot.${slot} .perk-icon img`);
+  if (!iconImg) return;
+
+  iconImg.src = perkId
+    ? `/public/assets/icons/buffs/${perkId}.png`
+    : "/public/assets/icons/empty-slot.png";
+
+  // Highlight if currently active
+  if (perkId && player.activePerks[perkId]) {
+    iconImg.classList.add("active-perk");
+  } else {
+    iconImg.classList.remove("active-perk");
+  }
+});
 
 
   // --------------------------
-    // QUICK SLOT ICONS
-    // --------------------------
-    const slots = ["passive", "offense", "defense"];
+  // QUICK SLOT ICONS: CONSUMABLES
+  // --------------------------
+  const quickConsumables = player.perks.consumables;
+  quickConsumables.forEach((id, index) => {
+    const slot = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
+    if (!slot) return;
 
-    slots.forEach((slot) => {
-      const iconImg = document.querySelector(
-        `.quick-slot.${slot} .perk-icon img`
-      );
-      if (!iconImg) return;
+    slot.dataset.id = id ?? "";
+    const img = slot.querySelector('.perk-icon img');
+    img.src = id ? `/public/assets/icons/item/consumables/${id}.png` : "";
+  });
 
-      const perkId = GameState.player.perks[slot];
+  // --------------------------
+// QUICK SLOT CLICK HANDLERS
+// --------------------------
+document.querySelectorAll(".quick-slot").forEach((slotEl) => {
+  if (slotEl.dataset.listenerAdded) return; // prevent duplicates
+  slotEl.dataset.listenerAdded = true;
 
-      iconImg.src = perkId
-        ? `/public/assets/icons/buffs/${perkId}.png`
-        : "/public/assets/icons/empty-slot.png";
-    });
-
-  document.querySelectorAll(".quick-slot").forEach((slotEl) => {
   slotEl.addEventListener("click", () => {
     const type = slotEl.classList.contains("passive")
       ? "passive"
       : slotEl.classList.contains("offense")
       ? "offense"
+      : slotEl.classList.contains("item")
+      ? "consumable"
       : "defense";
 
-    const perkId = GameState.player.perks[type];
-    if (!perkId) return;
+    const playerPerks = player.perks ?? {};
+    const activePerks = player.activePerks ?? {};
 
-    if (type === "passive") {
-      // maybe just show details or info
-      const perkData = PassivePerks[perkId];
-      this.showPerkDetails({ id: perkId, type, ...perkData });
-    } else if (type === "offense") {
-      PerksManager.activateOffense(perkId);
-    } else if (type === "defense") {
-      PerksManager.activateDefense(perkId);
+    switch (type) {
+      case "passive": {
+        const perkId = playerPerks.passive;
+        if (!perkId) return;
+
+        const perkData = PassivePerks[perkId];
+        if (!perkData) return;
+
+        this.showPerkDetails({ id: perkId, type, ...perkData });
+        break;
+      }
+
+      case "offense": {
+        const perkId = playerPerks.offense;
+        if (!perkId) return;
+
+        // Activate if not already active
+        if (!activePerks[perkId]) {
+          PerksManager.activateOffense(perkId);
+        }
+        break;
+      }
+
+      case "defense": {
+        const perkId = playerPerks.defense;
+        if (!perkId) return;
+
+        if (!activePerks[perkId]) {
+          PerksManager.activateDefense(perkId);
+        }
+        break;
+      }
+
+      case "consumable": {
+        const consumableId = slotEl.dataset.id;
+        if (!consumableId) return;
+
+        const scene = window.currentScene;
+        const success = ConsumablesManager.use(consumableId, scene);
+        if (success) {
+          syncInventory();
+          alert(`✅ Used ${inventoryData.cons[consumableId].name}`);
+          this.updateHUD();
+        } else {
+          alert(`❌ No ${inventoryData.cons[consumableId].name} left!`);
+        }
+        break;
+      }
+
+      default:
+        console.warn("Unknown quick-slot type:", type);
     }
-
-    this.updateHUD(); // refresh cooldowns / energy
   });
 });
+
+
+
 }
   // -------------------------
   // EVENTS
@@ -465,6 +534,25 @@ showPerkDetails(perk) {
     this.showPerkDetails(perk);
   };
 }
+
+// -------------------------
+  // ENABLE / DISABLE PERK BUTTONS
+  // -------------------------
+  disablePerkButton(perkId) {
+    const btns = [this.perkEquipBtn, this.perkUnequipBtn];
+    btns.forEach(btn => {
+      if (!btn) return;
+      if (this.selectedPerk?.id === perkId) btn.disabled = true;
+    });
+  }
+
+  enablePerkButton(perkId) {
+    const btns = [this.perkEquipBtn, this.perkUnequipBtn];
+    btns.forEach(btn => {
+      if (!btn) return;
+      if (this.selectedPerk?.id === perkId) btn.disabled = false;
+    });
+  }
 
 
 

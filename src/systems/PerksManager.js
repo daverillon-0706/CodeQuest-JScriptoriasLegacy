@@ -3,6 +3,7 @@ import GameState from "../GameState.js";
 import { PassivePerks, OffensePerks, DefensePerks } from "../ui/data/perkData.js";
 
 export default class PerksManager {
+  
   // -------------------------
   // HELPERS
   // -------------------------
@@ -11,13 +12,45 @@ export default class PerksManager {
   }
 
   static sync() {
-    // Only store serializable data
-    const { hp, max_hp, energy, max_energy, cryptos, perks } = this.player;
-    const clone = { hp, max_hp, energy, max_energy, cryptos, perks };
-    GameState.player = { ...clone, effects: this.player.effects };
-    window.hud?.updateHUD?.();
-  }
+  if (!this.player) return;
 
+  const storedPlayer = GameState.player ?? {};
+  GameState.player = {
+    ...storedPlayer,               // keep existing data like activePerks
+    hp: this.player.hp,
+    max_hp: this.player.max_hp,
+    energy: this.player.energy,
+    max_energy: this.player.max_energy,
+    cryptos: this.player.cryptos,
+    perks: this.player.perks,
+    effects: this.player.effects,
+    perkInventory: this.player.perkInventory,
+    items: this.player.items,
+    lessonsUnlocked: this.player.lessonsUnlocked,
+    codexProgress: this.player.codexProgress,
+    worldState: this.player.worldState,
+    riftProgress: this.player.riftProgress,
+  };
+
+  window.hud?.updateHUD?.();
+}
+
+  static currentScene = null;
+
+  static setScene(scene) {
+  this.currentScene = scene;
+  console.log("Scene key:", scene.scene.key);
+
+  const player = GameState.player;
+
+  // Initialize objects if missing
+  player.activePerks ??= {};
+  player.cooldowns ??= {};
+  GameState.player = player;
+
+  console.log("OffensePerks:", OffensePerks);
+  console.log("DefensePerks:", DefensePerks);
+}
   static isEquipped(perkId) {
     const p = this.player?.perks;
     if (!p) return false;
@@ -44,10 +77,16 @@ export default class PerksManager {
   }
 
   static startCooldown(perkId, duration) {
-    if (!duration) return;
-    this.player.cooldowns ??= {};
-    this.player.cooldowns[perkId] = Date.now() + duration;
-  }
+  if (!duration) return;
+
+  // ✅ Ensure player and cooldown object exist
+  const player = this.player;
+  if (!player) return;
+
+  player.cooldowns ??= {};  // <- THIS ensures it exists
+
+  player.cooldowns[perkId] = Date.now() + duration;
+}
 
   // -------------------------
   // EQUIP / UNEQUIP
@@ -136,25 +175,57 @@ static unequip(type) {
   const perk = source[perkId];
   if (!perk) return;
 
-  console.log("[PerksManager] Activating perk:", perkId, perk.type ?? "unknown");
+  if (!this.player) return;
 
-  if (this.isOnCooldown(perkId)) {
-    console.log("[PerksManager] On cooldown:", perkId);
-    return;
-  }
+  this.player.activePerks ??= {};
+
+  if (this.player.activePerks[perkId]) return; // already active
+
+  if (!this.isEquipped(perkId)) return;
+
+  if (this.isOnCooldown(perkId)) return;
 
   const cost = this.getEffectiveCost(perk);
-  if (!this.hasEnergy(cost)) {
-    console.log("[PerksManager] Not enough energy for:", perkId);
+  if (!this.hasEnergy(cost)) return;
+
+  this.spendEnergy(cost);
+  this.player.activePerks[perkId] = true;
+
+  console.log(`[PerksManager] Activating perk: ${perkId}`);
+  console.log(`[PerksManager] Active perks now:`, this.player.activePerks);
+
+  // Immediately disable HUD button
+  window.hud?.disablePerkButton(perkId);
+
+  try {
+    if (perk.apply) {
+      perk.apply(this.player, this.currentScene);
+    }
+  } catch (err) {
+    console.error(`[PerksManager] Error activating ${perkId}:`, err);
+    delete this.player.activePerks[perkId];
+    window.hud?.enablePerkButton(perkId);
     return;
   }
 
-  this.spendEnergy(cost);
-  perk.apply?.(this.player);
+  // Duration
+  if (perk.duration) {
+    this.currentScene?.time?.delayedCall(perk.duration, () => {
+      delete this.player.activePerks[perkId];
+      console.log(`[PerksManager] Perk expired: ${perkId}`);
+      window.hud?.enablePerkButton(perkId);
+      window.hud?.updateHUD();
+    });
+  } else {
+    // If no duration, re-enable after cooldown
+    const cd = perk.cooldown ?? 0;
+    setTimeout(() => {
+      window.hud?.enablePerkButton(perkId);
+      window.hud?.updateHUD();
+    }, cd);
+  }
+
   this.startCooldown(perkId, perk.cooldown);
-
-  console.log("[PerksManager] Perk activated:", perkId);
-
   this.sync();
 }
 

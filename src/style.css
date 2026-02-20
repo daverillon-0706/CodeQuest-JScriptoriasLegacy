@@ -1292,6 +1292,10 @@ body {
   padding: 0;
   cursor: pointer;
   position: relative;
+  border: 2px solid #00ffea;
+  filter: drop-shadow(0 0 8px #00ffea);
+  border-radius: 4px;
+  
 }
 
 .quick-slot:active {
@@ -1432,5 +1436,9 @@ body {
   opacity: 0.8;
 }
 
+.active-perk {
+  outline: 2px solid yellow;
+  filter: brightness(1.2);
+}
 
 

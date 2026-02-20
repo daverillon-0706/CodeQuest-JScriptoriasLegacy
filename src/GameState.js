@@ -24,6 +24,8 @@ const DEFAULT_PLAYER = {
     consumables: [null, null]
   },
 
+  activePerks:{},
+  effects:{},
   perkInventory: [],
 
   items: {
@@ -56,24 +58,42 @@ const GameState = {
   // LOAD
   // =========================
   get player() {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return null;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) return null;
 
-    const parsed = JSON.parse(stored);
+  const parsed = JSON.parse(stored);
 
-    return {
-      ...DEFAULT_PLAYER,
-      ...parsed,
-      items: {
-        ...DEFAULT_PLAYER.items,
-        ...(parsed.items || {})
-      },
-      worldState: {
-        ...DEFAULT_PLAYER.worldState,
-        ...(parsed.worldState || {})
-      }
-    };
-  },
+  return {
+    ...DEFAULT_PLAYER,
+    ...parsed,
+
+    perks: {
+      ...DEFAULT_PLAYER.perks,
+      ...(parsed.perks || {})
+    },
+
+    items: {
+      ...DEFAULT_PLAYER.items,
+      ...(parsed.items || {})
+    },
+
+    worldState: {
+      ...DEFAULT_PLAYER.worldState,
+      ...(parsed.worldState || {})
+    },
+
+    // 🔥 ADD THESE
+    activePerks: {
+      ...DEFAULT_PLAYER.activePerks,
+      ...(parsed.activePerks || {})
+    },
+
+    effects: {
+      ...DEFAULT_PLAYER.effects,
+      ...(parsed.effects || {})
+    }
+  };
+},
 
   // =========================
   // SAVE
@@ -86,20 +106,24 @@ const GameState = {
     }
 
     const toStore = {
-      saveVersion: value.saveVersion ?? 2,
-      hp: value.hp ?? 5,
-      max_hp: value.max_hp ?? 5,
-      energy: value.energy ?? 3,
-      max_energy: value.max_energy ?? 3,
-      cryptos: value.cryptos ?? 0,
-      perks: value.perks ?? DEFAULT_PLAYER.perks,
-      perkInventory: value.perkInventory ?? [],
-      items: value.items ?? DEFAULT_PLAYER.items,
-      lessonsUnlocked: value.lessonsUnlocked ?? [],
-      codexProgress: value.codexProgress ?? DEFAULT_PLAYER.codexProgress,
-      worldState: value.worldState ?? DEFAULT_PLAYER.worldState,
-      riftProgress:value.riftProgress ?? {}
-    };
+  saveVersion: value.saveVersion ?? 2,
+  hp: value.hp ?? 5,
+  max_hp: value.max_hp ?? 5,
+  energy: value.energy ?? 3,
+  max_energy: value.max_energy ?? 3,
+  cryptos: value.cryptos ?? 0,
+
+  perks: value.perks ?? DEFAULT_PLAYER.perks,
+  activePerks: value.activePerks ?? {},   // 🔥 ADD
+  effects: value.effects ?? {},           // 🔥 ADD
+
+  perkInventory: value.perkInventory ?? [],
+  items: value.items ?? DEFAULT_PLAYER.items,
+  lessonsUnlocked: value.lessonsUnlocked ?? [],
+  codexProgress: value.codexProgress ?? DEFAULT_PLAYER.codexProgress,
+  worldState: value.worldState ?? DEFAULT_PLAYER.worldState,
+  riftProgress: value.riftProgress ?? {}
+};
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
     
@@ -209,6 +233,8 @@ addConsumable(id, amount = 1) {
     this.player = player; // trigger save & events
     return true;
   }
+
+  
 };
 
 export default GameState;
