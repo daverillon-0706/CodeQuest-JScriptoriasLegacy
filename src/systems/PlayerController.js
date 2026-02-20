@@ -9,6 +9,19 @@ export default class PlayerController {
     this.MOVE_SPEED = moveSpeed;
     this.frozen = false; // ← New flag: frozen when coding
 
+    this.coordDisplay = document.getElementById('player-coords');
+    // In your scene create() or PlayerController constructor
+this.coordDisplay = document.createElement('div');
+this.coordDisplay.style.position = 'absolute';
+this.coordDisplay.style.top = '5px';
+this.coordDisplay.style.left = '5px';
+this.coordDisplay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+this.coordDisplay.style.color = '#fff';
+this.coordDisplay.style.padding = '4px';
+this.coordDisplay.style.fontFamily = 'monospace';
+this.coordDisplay.style.zIndex = 999;
+document.body.appendChild(this.coordDisplay);
+
 
     // Arrow keys
     this.cursors = scene.input.keyboard.createCursorKeys();
@@ -46,12 +59,20 @@ export default class PlayerController {
   update(npcs = []) {
     if (!this.player) return;
 
-
     // 🚫 Skip movement if frozen (coding)
     if (this.frozen) {
       this.player.body.setVelocity(0, 0);
       return this.canTalkTo; // still detect nearby NPCs if needed
     }
+
+    // update live coordinates
+if (this.player) {
+  const px = Math.round(this.player.x);
+  const py = Math.round(this.player.y);
+  const tileX = Math.floor(this.player.x / this.scene.TILE_SIZE);
+const tileY = Math.floor(this.player.y / this.scene.TILE_SIZE);
+this.coordDisplay.textContent = `px: ${px}, ${py} | tile: ${tileX}, ${tileY}`;
+}
     
     // =========================
     // ⚔️ ATTACK INPUT
@@ -198,22 +219,28 @@ unfreeze() {
 }
   // ---- DEBUG HELPER ----
   logPlayerPosition(delta) {
-    if (!this.debugPosition) return;
+  if (!this.debugPosition || !this.player) return;
 
-    this._debugTimer += delta;
-    if (this._debugTimer < 500) return;
+  this._debugTimer += delta;
+  if (this._debugTimer < 100) return; // update every 100ms
+  this._debugTimer = 0;
 
-    this._debugTimer = 0;
+  const px = Math.round(this.player.x);
+  const py = Math.round(this.player.y);
 
-    const px = Math.round(this.player.x);
-    const py = Math.round(this.player.y);
+  const tileSize = this.scene.TILE_SIZE || 16;
+  const tileX = Math.floor(px / tileSize);
+  const tileY = Math.floor(py / tileSize);
 
-    const tileSize = this.scene.TILE_SIZE || 16;
-    const tileX = Math.floor(px / tileSize);
-    const tileY = Math.floor(py / tileSize);
+  // Console log
+  console.log(`[${this.scene.scene.key}] Player @ px(${px}, ${py}) | tile(${tileX}, ${tileY})`);
 
-    console.log(
-      `[${this.scene.scene.key}] Player @ px(${px}, ${py}) | tile(${tileX}, ${tileY})`
-    );
+  // In-game display
+  if (this.coordDisplay) {
+    this.coordDisplay.textContent = `Pixel: (${px}, ${py}) | Tile: (${tileX}, ${tileY})`;
   }
+}
+
+
+
 }

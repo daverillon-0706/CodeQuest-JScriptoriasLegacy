@@ -107,6 +107,15 @@ const GameState = {
     new CustomEvent("gamestate-updated", { detail: toStore})
     );
 
+    window.addEventListener("gamestate-updated", (e) => {
+  const player = e.detail;
+
+  updateHearts(player.hp, player.max_hp);
+  updateEnergy(player.energy, player.max_energy);
+  updateCryptos(player.cryptos);
+});
+
+
     console.log("[GameState] Saved player data:", JSON.stringify(toStore, null, 2));
   },
 
@@ -115,6 +124,90 @@ const GameState = {
   // =========================
   logout() {
     localStorage.removeItem(STORAGE_KEY);
+  },
+
+  // =========================
+// KEY ITEMS
+// =========================
+
+// Get all collected key items
+getKeyItems() {
+  return this.player?.items?.keyItems ?? [];
+},
+
+// Check if player has a key item
+hasKeyItem(id) {
+  return this.getKeyItems().includes(id);
+},
+
+// Get next required key item
+getNextKeyItem(KEY_ITEM_ORDER) {
+  const owned = this.getKeyItems();
+  return KEY_ITEM_ORDER[owned.length] ?? null;
+},
+
+// Add key item (ordered)
+addKeyItem(id, KEY_ITEM_ORDER) {
+  const player = this.player;
+  if (!player) return;
+
+  const owned = player.items.keyItems;
+
+  // Prevent duplicates
+  if (owned.includes(id)) {
+    console.log("[KeyItem] Already owned:", id);
+    return;
+  }
+
+  // Enforce order
+  const expected = KEY_ITEM_ORDER[owned.length];
+
+  if (id !== expected) {
+    console.warn(
+      `[KeyItem] Cannot collect ${id} yet. Expected: ${expected}`
+    );
+    return;
+  }
+
+  owned.push(id);
+
+  this.player = player;
+
+  console.log("[KeyItem] Collected:", id);
+},
+
+addConsumable(id, amount = 1) {
+    const player = this.player;
+    if (!player) return;
+
+    player.items = player.items || {};
+    player.items.consumables = player.items.consumables || [];
+
+    const existing = player.items.consumables.find(c => c.id === id);
+    if (existing) {
+      existing.amount += amount;
+    } else {
+      player.items.consumables.push({ id, amount });
+    }
+
+    this.player = player; // trigger save & events
+  },
+
+  useConsumable(id, amount = 1) {
+    const player = this.player;
+    if (!player?.items?.consumables) return false;
+
+    const consumable = player.items.consumables.find(c => c.id === id);
+    if (!consumable || consumable.amount < amount) return false;
+
+    consumable.amount -= amount;
+    if (consumable.amount <= 0) {
+      // remove from inventory
+      player.items.consumables = player.items.consumables.filter(c => c.id !== id);
+    }
+
+    this.player = player; // trigger save & events
+    return true;
   }
 };
 

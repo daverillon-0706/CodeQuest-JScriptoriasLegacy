@@ -22,7 +22,11 @@
       <div id="stage">
 
         <!-- Game viewport -->
-        <div id="game-container"></div>
+        <div id="game-container">
+
+          <!-- SHOP UI -->
+
+        </div>
 
         <div id="dialogue-box" class="dialogue-box hidden">
           <p id="dialogue-text"></p>
@@ -31,41 +35,17 @@
 
       </div>
 
-      <!-- Battle UI -->
-      <div id="battle-ui" class="hidden" style="display:none; visibility:hidden;">
-        <div id="battle-bg"></div>
-
-        <div id="player-container">
-          <textarea id="player-code" placeholder="Type JS code here..."></textarea>
-        </div>
-
-        <div id="bug-container">
-          <pre id="bug-code">// Bug's error code appears here</pre>
-        </div>
-
-        <div id="battle-buttons">
-          <button id="debug-btn" disabled>Debug</button>
-          <button class="perk-btn" data-perk="Passive">Passive</button>
-          <button class="perk-btn" data-perk="Attack">Attack</button>
-          <button class="perk-btn" data-perk="Defend">Defend</button>
-          <button id="escape-btn">Escape</button>
-        </div>
-
-        <div id="battle-stats">
-          <p>HP: <span id="battle-playerHP">0</span></p>
-          <p>Energy: <span id="battle-playerEnergy">0</span></p>
-          <p>Cryptos: <span id="battle-playerCryptos">0</span></p>
-          <p>Bug HP: <span id="battle-bugHP">1</span></p>
-          <p>Bug Energy: <span id="battle-bugEnergy"></span></p>
-          <div id="bug-debuffs">
-
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- HUD (Tablet version) -->
+
+    <div id="shop-ui" class="shop-hidden">
+  <div class="shop-container">
+    <h2>Debug Shop</h2>
+    <div id="shop-items"></div>
+    <button id="shop-close">Close (Z)</button>
+  </div>
+</div>
 
 <!-- PLAYER STATS HUD (Top-left) -->
 <div id="player-stats" class="hud-top-left">
@@ -167,7 +147,7 @@
   </button>
 
   <!-- Slot 4: Consumable -->
-  <button class="quick-slot item" data-slot="item-1" title="Consumable">
+  <button class="quick-slot item" data-slot="item-1" data-id="" title="Consumable">
     <div class="perk-frame">
       <!-- FRAME -->
       <img
@@ -183,7 +163,7 @@
   </button>
 
   <!-- Slot 5: Consumable -->
-  <button class="quick-slot item" data-slot="item-1" title="Consumable">
+  <button class="quick-slot item" data-slot="item-2" dtata-id=""  title="Consumable">
     <div class="perk-frame">
       <!-- FRAME -->
       <img
@@ -443,8 +423,6 @@
 
   </div>
 </div>
-
-
     <!-- ================= LOGOUT ================= -->
     <div id="app-logout" class="tablet-panel hidden">
       <h3>Logout</h3>
@@ -454,48 +432,9 @@
   </div>
 </div>
 
-<!-- Compiler UI 
-<div id="compiler-container" style="
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 300px;
-  background: rgba(0,0,0,0.9);
-  color: #0f0;
-  border: 2px solid #0f0;
-  padding: 8px;
-  display: none;
-  z-index: 5000;
-  font-family: monospace;
-  pointer-events: none;   /* <--- add this */
-">
-</div>
 
-  <textarea id="compiler-input" rows="5" style="width:100%; background:black; color:#0f0; font-family:monospace; border:none; resize:none;"></textarea>
-  
-  <button id="compiler-run" style="width:100%; margin-top:4px; cursor:pointer;">Run</button>
-  
-  <button id="compiler-run"
-        onclick="console.log('RUN BUTTON WORKS')">
-  Run
-</button>
 
-  <div id="compiler-output" style="margin-top:4px; color:#f00;"></div>
-</div>
 
-<div id="game-container"></div>
-
- Simple Attack UI 
-<div id="compiler-container" style="
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 200px;
-  display: none;
-  z-index: 5000;
-"></div>
-
--->
 
 <div
   id="debug-controls"
@@ -512,6 +451,14 @@
   "
 >
   <h4>🧪 Debug Stats</h4>
+
+  <div id="player-coords" 
+     style="position: absolute; top: 10px; left: 10px; 
+            background: rgba(0,0,0,0.5); color: white; 
+            padding: 4px 8px; font-family: monospace; 
+            z-index: 999;">
+  X: 0 | Y: 0
+</div>
 
   <!-- Hearts -->
   <button id="hp-plus">❤️ +1 Heart</button>

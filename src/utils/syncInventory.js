@@ -1,37 +1,19 @@
-// src/ui/utils/syncInventory.js
-
 import GameState from "../GameState.js";
-
-import inventoryState  from "../ui/data/inventoryState.js";
+import { inventoryState } from "../ui/data/inventoryState.js";
 
 export function syncInventory() {
-
-  const player =
-    GameState.player;
-
+  const player = GameState.player;
   if (!player) return;
 
   // KEY ITEMS
-  Object.keys(
-    inventoryState.key
-  ).forEach(id => {
-
-    inventoryState.key[id] =
-      player.items.keyItems
-        .includes(id);
-
+  inventoryState.key = {};
+  player.items.keyItems.forEach(id => {
+    inventoryState.key[id] = true;
   });
 
   // CONSUMABLES
-  Object.keys(
-    inventoryState.cons
-  ).forEach(id => {
-
-    inventoryState.cons[id] =
-      player.items.consumables
-        ?.find(c => c.id === id)
-        ?.amount || 0;
-
+  inventoryState.cons = {};
+  player.items.consumables.forEach(c => {
+    inventoryState.cons[c.id] = c.amount;
   });
-
 }

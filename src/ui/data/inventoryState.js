@@ -1,29 +1,23 @@
-import inventoryData
-  from "./inventoryData.js";
-
-const inventoryState = {
-
-  key: {},
-  cons: {}
-
+// src/ui/data/inventoryState.js
+export const inventoryState = {
+  key: {
+    keystone_syntax: false,
+    keystone_datatypes: false,
+    keystone_variable: false,
+    keystone_condition: false,
+    keystone_operation: false,
+    keystone_array: false,
+    keystone_function: false
+  },
+  cons: {
+    pills_tier1: 0,
+    pills_tier2: 0,
+    pills_tier3: 0,
+    vital_drink1: 0,
+    vital_drink2: 0,
+    vital_drink3: 0,
+    revital_vial: 0,
+    adrenaline: 0,
+    escape_diamond: 0
+  }
 };
-
-// Initialize keys → false
-Object.keys(
-  inventoryData.key
-).forEach(id => {
-
-  inventoryState.key[id] = false;
-
-});
-
-// Initialize consumables → 0
-Object.keys(
-  inventoryData.cons
-).forEach(id => {
-
-  inventoryState.cons[id] = 0;
-
-});
-
-export default inventoryState;

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import inventoryState from "../ui/data/inventoryState.js";
+//import inventoryState from "../ui/data/inventoryState.js";
 
 const CHEST_FRAMES = {
   item: 0,

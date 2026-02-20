@@ -735,6 +735,7 @@ body {
 
 /* Icon */
 .inv-icon {
+  image-rendering: pixelated;
   width: 60px;
   height: 60px;
   object-fit: contain;
@@ -1379,4 +1380,57 @@ body {
   height: 32px;
   margin-right: 8px;
 }
+
+/* Overlay */
+#shop-ui {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+}
+
+.shop-hidden {
+  display: none !important;
+}
+
+.shop-container {
+  width: 420px;
+  background: #1e1e2f;
+  border: 3px solid #6cf;
+  padding: 20px;
+  border-radius: 12px;
+  color: white;
+  font-family: monospace;
+}
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-bottom: 1px solid #555;
+}
+
+.shop-icon {
+  width: 40px;
+  height: 40px;
+  image-rendering: pixelated;
+}
+
+.shop-info {
+  flex: 1;
+}
+
+.shop-info p {
+  margin: 2px 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+
 

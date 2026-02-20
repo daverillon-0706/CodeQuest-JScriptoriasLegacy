@@ -5,7 +5,6 @@ import PlayerController from "../systems/PlayerController.js";
 import HoverManager from "../systems/HoverManager.js";
 import ChestSystem from "../systems/ChestSystem.js";
 import SoundManager from "../systems/SoundManager.js";
-import Bug from "../systems/Bug.js";
 import BugManager from "../systems/BugManager.js";
 import SyntaxGolemBug from "../systems/bugs/SyntaxGolemBug.js";
 import RangeSlimeBug from "../systems/bugs/RangeSlimeBug.js";
@@ -16,8 +15,10 @@ import GameState from "../GameState.js";
 import { setupSceneTriggers } from "../utils/SceneTransitions.js";
 import { RIFT_ID_MAP } from "../ui/data/riftIdMap.js";
 import { normalizeRiftName } from "../ui/data/riftIdMap.js";
-import { KEYSTONE_MAP } from "../ui/data/riftRewards.js";
+import { KEYSTONE_MAP } from "../ui/data/keystoneMap.js";
+import { KEY_ITEM_ORDER } from "../ui/data/keyItems.js";
 import Bullet from "../systems/weapons/bullet.js";
+import ShopSystem from "../systems/ShopSystem.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -46,6 +47,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.mapScaleY = 1;
     this.minimapX = 0;
     this.minimapY = 0;
+    
   }
   // ================= PRELOAD =================
   preload() {
@@ -121,6 +123,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.syncGameStateToSprite();
     this.updateHUD();
 
+
     this.player.isCoding = false;
     this.compilerWindow = null;
     this.codingKeyHandler = null;
@@ -143,6 +146,9 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.onPlayerGameOver();
   }
 };
+
+// Shop System Logic
+this.shopSystem = new ShopSystem(this);
 
     // ---- BUG SYSTEM ----
     this.bugGroup = this.physics.add.group(); // ← Group for physics
@@ -167,19 +173,15 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         }
     });
 });
-
-
-
-// ---- CAMERA ----
+    // ---- CAMERA ----
     this.physics.world.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
     this.cameras.main.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels)
       .startFollow(this.player,true,0.08,0.08)
       .setZoom(3);
 
       // ---- MINIMAP ----
-this.createMinimap();
-this.drawMinimapMap(); // Draw static map once
-
+    this.createMinimap();
+    this.drawMinimapMap(); // Draw static map once
 
     // ---- COLLIDERS ----
     [this.buildingLayer, this.wallLayer, this.itemLayer]
@@ -192,14 +194,14 @@ this.drawMinimapMap(); // Draw static map once
 
     // Bugs ↔ walls
     this.physics.add.collider(
-  this.bugGroup,
-  this.wallLayer,
-  (bug, wall) => {
-    if (bug instanceof RangeSlimeBug && bug.isCharging) {
-      bug.stopCharge?.();
+    this.bugGroup,
+    this.wallLayer,
+    (bug, wall) => {
+      if (bug instanceof RangeSlimeBug && bug.isCharging) {
+        bug.stopCharge?.();
+      }
     }
-  }
-);
+  );
 
 // Rift logic
 this.rifts = [];
@@ -211,9 +213,7 @@ this.load.audio("player_heal", "/assets/sfx/player/player_heal.wav");
 this.load.audio("energy_gain", "/assets/sfx/player/energy_gain.wav");
 this.load.audio("energy_use", "/assets/sfx/player/energy_use.wav");
 this.load.audio("cryptos", "/assets/sfx/cryptos.wav");
-this.blasterSFX = this.sound.add("blaster", {
-  volume: 0.5
-});
+this.blasterSFX = this.sound.add("blaster", {volume: 0.5});
 
     // ---- SYSTEMS ----
     this.createAnimations();
@@ -227,9 +227,9 @@ this.blasterSFX = this.sound.add("blaster", {
 
 // Bullet ↔ Bugs collision
 this.physics.add.overlap(
-  this.bulletGroup,
-  this.bugGroup,
-  (bullet, bug) => {
+    this.bulletGroup,
+    this.bugGroup,
+    (bullet, bug) => {
 
     // Ignore rifts only
     if (bug.isRift) return;
@@ -288,6 +288,9 @@ this.physics.add.overlap(
         else this.dialogueManager.next();
         return;
       }
+
+      if (this.shopSystem.tryInteract(this.player)) return;
+
       const npc = this.playerController.canTalkTo;
       if(npc?.customData.dialogue?.length) this.dialogueManager.start(npc.customData.dialogue);
       const trigger = this.sceneTriggers?.getNearbyTrigger?.();
@@ -332,9 +335,6 @@ this.physics.add.overlap(
   if(!this.playerController) return;
   this.playerController.update(this.npcs);
 
-  
-
-
   if(this.bugManager) {
     this.bugManager.update(time, delta);
 
@@ -374,7 +374,6 @@ if (this.minimapCtx) {
   this.drawHTMLMinimapPlayer();
   this.drawHTMLMinimapBugs();
 }
-
 }
   // ================= HUD =================
   updateHUD(){
@@ -551,7 +550,7 @@ this.bugGroup.add(bug);
       spawnCount++;
     }
     console.log("Total bugs spawned:", spawnCount);
-  }
+}
 // ================= RIFT SYSTEM =================
   createRiftSystemsFromMap() {
     const layer = this.map.getObjectLayer("rifts layer");
@@ -589,10 +588,7 @@ rift.on('pointerdown', () => {
 });
 
 console.log("Registered Rift (hidden):", riftName);
-
 }
-
-
       // Rift kiosks
       if (obj.name === "rift_kiosk") {
         const kioskName = obj.properties?.find(p => p.name === "kioskName")?.value;
@@ -600,7 +596,7 @@ console.log("Registered Rift (hidden):", riftName);
         console.log("Loaded Kiosk:", kioskName);
       }
     });
-  }
+}
   getNearbyRiftKiosk() {
   if (!this.riftKiosks) return null;
 
@@ -682,7 +678,6 @@ console.log("Registered Rift (hidden):", riftName);
   // Activate Rift system
   rift.activate();
 }
-
   openRiftCompiler(rift) {
 
     console.log("=== OPEN COMPILER DEBUG ===");
@@ -889,7 +884,7 @@ console.log("Registered Rift (hidden):", riftName);
             printConsole(`❌ Compilation error: ${e.message}`, true);
 
             // Damage penalty
-            this.player.hp -= 4;
+            this.player.takeDamage(2);
             this.updateHUD();
 
             if (this.player.hp <= 0) {
@@ -948,6 +943,7 @@ console.log("Registered Rift (hidden):", riftName);
     // Remove compiler DOM element
     if (this.compilerWindow) {
         document.body.removeChild(this.compilerWindow);
+        this.compilerWindow.remove();
         this.compilerWindow = null;
     }
 
@@ -967,6 +963,9 @@ console.log("Registered Rift (hidden):", riftName);
 }
   defeatRift(rift) {
     if (rift.completed === false) return;
+    console.log("RiftName:", rift.riftName);
+    console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);
+
 
     const player = GameState.player;
 
@@ -978,13 +977,32 @@ console.log("Registered Rift (hidden):", riftName);
     // Add keystone
     const keystoneId = KEYSTONE_MAP[rift.riftName];
     if (keystoneId) {
+
         player.items = player.items || {};
         player.items.keyItems = player.items.keyItems || [];
 
-        if (!player.items.keyItems.includes(keystoneId)) {
-            player.items.keyItems.push(keystoneId);
+        const owned = player.items.keyItems;
+
+        // Prevent duplicates
+        if (owned.includes(keystoneId)) {
+            console.log("Keystone already owned:", keystoneId);
+        } else {
+
+            // 🔒 Enforce order
+            const expected = KEY_ITEM_ORDER[owned.length];
+
+            if (keystoneId !== expected) {
+                console.warn(
+                  `Keystone out of order. Expected: ${expected}, Got: ${keystoneId}`
+                );
+                return; // Block reward
+            }
+
+            owned.push(keystoneId);
+
             console.log(`🗝️ Keystone added: ${keystoneId}`);
         }
+
     } else {
         console.warn("No keystone mapped for:", rift.riftName);
     }
@@ -994,8 +1012,13 @@ console.log("Registered Rift (hidden):", riftName);
 
     // Feedback
     alert(`🗝️ You obtained the ${rift.riftName} Keystone!`);
+    console.log(
+  "Owned:",
+  owned,
+  "Next:",
+  KEY_ITEM_ORDER[owned.length]
+);
 }
-
   syncGameStateToSprite() {
   const gs = GameState.player;
   if (!gs) return;
