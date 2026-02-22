@@ -8,7 +8,7 @@ export const KEYSTONE_MAP = {
 
   Variables: "keystone_variable",
 
-  Operators: "keystone_operation",
+  Operators: "keystone_operator",
 
   Conditions: "keystone_condition",
 

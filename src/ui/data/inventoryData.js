@@ -25,7 +25,7 @@ export const inventoryData = {
     keystone_operation: {
       name: "Operation Keystone",
       desc: "Unlocks the Operators Rift.",
-      icon: "keystone_operation.png"
+      icon: "keystone_operator.png"
     },
     keystone_array: {
       name: "Array Keystone",

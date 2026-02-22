@@ -17,6 +17,7 @@ import { RIFT_ID_MAP } from "../ui/data/riftIdMap.js";
 import { normalizeRiftName } from "../ui/data/riftIdMap.js";
 import { KEYSTONE_MAP } from "../ui/data/keystoneMap.js";
 import { KEY_ITEM_ORDER } from "../ui/data/keyItems.js";
+import { RiftChallenges } from "../ui/data/riftChallenges.js";
 import Bullet from "../systems/weapons/bullet.js";
 import ShopSystem from "../systems/ShopSystem.js";
 import PerksManager from "../systems/PerksManager.js";
@@ -50,6 +51,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.minimapX = 0;
     this.minimapY = 0;
     
+    this.isUIBlockingInput = false;
   }
   // ================= PRELOAD =================
   preload() {
@@ -104,7 +106,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     const spawnLayer = this.map.getObjectLayer("Objects") || { objects: [] };
     let spawnObj = spawnLayer.objects.find(o => o.name === data.spawn)
       || spawnLayer.objects.find(o => o.name === "MalePlayer")
-      || { x:100, y:100 };
+      || { x:704, y:759 };
 
     const spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
     const spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
@@ -174,7 +176,7 @@ this.shopSystem = new ShopSystem(this);
     this.bugManager = new BugManager(this);
     window.bugManager = this.bugManager;
 
-    this.physics.world.createDebugGraphic();
+    //this.physics.world.createDebugGraphic();
     this.spawnBugsOnGrasswalk();
 
     // ---- Input hover/lock-on ----
@@ -635,56 +637,40 @@ console.log("Registered Rift (hidden):", riftName);
   });
 }
   activateRiftFromKiosk(kiosk) {
-
   if (!kiosk.kioskName) return;
 
   // Convert "Syntax Kiosk" → "Syntax Monolith"
-  const targetRiftName =
-    kiosk.kioskName.replace("Kiosk", "Monolith");
+  const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
 
   // Normalize to internal ID
-  const searchName =
-    normalizeRiftName(targetRiftName);
+  const riftId = normalizeRiftName(targetRiftName); // e.g., "Syntax", "DataTypes"
+  console.log("Looking for rift:", targetRiftName, "→", riftId);
 
-  console.log(
-    "Looking for rift:",
-    targetRiftName,
-    "→",
-    searchName
-  );
+  // Check if already completed
+  const riftProgress = GameState.player.riftProgress[riftId];
+  if (riftProgress?.completed) {
+    console.log(`[Rift] ${riftId} already completed, skipping activation`);
+    return;
+  }
 
-  const rift = this.rifts.find(
-    r => r.riftName === searchName
-  );
-
+  const rift = this.rifts.find(r => r.riftName === riftId);
   if (!rift) {
-    console.warn(
-      "No Rift found for:",
-      targetRiftName
-    );
+    console.warn(`[Rift] No Rift found for: ${targetRiftName}`);
     return;
   }
 
   // Prevent duplicate activation
   if (rift.isActive) {
-    console.log(
-      "Rift already active:",
-      searchName
-    );
+    console.log(`[Rift] Rift already active: ${riftId}`);
     return;
   }
 
-  console.log("Summoning Rift:", searchName);
+  console.log(`[Rift] Summoning Rift: ${riftId}`);
 
   // Reveal if dormant
   if (rift.isDormant) {
-
     rift.setVisible(true);
-
-    if (!rift.body) {
-      this.physics.world.enable(rift);
-    }
-
+    if (!rift.body) this.physics.world.enable(rift);
     rift.body.enable = true;
     rift.isDormant = false;
 
@@ -698,8 +684,40 @@ console.log("Registered Rift (hidden):", riftName);
     });
   }
 
-  // Activate Rift system
-  rift.activate();
+  // Assign challenges dynamically
+  const challenges = RiftChallenges[riftId];
+  if (!challenges || !challenges.length) {
+    console.warn(`[Rift] No challenges found for category: ${kiosk.kioskName}`);
+    return;
+  }
+
+  rift.challenges = challenges;
+  rift.currentChallenge = 0;
+  rift.completed = false;
+
+  // Activate rift system
+  rift.activate(riftId, () => {
+    // Callback when all challenges are completed
+    rift.completed = true;
+
+    // Save progress in GameState
+    GameState.player.riftProgress[riftId] = {
+      completed: true,
+      completedChallenges: challenges.map((_, i) => i)
+    };
+    GameState.player = GameState.player; // trigger save
+
+    // Shrink & destroy animation
+    this.tweens.add({
+      targets: rift,
+      scale: 0,
+      duration: 300,
+      ease: "Back.In",
+      onComplete: () => rift.destroy()
+    });
+
+    console.log(`[Rift] ${riftId} completed and destroyed`);
+  });
 }
   openRiftCompiler(rift) {
 
@@ -726,6 +744,7 @@ console.log("Registered Rift (hidden):", riftName);
     this.isCompilerOpen = true;
     this.player.isCoding = true;
     this.playerController.freeze();
+    this.isUIBlockingInput = true;
     rift.isDebugging = true;
 
     // ==============================
@@ -784,6 +803,9 @@ console.log("Registered Rift (hidden):", riftName);
     textarea.value = challenge?.starterCode ?? "";
     container.appendChild(textarea);
 
+    textarea.addEventListener("keydown", (e) => {
+  e.stopPropagation();
+});
     // ==============================
     // Console output box
     // ==============================
@@ -955,13 +977,13 @@ console.log("Registered Rift (hidden):", riftName);
             }
         );
 }
-
   closeRiftCompiler(rift) {
     // Prevent double execution
     if (!this.isCompilerOpen) return;
 
     this.player.isCoding = false;
     this.playerController.unfreeze();
+    this.isUIBlockingInput = false;
 
     // Remove compiler DOM element
     if (this.compilerWindow) {
@@ -1297,7 +1319,8 @@ showGameOverScreen() {
 
   // Title
   const title = document.createElement("h1");
-  title.textContent = "💀 GAME OVER";
+  title.textContent = "💀 GAME OVER 💀";
+  //title.textContent = "TS IS OVER GNG 🥀";
   container.appendChild(title);
 
   // ===== Retry Button =====
