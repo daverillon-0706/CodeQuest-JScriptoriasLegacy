@@ -12,7 +12,6 @@ import TypeMimicBug from "../systems/bugs/TypeMimicBug.js";
 import ReferenceWispBug from "../systems/bugs/ReferenceWispBug.js";
 import InternalRiftBug from "../systems/bugs/InternalRiftBug.js";
 import GameState from "../GameState.js";
-import { setupSceneTriggers } from "../utils/SceneTransitions.js";
 import { RIFT_ID_MAP } from "../ui/data/riftIdMap.js";
 import { normalizeRiftName } from "../ui/data/riftIdMap.js";
 import { KEYSTONE_MAP } from "../ui/data/keystoneMap.js";
@@ -22,6 +21,7 @@ import Bullet from "../systems/weapons/bullet.js";
 import ShopSystem from "../systems/ShopSystem.js";
 import PerksManager from "../systems/PerksManager.js";
 import { OffensePerks, DefensePerks } from "../ui/data/perkData.js";
+import SceneTransition from "../systems/SceneTransition.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -90,6 +90,9 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   }
   // ================= CREATE =================
   create(data = {}) {
+    SceneTransition.start(this, () => {
+  console.log("City scene finished transition");
+  });
     // ---- MAP ----
     this.map = this.make.tilemap({ key: "JScriptoriaCity" });
     const tilesets = this.map.tilesets.map(ts => this.map.addTilesetImage(ts.name, ts.name));
@@ -133,6 +136,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.compilerWindow = null;
     this.codingKeyHandler = null;
     this.codingDamageHandler = null;
+    this.nearbyDoor = null;
+    this.createLessonDoor();
 
     this.player.takeDamage = (amount = 1) => {
 
@@ -271,9 +276,6 @@ this.physics.add.overlap(
     // ---- SOUND MANAGER ----
     this.soundManager = new SoundManager(this);
 
-    //Summon Rift
-    //this.createRiftSystemsFromMap();
-
     // ---- HUD ----
     this.playerHPEl = document.getElementById("playerHP-text");
     this.playerEnergyEl = document.getElementById("playerEnergy-text");
@@ -292,7 +294,7 @@ this.physics.add.overlap(
     this.dialogueManager.setDomElements({ dialogueBox: dialogueBoxEl, dialogueText: dialogueTextEl, nextBtn: dialogueNextEl });
 
     // ---- SCENE TRIGGERS ----
-    this.sceneTriggers = setupSceneTriggers(this,this.map,this.player);
+    //this.sceneTriggers = setupSceneTriggers(this,this.map,this.player);
 
     // ---- CHESTS ----
     ChestSystem.init(this,this.player);
@@ -312,7 +314,6 @@ this.physics.add.overlap(
         else this.dialogueManager.next();
         return;
       }
-
       if (this.shopSystem.tryInteract(this.player)) return;
 
       const npc = this.playerController.canTalkTo;
@@ -333,6 +334,23 @@ this.physics.add.overlap(
         return;
       }
 
+      // Door interaction
+    if (this.nearbyDoor) {
+
+  const targetScene = this.nearbyDoor.getData("scene");
+  const lessonData = this.nearbyDoor.getData("lesson");
+
+  SceneTransition.start(this, () => {
+
+    this.scene.start(targetScene, {
+      lesson: lessonData,
+      spawn: "MalePlayer"
+    });
+
+  });
+
+  return;
+}
     });
 
     //this.input.keyboard.on("keydown-F", () => {
@@ -353,6 +371,9 @@ this.physics.add.overlap(
   }
 });
 
+SceneTransition.start(this, () => {
+  console.log("City scene loaded");
+});
 }
   // ================= UPDATE =================
   update(time, delta) {
@@ -399,6 +420,12 @@ if (this.minimapCtx) {
   this.drawHTMLMinimapPlayer();
   this.drawHTMLMinimapBugs();
 }
+
+if (this.nearbyDoor) {
+    if (!this.physics.overlap(this.player, this.nearbyDoor)) {
+      this.nearbyDoor = null;
+    }
+  }
 }
   // ================= HUD =================
   updateHUD(){
@@ -503,26 +530,35 @@ if (!anims.exists("rift-idle")) {
 }
 }
   // ================= NPCs =================
-  createNPCs(){
-    const npcLayer = this.map.getObjectLayer("NPC Objects");
-    if(!npcLayer) return;
-    this.npcs=[];
-    npcLayer.objects.forEach(obj=>{
-      const x = Math.round(obj.x/this.TILE_SIZE)*this.TILE_SIZE;
-      const y = Math.round(obj.y/this.TILE_SIZE)*this.TILE_SIZE;
+  createNPCs() {
+  const npcLayer = this.map.getObjectLayer("NPC Objects");
+  if (!npcLayer) return;
 
-      const npc = this.physics.add.sprite(x,y,"kaelen",0)
-        .setOrigin(0,1)
-        .setImmovable(true)
-        .play("npc-idle-down");
+  this.npcs = [];
 
-      npc.customData = {};
-      const prop = obj.properties?.find(p=>p.name==="dialogue");
-      npc.customData.dialogue = prop ? JSON.parse(prop.value) : [];
-      this.physics.add.collider(this.player,npc);
-      this.npcs.push(npc);
-    });
-  }
+  npcLayer.objects.forEach(obj => {
+
+    const x = Math.round(obj.x / this.TILE_SIZE) * this.TILE_SIZE;
+    const y = Math.round(obj.y / this.TILE_SIZE) * this.TILE_SIZE;
+
+    const npc = this.physics.add.sprite(x, y, "kaelen", 0)
+      .setOrigin(0, 1)
+      .setImmovable(true)
+      .setSize(12, 8)
+      .setOffset(2, 8)
+      .setDepth(y)
+      .play("npc-idle-down");
+
+    npc.customData = {};
+
+    const prop = obj.properties?.find(p => p.name === "dialogue");
+    npc.customData.dialogue = prop ? JSON.parse(prop.value) : [];
+
+    this.physics.add.collider(this.player, npc);
+
+    this.npcs.push(npc);
+  });
+}
   // ================= BUG SPAWNING =================
   spawnBugsOnGrasswalk() {
     if (!this.groundLayer) return;
@@ -1385,6 +1421,29 @@ removeGameOverUI() {
     this.gameOverUI.remove();
     this.gameOverUI = null;
   }
+}
+createLessonDoor() {
+
+  const doorX = 611; // CHANGE to your house door coords
+  const doorY = 440;
+
+  const doorZone = this.add.zone(doorX, doorY, 40, 40);
+  this.physics.world.enable(doorZone);
+  doorZone.setData("scene", "LessonHouseScene");
+  doorZone.setData("lesson", "syntax");
+
+  this.physics.add.overlap(this.player, doorZone, () => {
+    this.nearbyDoor = doorZone;
+  });
+
+  /* Clear when leaving
+  this.physics.world.on("worldstep", () => {
+    if (!this.physics.overlap(this.player, doorZone)) {
+      if (this.nearbyDoor === doorZone) {
+        this.nearbyDoor = null;
+      }
+    }
+  });*/
 }
 /*
 handlePerkEffects() {

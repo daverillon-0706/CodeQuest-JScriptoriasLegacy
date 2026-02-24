@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="20" height="15" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="1">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="20" height="15" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="3">
+ <editorsettings>
+  <export target="ClassroomScene.tmj" format="json"/>
+ </editorsettings>
  <tileset firstgid="1" name="floor" tilewidth="16" tileheight="16" tilecount="1" columns="1">
   <image source="../assets/tilesets/classroom/floor.png" width="16" height="16"/>
  </tileset>
@@ -8,6 +11,11 @@
  </tileset>
  <tileset firstgid="11" name="board" tilewidth="16" tileheight="16" tilecount="12" columns="6">
   <image source="../assets/tilesets/classroom/board.png" width="96" height="32"/>
+  <tile id="0">
+   <properties>
+    <property name="dialogue" value="[&quot;This is a test space, player.&quot;, &quot;Proceed to the headquarters to test out your compiler.&quot;, &quot;Inside there you will greet Master Elysia and the others.&quot;, &quot;Talk to them about that bug they caught and they will ask you to debug it or something.&quot;]"/>
+   </properties>
+  </tile>
  </tileset>
  <tileset firstgid="23" name="cabinet" tilewidth="16" tileheight="16" tilecount="4" columns="2">
   <image source="../assets/tilesets/classroom/cabinet.png" width="32" height="32"/>
@@ -56,6 +64,13 @@
 1610612738,3,3,3,3,3,3,3,3,0,0,3,3,3,3,3,3,3221225475,3221225475,3221225474
 </data>
  </layer>
+ <objectgroup id="5" name="NPC Objects">
+  <object id="2" name="Kaelen" x="160" y="65.6667" width="16" height="16">
+   <properties>
+    <property name="dialogue" value="[&quot;This is a test space, player.&quot;, &quot;Proceed to the headquarters to test out your compiler.&quot;, &quot;Inside there you will greet Master Elysia and the others.&quot;, &quot;Talk to them about that bug they caught and they will ask you to debug it or something.&quot;]"/>
+   </properties>
+  </object>
+ </objectgroup>
  <layer id="4" name="furniture layer" width="20" height="15">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

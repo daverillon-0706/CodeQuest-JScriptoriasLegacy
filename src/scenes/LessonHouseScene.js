@@ -1,5 +1,10 @@
 import Phaser from "phaser";
 import GameState from "../GameState.js";
+import PlayerController from "../systems/PlayerController.js";
+import PerksManager from "../systems/PerksManager.js";
+import SoundManager from "../systems/SoundManager.js";
+import DialogueManager from "../systems/DialogueManager.js";
+import SceneTransition from "../systems/SceneTransition.js";
 
 const LESSON_CONTENT = {
   syntax: {
@@ -14,18 +19,52 @@ const LESSON_CONTENT = {
 };
 
 export default class LessonHouseScene extends Phaser.Scene {
+
   constructor() {
     super("LessonHouseScene");
   }
 
   init(data) {
-    this.lesson = data.lesson;
+    this.lesson = data?.lesson || "syntax";
+    this.sceneData = data || {};
+  }
+
+  preload() {
+    this.load.tilemapTiledJSON("ClassroomScene", "/maps/ClassroomScene.tmj");
+
+    const tilesets = ["board","cabinet","chair","desk","floor","wall"];
+    tilesets.forEach(name => {
+      this.load.image(name, `/assets/tilesets/classroom/${name}.png`);
+    });
+
+    this.load.spritesheet("player_male",
+      "/assets/sprites/player/player_male.png",
+      { frameWidth:16, frameHeight:16 }
+    );
+
+    this.load.spritesheet("kaelen",
+      "/assets/sprites/npcs/kaelen.png",
+      { frameWidth:16, frameHeight:16 }
+    );
   }
 
   create() {
+
     // --------------------------
-    // Load Tilemap
-    // --------------------------
+  // BLACK BACKGROUND (FIX)
+  // --------------------------
+  this.cameras.main.setBackgroundColor("#000000");
+
+  // Optional extra protection against scene bleed
+  this.add.rectangle(
+    0,
+    0,
+    this.scale.width * 5,
+    this.scale.height * 5,
+    0x000000
+  )
+  .setOrigin(0)
+  .setDepth(-10);
     this.map = this.make.tilemap({ key: "ClassroomScene" });
 
     const tilesets = this.map.tilesets.map(ts =>
@@ -37,226 +76,183 @@ export default class LessonHouseScene extends Phaser.Scene {
     this.furnitureLayer = this.map.createLayer("furniture layer", tilesets);
     this.itemLayer = this.map.createLayer("item layer", tilesets);
 
-    // Collision
-    this.wallLayer.setCollisionByExclusion([-1]);
-    this.furnitureLayer.setCollisionByExclusion([-1]);
+    if (this.wallLayer) this.wallLayer.setCollisionByExclusion([-1]);
+    if (this.furnitureLayer) this.furnitureLayer.setCollisionByExclusion([-1]);
 
-    // --------------------------
-    // Player
-    // --------------------------
-    this.player = this.physics.add.sprite(200, 250, "player");
-    this.player.setCollideWorldBounds(true);
+    const spawnLayer = this.map.getObjectLayer("Objects") || { objects: [] };
+
+    let spawnObj =
+      spawnLayer.objects.find(o => o.name === this.sceneData.spawn) ||
+      spawnLayer.objects.find(o => o.name === "MalePlayer") ||
+      { x: 100, y: 100 };
+
+    this.player = this.physics.add.sprite(spawnObj.x, spawnObj.y, "player_male", 0)
+      .setOrigin(0,1)
+      .setCollideWorldBounds(true)
+      .setSize(12,8)
+      .setOffset(2,8)
+      .setDepth(3);
 
     this.physics.add.collider(this.player, this.wallLayer);
     this.physics.add.collider(this.player, this.furnitureLayer);
-    this.physics.world.createDebugGraphic();
-    this.physics.world.drawDebug = true;
 
-    // --------------------------
+    this.npcs = [];
+    this.createNPCs();
+
+    this.playerController = new PlayerController(
+      this,
+      this.player,
+      120,
+      { allowShooting: false }
+    );
+
+    PerksManager.setScene(this);
+    this.soundManager = new SoundManager(this);
+
     // Camera
-    // --------------------------
-    this.cameras.main.setBounds(
-      0,
-      0,
-      this.map.widthInPixels,
-      this.map.heightInPixels
-    );
-
-    this.physics.world.setBounds(
-      0,
-      0,
-      this.map.widthInPixels,
-      this.map.heightInPixels
-    );
-
-    this.cameras.main.startFollow(this.player);
+    this.physics.world.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
+    this.cameras.main
+      .setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels)
+      .startFollow(this.player,true,0.08,0.08)
+      .setZoom(3);
 
     // --------------------------
-    // Input
+    // DIALOGUE MANAGER SETUP
     // --------------------------
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.interactKey = this.input.keyboard.addKey(
-      Phaser.Input.Keyboard.KeyCodes.Z
-    );
+    DialogueManager.init(this);
+    DialogueManager.attachInputListeners();
 
-    // --------------------------
-    // Depth Handling
-    // --------------------------
-    this.groundLayer.setDepth(0);
-    this.wallLayer.setDepth(1);
-    this.furnitureLayer.setDepth(2);
-    this.player.setDepth(3);
-    this.itemLayer.setDepth(4);
-
-    // --------------------------
-    // Dialogue Text (Simple)
-    // --------------------------
-    this.dialogueText = this.add.text(20, 20, "", {
-      fontSize: "14px",
-      fill: "#ffffff",
-      wordWrap: { width: 300 }
-    }).setScrollFactor(0).setDepth(10);
-
-    // --------------------------
-    // NPC
-    // --------------------------
-    this.createNPC();
-
-    // --------------------------
-    // Books
-    // --------------------------
+    // Books + Exit
     this.createBooks();
-
-    // --------------------------
-    // Exit Zone
-    // --------------------------
     this.createExitZone();
+
+    SceneTransition.start(this, () => {
+  console.log("Lesson scene loaded");
+});
   }
 
   update() {
-    this.handleMovement();
-  }
 
-  handleMovement() {
-    const speed = 120;
-
-    this.player.setVelocity(0);
-
-    if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-speed);
-    } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(speed);
+    if (this.playerController) {
+      this.playerController.update(this.npcs);
     }
 
-    if (this.cursors.up.isDown) {
-      this.player.setVelocityY(-speed);
-    } else if (this.cursors.down.isDown) {
-      this.player.setVelocityY(speed);
-    }
+    // Depth sorting
+    this.player.setDepth(this.player.y);
+    this.npcs.forEach(npc => npc.setDepth(npc.y));
+
+    // IMPORTANT: update DialogueManager proximity
+    DialogueManager.updateProximity(this.player, this.npcs);
   }
 
   // --------------------------
-  // NPC
+  // NPC CREATION
   // --------------------------
-  createNPC() {
-    this.npc = this.physics.add.staticSprite(200, 120, "player"); // placeholder sprite
-    this.npc.setTint(0x00ff00);
-    this.npc.setDepth(3);
+  createNPCs() {
+    const npcLayer = this.map.getObjectLayer("NPC Objects");
+    if (!npcLayer) return;
 
-    this.physics.add.overlap(this.player, this.npc, () => {
-      if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-        this.dialogueText.setText(
-          `Welcome to ${LESSON_CONTENT[this.lesson].displayName}.\nRead all books before taking the quiz.`
-        );
+    npcLayer.objects.forEach(obj => {
+
+      const npc = this.physics.add.sprite(obj.x, obj.y, "kaelen", 0)
+        .setOrigin(0,1)
+        .setImmovable(true)
+        .setSize(12,8)
+        .setOffset(2,8);
+
+      const dialogueProp = obj.properties?.find(p => p.name === "dialogue");
+
+      let dialogueValue = ["Hello."];
+
+      if (dialogueProp) {
+        try {
+          dialogueValue = JSON.parse(dialogueProp.value);
+        } catch {
+          dialogueValue = [dialogueProp.value];
+        }
       }
+
+      // CRITICAL: DialogueManager expects npc.dialogue
+      npc.dialogue = dialogueValue;
+
+      this.physics.add.collider(this.player, npc);
+
+      this.npcs.push(npc);
     });
   }
 
   // --------------------------
-  // Books
+  // BOOKS (NOW USE DialogueManager)
   // --------------------------
   createBooks() {
-  const lessonData = LESSON_CONTENT[this.lesson];
 
-  const positions = [
-    { x: 140, y: 180 },
-    { x: 260, y: 180 },
-    { x: 140, y: 230 },
-    { x: 260, y: 230 }
-  ];
-
-  lessonData.books.forEach((bookData, i) => {
-
-    const book = this.add.rectangle(
-      positions[i].x,
-      positions[i].y,
-      24,
-      24,
-      0xff0000
-    );
-
-    this.physics.add.existing(book, true);
-
-    book.body.setSize(24, 24);
-
-    book.setDepth(4);
-    book.setData("bookKey", bookData.key);
-    book.setData("text", bookData.text);
-
-    this.physics.add.overlap(this.player, book, () => {
-      if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-        this.readBook(book);
-      }
-    });
-  });
-}
-
-  readBook(book) {
-    const key = book.getData("bookKey");
-    const text = book.getData("text");
-
-    // Ensure lessonProgress exists
-    if (!GameState.player.lessonProgress) {
-      GameState.player.lessonProgress = {};
-    }
-
-    if (!GameState.player.lessonProgress[this.lesson]) {
-      GameState.player.lessonProgress[this.lesson] = {
-        booksRead: {},
-        quizUnlocked: false,
-        quizPassed: false,
-        keycardGiven: false
-      };
-    }
-
-    GameState.player.lessonProgress[this.lesson].booksRead[key] = true;
-
-    this.dialogueText.setText(text);
-
-    this.checkAllBooksRead();
-  }
-
-  checkAllBooksRead() {
     const lessonData = LESSON_CONTENT[this.lesson];
-    const progress = GameState.player.lessonProgress[this.lesson];
 
-    const allRead = lessonData.books.every(
-      book => progress.booksRead[book.key]
-    );
+    const positions = [
+      { x:140, y:180 },
+      { x:260, y:180 },
+      { x:140, y:230 },
+      { x:260, y:230 }
+    ];
 
-    if (allRead && !progress.quizUnlocked) {
-      progress.quizUnlocked = true;
-      this.dialogueText.setText("All books read! Talk to the NPC to start the quiz.");
-    }
+    lessonData.books.forEach((bookData,i)=>{
+
+      const book = this.add.rectangle(
+        positions[i].x,
+        positions[i].y,
+        16,16,
+        0xff0000
+      );
+
+      this.physics.add.existing(book,true);
+
+      book.setData("bookKey",bookData.key);
+      book.setData("text",bookData.text);
+
+      this.physics.add.overlap(this.player,book,()=>{
+        if (Phaser.Input.Keyboard.JustDown(
+            this.input.keyboard.addKey("Z")
+        )) {
+          DialogueManager.start([book.getData("text")]);
+        }
+      });
+    });
   }
 
   // --------------------------
-  // Exit
+  // EXIT
   // --------------------------
   createExitZone() {
-  const x = this.map.widthInPixels / 2;
-  const y = this.map.heightInPixels - 20;
 
-  // Visible rectangle
-  const exitVisual = this.add.rectangle(
-    x,
-    y,
-    60,
-    40,
-    0x0000ff,
-    0.4
-  );
+    const zone = this.add.zone(
+      this.map.widthInPixels/2,
+      this.map.heightInPixels - 20,
+      60,40
+    );
 
-  exitVisual.setDepth(5);
+    this.physics.world.enable(zone);
 
-  this.exitZone = this.add.zone(x, y, 60, 40);
-  this.physics.world.enable(this.exitZone);
+    this.physics.add.overlap(this.player,zone,()=>{
+      this.nearExit = true;
+    });
 
-  this.physics.add.overlap(this.player, this.exitZone, () => {
-    if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-      this.scene.stop();
-      this.scene.resume("JScriptoriaCityScene");
-    }
-  });
-}
+    this.physics.world.on("worldstep",()=>{
+      if (!this.physics.overlap(this.player,zone))
+        this.nearExit = false;
+    });
+
+    this.input.keyboard.on("keydown-Z", () => {
+
+  if (this.nearExit) {
+
+    SceneTransition.start(this, () => {
+
+      this.scene.start("JScriptoriaCityScene", {
+        spawn: "LessonDoorReturn"
+      });
+
+    });
+  }
+});
+  }
 }

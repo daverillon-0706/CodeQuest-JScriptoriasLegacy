@@ -55,6 +55,34 @@
          "y":0
         }, 
         {
+         "draworder":"topdown",
+         "id":5,
+         "name":"NPC Objects",
+         "objects":[
+                {
+                 "height":16,
+                 "id":2,
+                 "name":"Kaelen",
+                 "properties":[
+                        {
+                         "name":"dialogue",
+                         "type":"string",
+                         "value":"[\"This is a test space, player.\", \"Proceed to the headquarters to test out your compiler.\", \"Inside there you will greet Master Elysia and the others.\", \"Talk to them about that bug they caught and they will ask you to debug it or something.\"]"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":160,
+                 "y":65.6666666666667
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
          "data":[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 23, 24, 23, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 24, 23, 24, 0,
@@ -106,8 +134,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":5,
- "nextobjectid":1,
+ "nextlayerid":6,
+ "nextobjectid":3,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
@@ -150,6 +178,16 @@
          "spacing":0,
          "tilecount":12,
          "tileheight":16,
+         "tiles":[
+                {
+                 "id":0,
+                 "properties":[
+                        {
+                         "name":"dialogue",
+                         "type":"string",
+                         "value":"[\"This is a test space, player.\", \"Proceed to the headquarters to test out your compiler.\", \"Inside there you will greet Master Elysia and the others.\", \"Talk to them about that bug they caught and they will ask you to debug it or something.\"]"
+                        }]
+                }],
          "tilewidth":16
         }, 
         {

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import JScriptoriaCityScene from "./scenes/JScriptoriaCityScene.js";
 import GameState from "./GameState.js";
+import LessonHouseScene from "./scenes/LessonHouseScene.js";
 
 // --------------------------
 // Debug loaded player
@@ -38,7 +39,8 @@ const config = {
     arcade: { debug: false }
   },
   scene: [
-    JScriptoriaCityScene
+    JScriptoriaCityScene,
+    LessonHouseScene
   ]
 };
 

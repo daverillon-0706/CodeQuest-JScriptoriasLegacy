@@ -3,24 +3,25 @@ import Bullet from "./weapons/bullet.js";
 
 
 export default class PlayerController {
-  constructor(scene, player, moveSpeed = 80) {
+  constructor(scene, player, moveSpeed = 80, options = {}) {
     this.scene = scene;
     this.player = player;
     this.MOVE_SPEED = moveSpeed;
+    this.allowShooting = options.allowShooting ?? true;
     this.frozen = false; // ← New flag: frozen when coding
-
+    
     this.coordDisplay = document.getElementById('player-coords');
     // In your scene create() or PlayerController constructor
-this.coordDisplay = document.createElement('div');
-this.coordDisplay.style.position = 'absolute';
-this.coordDisplay.style.top = '5px';
-this.coordDisplay.style.left = '5px';
-this.coordDisplay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-this.coordDisplay.style.color = '#fff';
-this.coordDisplay.style.padding = '4px';
-this.coordDisplay.style.fontFamily = 'monospace';
-this.coordDisplay.style.zIndex = 999;
-document.body.appendChild(this.coordDisplay);
+    this.coordDisplay = document.createElement('div');
+    this.coordDisplay.style.position = 'absolute';
+    this.coordDisplay.style.top = '5px';
+    this.coordDisplay.style.left = '5px';
+    this.coordDisplay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    this.coordDisplay.style.color = '#fff';
+    this.coordDisplay.style.padding = '4px';
+    this.coordDisplay.style.fontFamily = 'monospace';
+    this.coordDisplay.style.zIndex = 999;
+    document.body.appendChild(this.coordDisplay);
 
 
     // Arrow keys
@@ -64,6 +65,8 @@ this.lastShotTime = 0;
   update(npcs = []) {
     if (!this.player) return;
 
+    // Dynamic depth sorting
+    this.player.setDepth(this.player.y);
     // 🚫 Skip movement if frozen (coding)
     if (this.frozen) {
       this.player.body.setVelocity(0, 0);
@@ -84,7 +87,11 @@ this.coordDisplay.textContent = `px: ${px}, ${py} | tile: ${tileX}, ${tileY}`;
     // =========================
     const now = this.scene.time.now;
 
-if (this.attackKey.isDown && now > this.lastShotTime + this.fireRate) {
+if (
+  this.allowShooting &&
+  this.attackKey.isDown &&
+  now > this.lastShotTime + this.fireRate
+) {
   this.lastShotTime = now;
   this.attack();
 }
@@ -165,6 +172,8 @@ if (this.attackKey.isDown && now > this.lastShotTime + this.fireRate) {
 // ⚔️ ATTACK FUNCTION
 // =========================
 attack() {
+  if (!this.allowShooting) return;
+  if (!this.scene.bulletGroup) return;
   if (this.isAttacking) return;
 
   this.isAttacking = true;
