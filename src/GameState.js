@@ -37,7 +37,8 @@ const DEFAULT_PLAYER = {
 
   codexProgress: {
     enemiesScanned: [],
-    loreUnlocked: []
+    loreUnlocked: [],
+    unlockedLessons: []
   },
 
   worldState: {
@@ -47,6 +48,9 @@ const DEFAULT_PLAYER = {
   },
 
   riftProgress: {
+
+  },
+  lessonProgress:{
 
   }
 };
@@ -81,7 +85,15 @@ const GameState = {
       ...DEFAULT_PLAYER.worldState,
       ...(parsed.worldState || {})
     },
+    lessonProgress: {
+      ...DEFAULT_PLAYER.lessonProgress,
+      ...(parsed.lessonProgress || {})
+    },
 
+    codexProgress: {
+  ...DEFAULT_PLAYER.codexProgress,
+  ...(parsed.codexProgress || {})
+    },
     // 🔥 ADD THESE
     activePerks: {
       ...DEFAULT_PLAYER.activePerks,
@@ -120,9 +132,14 @@ const GameState = {
   perkInventory: value.perkInventory ?? [],
   items: value.items ?? DEFAULT_PLAYER.items,
   lessonsUnlocked: value.lessonsUnlocked ?? [],
-  codexProgress: value.codexProgress ?? DEFAULT_PLAYER.codexProgress,
+  codexProgress: {
+  enemiesScanned: value.codexProgress?.enemiesScanned ?? [],
+  loreUnlocked: value.codexProgress?.loreUnlocked ?? [],
+  unlockedLessons: value.codexProgress?.unlockedLessons ?? []
+},
   worldState: value.worldState ?? DEFAULT_PLAYER.worldState,
-  riftProgress: value.riftProgress ?? {}
+  riftProgress: value.riftProgress ?? {},
+  lessonProgress: value.lessonProgress ?? {}
 };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
@@ -233,8 +250,6 @@ addConsumable(id, amount = 1) {
     this.player = player; // trigger save & events
     return true;
   }
-
-  
 };
-
+window.GameState = GameState;
 export default GameState;

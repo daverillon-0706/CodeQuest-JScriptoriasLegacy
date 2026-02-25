@@ -1,22 +1,10 @@
 import Phaser from "phaser";
-import GameState from "../GameState.js";
 import PlayerController from "../systems/PlayerController.js";
 import PerksManager from "../systems/PerksManager.js";
 import SoundManager from "../systems/SoundManager.js";
 import DialogueManager from "../systems/DialogueManager.js";
 import SceneTransition from "../systems/SceneTransition.js";
-
-const LESSON_CONTENT = {
-  syntax: {
-    displayName: "JavaScript Syntax",
-    books: [
-      { key: "intro", text: "JavaScript is a programming language used for web development." },
-      { key: "basicSyntax", text: "Statements end with semicolons. Blocks use {}." },
-      { key: "compiler", text: "JavaScript runs in the browser using an engine like V8." },
-      { key: "consoleLog", text: "console.log() prints output to the console." }
-    ]
-  }
-};
+import LessonManager from "../systems/learning/LessonManager.js"
 
 export default class LessonHouseScene extends Phaser.Scene {
 
@@ -174,6 +162,32 @@ export default class LessonHouseScene extends Phaser.Scene {
 
       // CRITICAL: DialogueManager expects npc.dialogue
       npc.dialogue = dialogueValue;
+      npc.lessonId = this.lesson;
+
+npc.interact = () => {
+
+  const lessonId = npc.lessonId;
+  const progress = GameState.player.lessonProgress?.[lessonId];
+
+  if (LessonManager.isAllBooksRead(lessonId)) {
+
+    if (!progress?.quizCompleted) {
+      DialogueManager.start([
+        "You have studied well.",
+        "Are you ready for the quiz?"
+      ]);
+      return;
+    }
+
+    DialogueManager.start([
+      "You have already passed this lesson.",
+      "Proceed to activate the Rift."
+    ]);
+    return;
+  }
+
+  DialogueManager.start(npc.dialogue);
+};
 
       this.physics.add.collider(this.player, npc);
 
@@ -186,38 +200,81 @@ export default class LessonHouseScene extends Phaser.Scene {
   // --------------------------
   createBooks() {
 
-    const lessonData = LESSON_CONTENT[this.lesson];
+  const lessonData = LessonManager.getLesson(this.lesson);
 
-    const positions = [
-      { x:140, y:180 },
-      { x:260, y:180 },
-      { x:140, y:230 },
-      { x:260, y:230 }
-    ];
-
-    lessonData.books.forEach((bookData,i)=>{
-
-      const book = this.add.rectangle(
-        positions[i].x,
-        positions[i].y,
-        16,16,
-        0xff0000
-      );
-
-      this.physics.add.existing(book,true);
-
-      book.setData("bookKey",bookData.key);
-      book.setData("text",bookData.text);
-
-      this.physics.add.overlap(this.player,book,()=>{
-        if (Phaser.Input.Keyboard.JustDown(
-            this.input.keyboard.addKey("Z")
-        )) {
-          DialogueManager.start([book.getData("text")]);
-        }
-      });
-    });
+  if (!lessonData) {
+    console.error("Lesson not found:", this.lesson);
+    return;
   }
+
+  LessonManager.initLessonProgress(this.lesson);
+
+  const positions = [
+    { x:140, y:180 },
+    { x:260, y:180 },
+    { x:140, y:230 },
+    { x:260, y:230 }
+  ];
+
+  lessonData.books.forEach((bookData, i) => {
+
+    const book = this.add.rectangle(
+      positions[i].x,
+      positions[i].y,
+      16,
+      16,
+      0xff0000
+    );
+
+    this.physics.add.existing(book, true);
+
+    book.setData("bookKey", bookData.key);
+    book.setData("text", bookData.text);
+
+    this.physics.add.overlap(this.player, book, () => {
+
+  if (Phaser.Input.Keyboard.JustDown(
+      this.input.keyboard.addKey("Z")
+  )) {
+
+    const bookKey = book.getData("bookKey");
+    const text = book.getData("text");
+
+    // Show book text FIRST
+    DialogueManager.start([text]);
+
+    // Mark book immediately (no callback timing issues)
+    LessonManager.markBookRead(this.lesson, bookKey);
+
+    // Delay completion check slightly (prevents race condition)
+    this.time.delayedCall(200, () => {
+
+      if (LessonManager.isAllBooksRead(this.lesson)) {
+
+        const progress =
+          GameState.player.lessonProgress?.[this.lesson];
+
+        if (!progress?._completionShown) {
+
+          progress._completionShown = true;
+          GameState.player = GameState.player;
+
+          DialogueManager.start([
+            "You have completed all lesson materials.",
+            "Talk to the instructor to begin the quiz."
+          ]);
+        }
+      }
+
+    });
+
+  }
+
+});
+
+  });
+
+}
 
   // --------------------------
   // EXIT

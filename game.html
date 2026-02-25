@@ -43,7 +43,7 @@
   <div class="shop-container">
     <h2>Debug Shop</h2>
     <div id="shop-items"></div>
-    <button id="shop-close">Close (Z)</button>
+    <button id="shop-close">Close</button>
   </div>
 </div>
 
@@ -184,7 +184,7 @@
   
 <div id="minimap-container" class="hud-top-right">
   <canvas id="minimapCanvas" width="280" height="280"></canvas>
-  <div id="map-name">J. Scriptoria — Main Plaza</div>
+  <div id="map-name">J. Scriptoria City</div>
 </div>
 
 
@@ -393,9 +393,29 @@
 
     <!-- ================= LESSONS ================= -->
     <div id="app-lessons" class="tablet-panel hidden">
-      <h3>Lessons</h3>
-      <!-- interactive lessons UI -->
+  <h3 id="lessons-title">Lessons</h3>
+
+  <div class="lessons-layout">
+
+    <!-- LEFT: Categories + Lesson List -->
+    <div class="lessons-sidebar">
+  <div id="lessons-tree"></div>
+</div>
+
+    <!-- RIGHT: Content -->
+    <div class="lessons-content-wrapper">
+      <div id="lessons-content">
+        Select a lesson to read.
+      </div>
+
+      <div class="lessons-pagination">
+        <button id="lesson-prev" style="display:none;">◀</button>
+        <button id="lesson-next" style="display:none;">▶</button>
+      </div>
     </div>
+
+  </div>
+</div>
 
     <!-- ================= ACHIEVEMENTS ================= -->
     <div id="app-achievements" class="tablet-panel hidden">

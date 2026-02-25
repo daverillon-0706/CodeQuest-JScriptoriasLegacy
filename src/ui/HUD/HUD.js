@@ -33,13 +33,6 @@ export default class HUD {
   window.hud = this;
 
   this.updateHUD();
-  
-  window.addEventListener("gamestate-updated", () => {
-  syncInventory();
-  if (document.getElementById("app-inventory")?.classList.contains("active")) {
-    this.inventory.loadInventory(); // refresh UI instead of new InventoryUI()
-  }
-});
 }
 
   // -------------------------
@@ -570,5 +563,11 @@ document.addEventListener("DOMContentLoaded", () => {
     new HUD();
   } catch (e) {
     console.error("[HUD] Init failed", e);
+  }
+});
+window.addEventListener("gamestate-updated", () => {
+  syncInventory();
+  if (document.getElementById("app-inventory")?.classList.contains("active")) {
+    this.inventory.loadInventory(); // refresh UI instead of new InventoryUI()
   }
 });

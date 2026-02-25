@@ -22,16 +22,46 @@ this.entryText = document.getElementById('codex-entry-text');
 
 
   loadCodexList(category = 'stories') {
-    this.codexItemsContainer.innerHTML = '';
-    const entries = this.codexData[category];
-    if (!entries) return;
+
+  this.codexItemsContainer.innerHTML = '';
+
+  let entries = this.codexData[category];
+  if (!entries) return;
+
+  // 🔥 Special handling for lessons
+  if (category === "lessons") {
+
+    const unlocked =
+      window.GameState?.player?.codex?.unlockedLessons || [];
+
     Object.keys(entries).forEach(title => {
+
+      // We assume lessonId = lowercase title key mapping
+      const lessonId = title.toLowerCase().split(" ")[0];
+
+      if (!unlocked.includes(lessonId)) return;
+
       const li = document.createElement('li');
       li.textContent = title;
-      li.addEventListener('click', () => this.openCodexEntry(category, title));
+      li.addEventListener('click', () =>
+        this.openCodexEntry(category, title)
+      );
       this.codexItemsContainer.appendChild(li);
     });
+
+    return;
   }
+
+  // Normal categories (no filtering)
+  Object.keys(entries).forEach(title => {
+    const li = document.createElement('li');
+    li.textContent = title;
+    li.addEventListener('click', () =>
+      this.openCodexEntry(category, title)
+    );
+    this.codexItemsContainer.appendChild(li);
+  });
+}
 
   openCodexEntry(category, title) {
   this.currentBook = this.codexData[category][title];

@@ -1,6 +1,7 @@
-// src/ui/LessonsUI.js
+// src/ui/HUD/LessonsUI.js
 
-import lessonsData from "../data/lessonsData";
+import { LESSON_DATA } from "../data/lessonData.js";
+import GameState from "../../GameState.js";
 
 export default class LessonsUI {
   constructor() {
@@ -13,11 +14,14 @@ export default class LessonsUI {
   }
 
   cacheElements() {
-    this.listBox = document.getElementById("lessons-list");
     this.contentBox = document.getElementById("lessons-content");
     this.prevBtn = document.getElementById("lesson-prev");
     this.nextBtn = document.getElementById("lesson-next");
     this.titleBox = document.getElementById("lessons-title");
+    this.treeContainer = document.getElementById("lessons-tree");
+
+    if (!this.treeContainer)
+      console.warn("lessons-tree not found in DOM");
   }
 
   attachEvents() {
@@ -32,7 +36,13 @@ export default class LessonsUI {
 
     if (this.nextBtn) {
       this.nextBtn.addEventListener("click", () => {
-        const pages = lessonsData[this.currentCategory][this.currentLesson];
+        const book = this.getCurrentBook();
+        if (!book) return;
+
+        const pages = Array.isArray(book.text)
+          ? book.text
+          : [book.text];
+
         if (this.currentPage < pages.length - 1) {
           this.currentPage++;
           this.renderPage();
@@ -41,93 +51,209 @@ export default class LessonsUI {
     }
   }
 
-  // --------------------------
-  // LOAD CATEGORIES
-  // --------------------------
-  loadCategories() {
-    this.listBox.innerHTML = "";
+  // =====================================================
+  // CATEGORY UNLOCK CHECK
+  // =====================================================
 
-    Object.keys(lessonsData).forEach(category => {
-      const btn = document.createElement("button");
-      btn.classList.add("lessons-category-btn");
-      btn.textContent = category.toUpperCase();
+  isCategoryUnlocked(categoryId, index, categoryKeys) {
+    // First category always unlocked
+    if (index === 0) return true;
 
-      btn.addEventListener("click", () => this.loadLessons(category));
+    const previousCategory = categoryKeys[index - 1];
 
-      this.listBox.appendChild(btn);
-    });
-
-    this.titleBox.textContent = "Lessons";
-    this.contentBox.textContent = "Choose a category to begin.";
-    this.prevBtn.style.display = "none";
-    this.nextBtn.style.display = "none";
+    return GameState.player?.lessonProgress?.[
+      previousCategory
+    ]?.quizPassed === true;
   }
 
-  // --------------------------
-  // LOAD LESSON TITLES
-  // --------------------------
-  loadLessons(category) {
-    this.currentCategory = category;
-    this.listBox.innerHTML = "";
+  // =====================================================
+  // TREE BUILDER
+  // =====================================================
 
-    Object.keys(lessonsData[category]).forEach(lessonName => {
-      const btn = document.createElement("button");
-      btn.classList.add("lessons-lesson-btn");
-      btn.textContent = lessonName;
+  loadCategories() {
+    if (!this.treeContainer) return;
 
-      btn.addEventListener("click", () =>
-        this.loadLessonContent(category, lessonName)
+    this.treeContainer.innerHTML = "";
+
+    const categoryKeys = Object.keys(LESSON_DATA);
+
+    categoryKeys.forEach((lessonId, index) => {
+      const lesson = LESSON_DATA[lessonId];
+      const progress =
+        GameState.player?.lessonProgress?.[lessonId];
+
+      const books = lesson.books || [];
+      const allRead = books.every(
+        b => progress?.booksRead?.[b.key]
       );
 
-      this.listBox.appendChild(btn);
+      const isUnlocked =
+        this.isCategoryUnlocked(
+          lessonId,
+          index,
+          categoryKeys
+        );
+
+      /* ---------------- GROUP ---------------- */
+
+      const group = document.createElement("div");
+      group.classList.add("lesson-group");
+
+      /* ---------------- HEADER ---------------- */
+
+      const header = document.createElement("div");
+      header.classList.add("lesson-group-header");
+
+      header.innerHTML = `
+        <span>▼</span>
+        ${lesson.displayName}
+        ${allRead ? " ✅" : ""}
+        ${!isUnlocked ? " 🔒" : ""}
+      `;
+
+      if (!isUnlocked) {
+        header.style.opacity = "0.5";
+        header.style.cursor = "not-allowed";
+      }
+
+      if (allRead && isUnlocked) {
+        header.style.background = "#1b3f1b";
+        header.style.color = "#4caf50";
+      }
+
+      if (isUnlocked) {
+        header.addEventListener("click", () => {
+          group.classList.toggle("open");
+        });
+      }
+
+      group.appendChild(header);
+
+      /* ---------------- SUBLESSONS ---------------- */
+
+      const subList = document.createElement("div");
+      subList.classList.add("lesson-sublist");
+
+      if (isUnlocked) {
+        books.forEach(book => {
+          const btn = document.createElement("div");
+          btn.classList.add("lesson-subitem");
+
+          const isRead =
+            progress?.booksRead?.[book.key];
+
+          const displayName =
+            book.title || this.formatKey(book.key);
+
+          btn.innerHTML = `
+            ${displayName}
+            ${isRead ? " ✅" : ""}
+          `;
+
+          if (isRead) {
+            btn.style.color = "#4caf50";
+          }
+
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.loadLessonContent(
+              lessonId,
+              book.key
+            );
+          });
+
+          subList.appendChild(btn);
+        });
+      }
+
+      group.appendChild(subList);
+      this.treeContainer.appendChild(group);
     });
-
-    this.titleBox.textContent = category.toUpperCase();
-    this.contentBox.textContent = "Select a lesson to read.";
-
-    this.prevBtn.style.display = "none";
-    this.nextBtn.style.display = "none";
   }
 
-  // --------------------------
-  // LOAD SPECIFIC LESSON
-  // --------------------------
-  loadLessonContent(category, lessonName) {
+  // =====================================================
+  // LOAD LESSON CONTENT
+  // =====================================================
+
+  loadLessonContent(category, lessonKey) {
     this.currentCategory = category;
-    this.currentLesson = lessonName;
+    this.currentLesson = lessonKey;
     this.currentPage = 0;
 
-    this.titleBox.textContent = lessonName;
+    const lesson = LESSON_DATA[category];
+    if (!lesson) return;
+
+    const book = lesson.books.find(
+      b => b.key === lessonKey
+    );
+
+    if (!book) return;
+
+    this.titleBox.textContent =
+      book.title || this.formatKey(lessonKey);
+
     this.renderPage();
   }
 
-  // --------------------------
+  // =====================================================
   // RENDER PAGE
-  // --------------------------
-  renderPage() {
-    const pages =
-      lessonsData[this.currentCategory][this.currentLesson];
+  // =====================================================
 
-    this.contentBox.textContent = pages[this.currentPage];
+  getCurrentBook() {
+    if (!this.currentCategory ||
+        !this.currentLesson) return null;
 
-    this.prevBtn.style.display = this.currentPage > 0 ? "block" : "none";
-    this.nextBtn.style.display =
-      this.currentPage < pages.length - 1 ? "block" : "none";
+    const lesson =
+      LESSON_DATA[this.currentCategory];
+
+    return lesson?.books.find(
+      b => b.key === this.currentLesson
+    );
   }
 
-  // --------------------------
-  // RESET (closing app)
-  // --------------------------
+  renderPage() {
+    const book = this.getCurrentBook();
+    if (!book) return;
+
+    const pages = Array.isArray(book.text)
+      ? book.text
+      : [book.text];
+
+    this.contentBox.textContent =
+      pages[this.currentPage];
+
+    this.prevBtn.style.display =
+      this.currentPage > 0 ? "block" : "none";
+
+    this.nextBtn.style.display =
+      this.currentPage < pages.length - 1
+        ? "block"
+        : "none";
+  }
+
+  // =====================================================
+  // RESET
+  // =====================================================
+
   resetLessonsUI() {
     this.currentCategory = null;
     this.currentLesson = null;
     this.currentPage = 0;
 
-    this.listBox.innerHTML = "";
+    if (this.treeContainer)
+      this.treeContainer.innerHTML = "";
+
     this.titleBox.textContent = "Lessons";
-    this.contentBox.textContent = "All unlocked lessons will appear here.";
+    this.contentBox.textContent =
+      "All unlocked lessons will appear here.";
 
     this.prevBtn.style.display = "none";
     this.nextBtn.style.display = "none";
+  }
+
+  formatKey(key) {
+    return key
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^./, str => str.toUpperCase());
   }
 }
