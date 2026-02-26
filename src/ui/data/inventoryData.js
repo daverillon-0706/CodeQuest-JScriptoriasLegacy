@@ -2,6 +2,42 @@
 
 export const inventoryData = {
   key: {
+    //Keycards
+    keycard_syntax: {
+      name: "Syntax Keycard",
+      desc: "Proves mastery of JavaScript syntax. Unlocks the Syntax Rift.",
+      icon: "keycard_syntax.png"
+    },
+
+    keycard_datatypes: {
+      name: "Data Types Keycard",
+      desc: "Unlocks the Data Types Quiz and Rift.",
+      icon: "keycard_datatypes.png"
+    },
+
+    keycard_variable: {
+      name: "Variable Keycard",
+      desc: "Unlocks the Variables Quiz and Rift.",
+      icon: "keycard_variable.png"
+    },
+
+    keycard_operator: {
+      name: "Operator Keycard",
+      desc: "Unlocks the Operators Rift.",
+      icon: "keycard_operator.png"
+    },
+
+    keycard_array: {
+      name: "Array Keycard",
+      desc: "Unlocks the Arrays Rift.",
+      icon: "keycard_array.png"
+    },
+    keycard_function: {
+      name: "Function Keycard",
+      desc: "Unlocks the Functions Rift.",
+      icon: "keycard_function.png"
+    },
+    //Keystones
     keystone_syntax: {
       name: "Syntax Keystone",
       desc: "Unlocks the Syntax Rift.",
@@ -17,15 +53,15 @@ export const inventoryData = {
       desc: "Unlocks the Variables Rift.",
       icon: "keystone_variable.png"
     },
+    keystone_operator: {
+      name: "Operator Keystone",
+      desc: "Unlocks the Operators Rift.",
+      icon: "keystone_operator.png"
+    },
     keystone_condition: {
       name: "Condition Keystone",
       desc: "Unlocks the Conditions Rift.",
       icon: "keystone_condition.png"
-    },
-    keystone_operation: {
-      name: "Operation Keystone",
-      desc: "Unlocks the Operators Rift.",
-      icon: "keystone_operator.png"
     },
     keystone_array: {
       name: "Array Keystone",

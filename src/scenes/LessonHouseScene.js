@@ -5,6 +5,8 @@ import SoundManager from "../systems/SoundManager.js";
 import DialogueManager from "../systems/DialogueManager.js";
 import SceneTransition from "../systems/SceneTransition.js";
 import LessonManager from "../systems/learning/LessonManager.js"
+import GameState from "../GameState.js";
+import QuizUI from "../ui/HUD/QuizUI.js";
 
 export default class LessonHouseScene extends Phaser.Scene {
 
@@ -164,21 +166,19 @@ export default class LessonHouseScene extends Phaser.Scene {
       npc.dialogue = dialogueValue;
       npc.lessonId = this.lesson;
 
-npc.interact = () => {
+      npc.interact = () => {
 
   const lessonId = npc.lessonId;
-  const progress = GameState.player.lessonProgress?.[lessonId];
 
-  if (LessonManager.isAllBooksRead(lessonId)) {
+  console.log("Instructor interact triggered");
+  // Must read all books first
+  if (!LessonManager.isAllBooksRead(lessonId)) {
+    DialogueManager.start(npc.dialogue);
+    return;
+  }
 
-    if (!progress?.quizCompleted) {
-      DialogueManager.start([
-        "You have studied well.",
-        "Are you ready for the quiz?"
-      ]);
-      return;
-    }
-
+  // If quiz already passed
+  if (GameState.hasPassedQuiz(lessonId)) {
     DialogueManager.start([
       "You have already passed this lesson.",
       "Proceed to activate the Rift."
@@ -186,7 +186,27 @@ npc.interact = () => {
     return;
   }
 
-  DialogueManager.start(npc.dialogue);
+  // Ask confirmation before starting quiz
+  DialogueManager.start([
+    "You have studied well.",
+    "Are you ready for the quiz?",
+    {
+      options: [
+        {
+          text: "Yes",
+          action: () => {
+            new QuizUI(lessonId);
+          }
+        },
+        {
+          text: "Not yet",
+          action: () => {
+            DialogueManager.start(["Come back when you are ready."]);
+          }
+        }
+      ]
+    }
+  ]);
 };
 
       this.physics.add.collider(this.player, npc);

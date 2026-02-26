@@ -1,4 +1,9 @@
 export function wrapText(text, maxChars = 50) {
+
+    if (typeof text !== "string") {
+        text = String(text ?? "");
+    }
+
     const words = text.split(" ");
     let currentLine = "";
     let lines = [];
@@ -15,5 +20,5 @@ export function wrapText(text, maxChars = 50) {
         lines.push(currentLine.trim());
     }
 
-    return lines;  // <-- now returns array of lines
+    return lines;
 }

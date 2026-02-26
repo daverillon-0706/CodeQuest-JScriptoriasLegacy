@@ -249,7 +249,61 @@ addConsumable(id, amount = 1) {
 
     this.player = player; // trigger save & events
     return true;
+  },
+
+  // =========================
+// LESSON PROGRESSION
+// =========================
+
+getLessonProgress(category) {
+  const player = this.player;
+  if (!player) return null;
+
+  player.lessonProgress = player.lessonProgress || {};
+
+  if (!player.lessonProgress[category]) {
+    player.lessonProgress[category] = {
+      booksRead: [],
+      quizPassed: false
+    };
+
+    this.player = player; // save
   }
+
+  return player.lessonProgress[category];
+},
+
+markLessonRead(category, lessonId) {
+  const player = this.player;
+  if (!player) return;
+
+  const progress = this.getLessonProgress(category);
+
+  if (!progress.booksRead.includes(lessonId)) {
+    progress.booksRead.push(lessonId);
+    this.player = player;
+  }
+},
+
+hasReadLesson(category, lessonId) {
+  const progress = this.getLessonProgress(category);
+  return progress?.booksRead.includes(lessonId);
+},
+
+markQuizPassed(category) {
+  const player = this.player;
+  if (!player) return;
+
+  const progress = this.getLessonProgress(category);
+  progress.quizPassed = true;
+
+  this.player = player;
+},
+
+hasPassedQuiz(category) {
+  const progress = this.getLessonProgress(category);
+  return progress?.quizPassed === true;
+}
 };
 window.GameState = GameState;
 export default GameState;

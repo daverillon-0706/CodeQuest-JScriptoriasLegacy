@@ -94,20 +94,28 @@ export default class InventoryUI {
 
   // Load inventory items for a given tab
   loadInventory(tab = 'key') {
-    this.currentTab = tab;
-    this.invGrid.innerHTML = '';
+  this.currentTab = tab;
+  this.invGrid.innerHTML = '';
 
-    syncInventory();
+  syncInventory();
 
-    const data = inventoryData[tab];
-    const state = inventoryState[tab];
-    if (!data || !state) return;
+  const player = GameState.player;
+  if (!player) return;
 
-    Object.keys(data).forEach(id => {
-      const owned = tab === 'key' ? state[id] === true : state[id] > 0;
-      if (!owned) return;
+  // ===============================
+  // KEY ITEMS (Keycards / Keystones)
+  // ===============================
+  if (tab === 'key') {
 
-      const item = data[id];
+    const keyItems = player.items?.keyItems || [];
+
+    keyItems.forEach(id => {
+
+      const itemData = inventoryData.key?.[id] || {
+        name: id,
+        desc: "Key Item"
+      };
+
       const slot = document.createElement('div');
       slot.classList.add('inv-slot');
 
@@ -116,20 +124,46 @@ export default class InventoryUI {
       img.classList.add('inv-icon');
       slot.appendChild(img);
 
-      if (tab === 'cons') {
-        const count = document.createElement('span');
-        count.classList.add('inv-count');
-        count.textContent = state[id];
-        slot.appendChild(count);
-      }
-
       slot.addEventListener('click', () =>
-        this.openItemDetails(item, id, tab === 'cons' ? state[id] : null)
+        this.openItemDetails(itemData, id)
       );
 
       this.invGrid.appendChild(slot);
     });
+
+    return;
   }
+
+  // ===============================
+  // OTHER TABS (Consumables etc)
+  // ===============================
+
+  const data = inventoryData[tab];
+  const state = inventoryState[tab];
+  if (!data || !state) return;
+
+  Object.keys(data).forEach(id => {
+
+    const owned = state[id] > 0;
+    if (!owned) return;
+
+    const item = data[id];
+
+    const slot = document.createElement('div');
+    slot.classList.add('inv-slot');
+
+    const img = document.createElement('img');
+    img.src = ITEM_ICONS[id] ?? '';
+    img.classList.add('inv-icon');
+    slot.appendChild(img);
+
+    slot.addEventListener('click', () =>
+      this.openItemDetails(item, id, state[id])
+    );
+
+    this.invGrid.appendChild(slot);
+  });
+}
 
   // Open item details (right panel)
   openItemDetails(item, id = null, amount = null) {

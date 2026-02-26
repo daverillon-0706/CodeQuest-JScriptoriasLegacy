@@ -5,7 +5,7 @@ export const inventoryState = {
     keystone_datatypes: false,
     keystone_variable: false,
     keystone_condition: false,
-    keystone_operation: false,
+    keystone_operator: false,
     keystone_array: false,
     keystone_function: false
   },

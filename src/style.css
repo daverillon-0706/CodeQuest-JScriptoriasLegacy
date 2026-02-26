@@ -266,6 +266,25 @@ body {
   color: #000;
 }
 
+#dialogue-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.dialogue-option-btn {
+  padding: 6px 10px;
+  background: #222;
+  color: white;
+  border: 1px solid #555;
+  cursor: pointer;
+}
+
+.dialogue-option-btn:hover {
+  background: #444;
+}
+
 /*Battle UI*/
 
 #battle-ui {
@@ -1482,3 +1501,27 @@ body {
 }
 
 
+/*Quiz*/
+.quiz-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.quiz-box {
+  background: #111;
+  padding: 20px;
+  width: 500px;
+  border-radius: 8px;
+  color: white;
+}
+
+.quiz-box button {
+  display: block;
+  margin: 8px 0;
+  width: 100%;
+}

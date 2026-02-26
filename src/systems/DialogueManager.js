@@ -13,12 +13,15 @@ const DialogueManager = {
   currentLine: 0,
   isTyping: false,
   typeTimer: null,
+  activeOptions: null,
+  optionsContainer: null,
 
   // Interaction state
   canTalkTo: null, // set by updateProximity or scenes
   // internal listener refs so we can remove them
   _zHandler: null,
   _nextClickHandler: null,
+  
 
   init(scene) {
     this.scene = scene;
@@ -29,10 +32,14 @@ const DialogueManager = {
   // Optional: set DOM elements if you want to pass explicit elements
   // If you don't call this, DialogueManager will try to use document.getElementById
   setDomElements({ dialogueBox, dialogueText, nextBtn } = {}) {
-    this.dialogueBox = dialogueBox ?? document.getElementById("dialogue-box");
-    this.dialogueText = dialogueText ?? document.getElementById("dialogue-text");
-    this.nextBtn = nextBtn ?? document.getElementById("dialogue-next");
-  },
+  this.dialogueBox = dialogueBox ?? document.getElementById("dialogue-box");
+  this.dialogueText = dialogueText ?? document.getElementById("dialogue-text");
+  this.nextBtn = nextBtn ?? document.getElementById("dialogue-next");
+
+  // 🔥 ADD THIS
+  this.optionsContainer =
+    document.getElementById("dialogue-options");
+},
 
   // Call this after init() and setDomElements()
   attachInputListeners() {
@@ -60,9 +67,13 @@ const DialogueManager = {
 
         // Otherwise try to start a nearby NPC dialogue or perform scene interaction
         // Scenes can also call handleZKey(doorLayer) if they want to manage doors/scene transitions
-        if (this.canTalkTo?.dialogue?.length) {
-          this.start(this.canTalkTo.dialogue);
-        }
+        if (this.canTalkTo) {
+  if (typeof this.canTalkTo.interact === "function") {
+    this.canTalkTo.interact();
+  } else if (this.canTalkTo.dialogue?.length) {
+    this.start(this.canTalkTo.dialogue);
+  }
+}
       }
     };
     window.addEventListener("keydown", this._zHandler);
@@ -131,10 +142,15 @@ const DialogueManager = {
     }
 
     // If an NPC is near, start dialogue
-    if (this.canTalkTo?.dialogue?.length) {
-      this.start(this.canTalkTo.dialogue);
-      return true;
-    }
+    if (this.canTalkTo) {
+  if (typeof this.canTalkTo.interact === "function") {
+    this.canTalkTo.interact();
+    return true;
+  } else if (this.canTalkTo.dialogue?.length) {
+    this.start(this.canTalkTo.dialogue);
+    return true;
+  }
+}
 
     return false;
   },
@@ -153,22 +169,40 @@ const DialogueManager = {
   },
 
   next() {
-    if (this.isTyping) return;
-    this.currentLine++;
-    if (this.currentLine < (this.activeDialogue?.length || 0)) {
-      this.typeLine(this.activeDialogue[this.currentLine]);
-    } else {
-      this.close();
-    }
-  },
+  if (this.isTyping) return;
+
+  this.currentLine++;
+
+  if (this.currentLine >= (this.activeDialogue?.length || 0)) {
+    this.close();
+    return;
+  }
+
+  const line = this.activeDialogue[this.currentLine];
+
+  // 🔥 IF THIS IS A CHOICE OBJECT
+  if (typeof line === "object" && line?.options) {
+    this.showOptions(line.options);
+    return;
+  }
+
+  this.typeLine(line);
+},
 
   close() {
-    if (this.dialogueBox) this.dialogueBox.classList.add("hidden");
-    this._clearTyping();
-    this.activeDialogue = null;
-    this.currentLine = 0;
-    this.isTyping = false;
-  },
+  if (this.dialogueBox)
+    this.dialogueBox.classList.add("hidden");
+
+  if (this.optionsContainer) {
+    this.optionsContainer.innerHTML = "";
+    this.optionsContainer.classList.add("hidden");
+  }
+
+  this._clearTyping();
+  this.activeDialogue = null;
+  this.currentLine = 0;
+  this.isTyping = false;
+},
 
   typeLine(text) {
     this._clearTyping();
@@ -217,6 +251,31 @@ const DialogueManager = {
       this.typeTimer = null;
     }
   },
+  showOptions(options) {
+  if (!this.optionsContainer) return;
+
+  this.optionsContainer.innerHTML = "";
+  this.optionsContainer.classList.remove("hidden");
+
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.textContent = opt.text;
+    btn.className = "dialogue-option-btn";
+
+    btn.addEventListener("click", () => {
+
+      // Hide options after click
+      this.optionsContainer.innerHTML = "";
+      this.optionsContainer.classList.add("hidden");
+
+      if (opt.action) opt.action();
+
+      this.close();
+    });
+
+    this.optionsContainer.appendChild(btn);
+  });
+},
 
   // Remove timers and listeners. keepScene param if you want to keep scene link
   dispose(removeScene = true) {

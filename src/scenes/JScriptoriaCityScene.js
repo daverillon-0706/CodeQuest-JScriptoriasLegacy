@@ -57,8 +57,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   preload() {
     this.load.tilemapTiledJSON("JScriptoriaCity", "/maps/JScriptoriaCity.tmj");
 
-    const cityTilesets = ["house","headquarters","guild","inn","library","road_full","roads", "school-sheet"];
-    const outskirtsTilesets = ["cliff","grasswalk","hole","kiosk","monolith-sheet", "road_dirt_path", "stone_path","tree"];
+    const cityTilesets = ["house","headquarters","guild", "monolith_syntax", "monolith_datatypes", "monolith_variables", "monolith_operators", "monolith_conditions", "monolith_array", "monolith_functions", "inn","library","road_full","roads", "school-sheet"];
+    const outskirtsTilesets = ["cliff","grasswalk","hole","kiosk", "road_dirt_path", "stone_path","tree"];
     const indoorTilesets = ["lowerwall","upperwall"];
 
     cityTilesets.forEach(name => this.load.image(name, `/assets/tilesets/jscriptoriacity/${name}.png`));

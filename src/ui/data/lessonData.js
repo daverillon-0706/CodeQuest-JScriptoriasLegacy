@@ -23,8 +23,8 @@ export const LESSON_DATA = {
       },
       {
         key: "consoleLog",
-        title: "Using Console.log()",
-        text: "console.log() prints output to the console.",
+        title: "Using console.log()",
+        text: "console.log() prints output to the browser's console.",
         locked: true
       }
     ]
