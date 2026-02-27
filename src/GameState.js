@@ -172,8 +172,12 @@ const GameState = {
 // =========================
 
 // Get all collected key items
-getKeyItems() {
-  return this.player?.items?.keyItems ?? [];
+getKeyItems(type = null) {
+  const items = this.player?.items?.keyItems ?? [];
+
+  if (!type) return items;
+
+  return items.filter(id => id.startsWith(type));
 },
 
 // Check if player has a key item
@@ -188,24 +192,28 @@ getNextKeyItem(KEY_ITEM_ORDER) {
 },
 
 // Add key item (ordered)
-addKeyItem(id, KEY_ITEM_ORDER) {
+addKeyItem(id, ORDER) {
   const player = this.player;
   if (!player) return;
 
+  player.items.keyItems = player.items.keyItems || [];
+
   const owned = player.items.keyItems;
 
-  // Prevent duplicates
   if (owned.includes(id)) {
     console.log("[KeyItem] Already owned:", id);
     return;
   }
 
-  // Enforce order
-  const expected = KEY_ITEM_ORDER[owned.length];
+  // Determine correct order based on filtered items of same type
+  const type = id.startsWith("keycard") ? "keycard" : "keystone";
+  const sameTypeOwned = owned.filter(i => i.startsWith(type));
+
+  const expected = ORDER[sameTypeOwned.length];
 
   if (id !== expected) {
     console.warn(
-      `[KeyItem] Cannot collect ${id} yet. Expected: ${expected}`
+      `[KeyItem] Cannot collect ${id}. Expected: ${expected}`
     );
     return;
   }
@@ -213,7 +221,6 @@ addKeyItem(id, KEY_ITEM_ORDER) {
   owned.push(id);
 
   this.player = player;
-
   console.log("[KeyItem] Collected:", id);
 },
 
@@ -263,12 +270,13 @@ getLessonProgress(category) {
 
   if (!player.lessonProgress[category]) {
     player.lessonProgress[category] = {
-      booksRead: [],
-      quizPassed: false
+      booksRead: {},         // use object for mapping like your save
+      quizCompleted: false,  // match the key used everywhere
+      keycardRewarded: false
     };
 
-    this.player = player; // save
-  }
+    this.player = player;
+}
 
   return player.lessonProgress[category];
 },
@@ -279,8 +287,8 @@ markLessonRead(category, lessonId) {
 
   const progress = this.getLessonProgress(category);
 
-  if (!progress.booksRead.includes(lessonId)) {
-    progress.booksRead.push(lessonId);
+  if (!progress.booksRead[lessonId]) {
+    progress.booksRead[lessonId] = true;
     this.player = player;
   }
 },
@@ -295,14 +303,14 @@ markQuizPassed(category) {
   if (!player) return;
 
   const progress = this.getLessonProgress(category);
-  progress.quizPassed = true;
+  progress.quizCompleted = true;
 
   this.player = player;
 },
 
 hasPassedQuiz(category) {
   const progress = this.getLessonProgress(category);
-  return progress?.quizPassed === true;
+  return progress?.quizCompleted === true;
 }
 };
 window.GameState = GameState;

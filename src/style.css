@@ -1516,6 +1516,7 @@ body {
   background: #111;
   padding: 20px;
   width: 500px;
+  height: 800px;
   border-radius: 8px;
   color: white;
 }
@@ -1524,4 +1525,10 @@ body {
   display: block;
   margin: 8px 0;
   width: 100%;
+}
+
+.quiz-box button.active {
+  background-color: #2ecc71;
+  color: white;
+  transform: scale(1.02);
 }

@@ -673,87 +673,104 @@ console.log("Registered Rift (hidden):", riftName);
   });
 }
   activateRiftFromKiosk(kiosk) {
-  if (!kiosk.kioskName) return;
+    if (!kiosk?.kioskName) return;
 
-  // Convert "Syntax Kiosk" → "Syntax Monolith"
-  const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
+    // 🔒 KEYCARD VALIDATION
+    const category = kiosk.kioskName
+      .replace(" Kiosk", "")
+      .trim()
+      .toLowerCase();
 
-  // Normalize to internal ID
-  const riftId = normalizeRiftName(targetRiftName); // e.g., "Syntax", "DataTypes"
-  console.log("Looking for rift:", targetRiftName, "→", riftId);
+    const requiredKeycard = `keycard_${category}`;
 
-  // Check if already completed
-  const riftProgress = GameState.player.riftProgress[riftId];
-  if (riftProgress?.completed) {
-    console.log(`[Rift] ${riftId} already completed, skipping activation`);
-    return;
-  }
+    if (!GameState.hasKeyItem(requiredKeycard)) {
+        console.log("❌ Missing keycard:", requiredKeycard);
+        return;
+    }
 
-  const rift = this.rifts.find(r => r.riftName === riftId);
-  if (!rift) {
-    console.warn(`[Rift] No Rift found for: ${targetRiftName}`);
-    return;
-  }
+    console.log("✅ Keycard verified:", requiredKeycard);
+    // Convert "Syntax Kiosk" → "Syntax Monolith"
+    const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
 
-  // Prevent duplicate activation
-  if (rift.isActive) {
-    console.log(`[Rift] Rift already active: ${riftId}`);
-    return;
-  }
+    // Normalize to internal ID
+    const riftId = normalizeRiftName(targetRiftName); // e.g., "Syntax", "DataTypes"
+    console.log("Looking for rift:", targetRiftName, "→", riftId);
 
-  console.log(`[Rift] Summoning Rift: ${riftId}`);
+    // Ensure riftProgress exists
+    GameState.player.riftProgress = GameState.player.riftProgress || {};
+    const riftProgress = GameState.player.riftProgress[riftId];
 
-  // Reveal if dormant
-  if (rift.isDormant) {
-    rift.setVisible(true);
-    if (!rift.body) this.physics.world.enable(rift);
-    rift.body.enable = true;
-    rift.isDormant = false;
+    if (riftProgress?.completed) {
+        console.log(`[Rift] ${riftId} already completed, skipping activation`);
+        return;
+    }
 
-    // Spawn animation
-    rift.setScale(0);
-    this.tweens.add({
-      targets: rift,
-      scale: 1,
-      duration: 300,
-      ease: "Back.Out"
+    const rift = this.rifts.find(r => r.riftName === riftId);
+    if (!rift) {
+        console.warn(`[Rift] No Rift found for: ${targetRiftName}`);
+        return;
+    }
+
+    // Prevent duplicate activation
+    if (rift.isActive || rift.isDebugging) {
+        console.log(`[Rift] Rift already active or debugging: ${riftId}`);
+        return;
+    }
+
+    console.log(`[Rift] Summoning Rift: ${riftId}`);
+
+    // Reveal if dormant
+    if (rift.isDormant) {
+        rift.setVisible(true);
+        if (!rift.body) this.physics.world.enable(rift);
+        rift.body.enable = true;
+        rift.isDormant = false;
+
+        rift.setScale(0);
+        this.tweens.add({
+            targets: rift,
+            scale: 1,
+            duration: 300,
+            ease: "Back.Out"
+        });
+    }
+
+    // Assign challenges
+    const challenges = RiftChallenges[riftId];
+    if (!challenges?.length) {
+        console.warn(`[Rift] No challenges found for category: ${kiosk.kioskName}`);
+        return;
+    }
+
+    rift.challenges = challenges;
+    rift.currentChallenge = 0;
+    rift.completed = false;
+    rift.isActive = true;
+
+    // Activate rift
+    rift.activate(riftId, () => {
+        // Completion callback
+        rift.completed = true;
+        rift.isActive = false;
+
+        // Save progress
+        GameState.player.riftProgress[riftId] = {
+            completed: true,
+            completedChallenges: challenges.map((_, i) => i)
+        };
+        GameState.player = GameState.player; // trigger save
+
+        // Animate and remove
+        this.tweens.add({
+            targets: rift,
+            scale: 0,
+            duration: 300,
+            ease: "Back.In",
+            onComplete: () => rift.destroy()
+        });
+
+        console.log(`[Rift] ${riftId} completed and destroyed`);
     });
-  }
-
-  // Assign challenges dynamically
-  const challenges = RiftChallenges[riftId];
-  if (!challenges || !challenges.length) {
-    console.warn(`[Rift] No challenges found for category: ${kiosk.kioskName}`);
-    return;
-  }
-
-  rift.challenges = challenges;
-  rift.currentChallenge = 0;
-  rift.completed = false;
-
-  // Activate rift system
-  rift.activate(riftId, () => {
-    // Callback when all challenges are completed
-    rift.completed = true;
-
-    // Save progress in GameState
-    GameState.player.riftProgress[riftId] = {
-      completed: true,
-      completedChallenges: challenges.map((_, i) => i)
-    };
-    GameState.player = GameState.player; // trigger save
-
-    // Shrink & destroy animation
-    this.tweens.add({
-      targets: rift,
-      scale: 0,
-      duration: 300,
-      ease: "Back.In",
-      onComplete: () => rift.destroy()
-    });
-
-    console.log(`[Rift] ${riftId} completed and destroyed`);
-  });
 }
   openRiftCompiler(rift) {
 
@@ -1043,62 +1060,78 @@ console.log("Registered Rift (hidden):", riftName);
     if (rift && rift.onCodingClosed) rift.onCodingClosed();
 }
   defeatRift(rift) {
-    if (rift.completed === false) return;
-    console.log("RiftName:", rift.riftName);
-    console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);
+  if (!rift || !rift.completed) return;
 
+  console.log("RiftName:", rift.riftName);
+  console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);
 
-    const player = GameState.player;
+  const player = GameState.player;
+  if (!player) return;
 
-    // Ensure riftProgress exists
-    player.riftProgress = player.riftProgress || {};
-    player.riftProgress[rift.riftName] = player.riftProgress[rift.riftName] || {};
-    player.riftProgress[rift.riftName].completed = true;
+  // ✅ Ensure riftProgress exists
+  player.riftProgress = player.riftProgress || {};
+  player.riftProgress[rift.riftName] =
+    player.riftProgress[rift.riftName] || {};
 
-    // Add keystone
-    const keystoneId = KEYSTONE_MAP[rift.riftName];
-    if (keystoneId) {
+  player.riftProgress[rift.riftName].completed = true;
 
-        player.items = player.items || {};
-        player.items.keyItems = player.items.keyItems || [];
+  // =====================================================
+  // ✅ KEYSTONE REWARD LOGIC (FIXED ORDER CALCULATION)
+  // =====================================================
 
-        const owned = player.items.keyItems;
+  const keystoneId = KEYSTONE_MAP[rift.riftName];
+  if (keystoneId) {
+    player.items = player.items || {};
+    player.items.keyItems = player.items.keyItems || [];
 
-        // Prevent duplicates
-        if (owned.includes(keystoneId)) {
-            console.log("Keystone already owned:", keystoneId);
-        } else {
+    const owned = player.items.keyItems;
 
-            // 🔒 Enforce order
-            const expected = KEY_ITEM_ORDER[owned.length];
-
-            if (keystoneId !== expected) {
-                console.warn(
-                  `Keystone out of order. Expected: ${expected}, Got: ${keystoneId}`
-                );
-                return; // Block reward
-            }
-
-            owned.push(keystoneId);
-
-            console.log(`🗝️ Keystone added: ${keystoneId}`);
-        }
-
+    // Prevent duplicate keystone
+    if (owned.includes(keystoneId)) {
+      console.log("Keystone already owned:", keystoneId);
     } else {
-        console.warn("No keystone mapped for:", rift.riftName);
+      // ✅ Count ONLY keystones for order check
+      const ownedKeystones = owned.filter(id =>
+        id.startsWith("keystone")
+      );
+
+      const expected = KEY_ITEM_ORDER[ownedKeystones.length];
+
+      if (keystoneId !== expected) {
+        console.warn(
+          `Keystone out of order. Expected: ${expected}, Got: ${keystoneId}`
+        );
+        return; // 🚨 Block reward if wrong order
+      }
+
+      owned.push(keystoneId);
+      console.log("🗝️ Keystone added:", keystoneId);
     }
 
-    // Save player
-    GameState.player = player;
-
-    // Feedback
-    alert(`🗝️ You obtained the ${rift.riftName} Keystone!`);
+    console.log("Owned key items:", player.items.keyItems);
     console.log(
-  "Owned:",
-  owned,
-  "Next:",
-  KEY_ITEM_ORDER[owned.length]
-);
+      "Next expected:",
+      KEY_ITEM_ORDER[
+        player.items.keyItems.filter(id =>
+          id.startsWith("keystone")
+        ).length
+      ]
+    );
+  } else {
+    console.warn("No keystone mapped for:", rift.riftName);
+  }
+
+  // =====================================================
+  // ✅ SAVE PROPERLY
+  // =====================================================
+
+  GameState.player = player;
+
+  // =====================================================
+  // ✅ FEEDBACK
+  // =====================================================
+
+  alert(`🗝️ You obtained the ${rift.riftName} Keystone!`);
 }
   syncGameStateToSprite() {
   const gs = GameState.player;

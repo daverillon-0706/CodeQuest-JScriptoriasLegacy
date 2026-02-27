@@ -39,26 +39,26 @@ export default class QuizManager {
   }
 
   finish() {
-
   if (!this.hasPassed()) return false;
 
-  const lessonToItemMap = {
-    syntax: "syntax",
-    dataTypes: "datatypes",
-    variables: "variable",
-    operators: "operator",
-    conditions: "condition",
-    arrays: "array",
-    functions: "function"
-  };
-
-  const suffix = lessonToItemMap[this.category];
-  if (!suffix) return false;
-
-  const keycardId = `keycard_${suffix}`;
-
   GameState.markQuizPassed(this.category);
+
+  const keycardId = `keycard_${this.category}`;
   GameState.addKeyItem(keycardId, KEYCARD_ORDER);
+
+  const progress = GameState.getLessonProgress(this.category);
+
+  progress.quizCompleted = true;
+  progress.keycardRewarded = true;
+
+  // 🔥 Force proper save
+  GameState.player = {
+    ...GameState.player,
+    lessonProgress: {
+      ...GameState.player.lessonProgress,
+      [this.category]: progress
+    }
+  };
 
   return true;
 }
