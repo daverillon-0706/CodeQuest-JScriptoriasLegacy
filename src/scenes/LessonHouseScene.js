@@ -4,7 +4,7 @@ import PerksManager from "../systems/PerksManager.js";
 import SoundManager from "../systems/SoundManager.js";
 import DialogueManager from "../systems/DialogueManager.js";
 import SceneTransition from "../systems/SceneTransition.js";
-import LessonManager from "../systems/learning/LessonManager.js"
+import LessonManager from "../systems/learning/LessonManager.js";
 import GameState from "../GameState.js";
 import QuizUI from "../ui/HUD/QuizUI.js";
 
@@ -20,6 +20,7 @@ export default class LessonHouseScene extends Phaser.Scene {
   }
 
   preload() {
+
     this.load.tilemapTiledJSON("ClassroomScene", "/maps/ClassroomScene.tmj");
 
     const tilesets = ["board","cabinet","chair","desk","floor","wall"];
@@ -27,13 +28,21 @@ export default class LessonHouseScene extends Phaser.Scene {
       this.load.image(name, `/assets/tilesets/classroom/${name}.png`);
     });
 
-    this.load.spritesheet("player_male",
+    this.load.spritesheet(
+      "player_male",
       "/assets/sprites/player/player_male.png",
       { frameWidth:16, frameHeight:16 }
     );
 
-    this.load.spritesheet("kaelen",
+    this.load.spritesheet(
+      "kaelen",
       "/assets/sprites/npcs/kaelen.png",
+      { frameWidth:16, frameHeight:16 }
+    );
+
+    this.load.spritesheet(
+      "book",
+      "/assets/icons/item/book.png",
       { frameWidth:16, frameHeight:16 }
     );
   }
@@ -41,20 +50,23 @@ export default class LessonHouseScene extends Phaser.Scene {
   create() {
 
     // --------------------------
-  // BLACK BACKGROUND (FIX)
-  // --------------------------
-  this.cameras.main.setBackgroundColor("#000000");
+    // Background
+    // --------------------------
+    this.cameras.main.setBackgroundColor("#000000");
 
-  // Optional extra protection against scene bleed
-  this.add.rectangle(
-    0,
-    0,
-    this.scale.width * 5,
-    this.scale.height * 5,
-    0x000000
-  )
-  .setOrigin(0)
-  .setDepth(-10);
+    this.add.rectangle(
+      0,
+      0,
+      this.scale.width * 5,
+      this.scale.height * 5,
+      0x000000
+    )
+    .setOrigin(0)
+    .setDepth(-10);
+
+    // --------------------------
+    // Map
+    // --------------------------
     this.map = this.make.tilemap({ key: "ClassroomScene" });
 
     const tilesets = this.map.tilesets.map(ts =>
@@ -69,6 +81,9 @@ export default class LessonHouseScene extends Phaser.Scene {
     if (this.wallLayer) this.wallLayer.setCollisionByExclusion([-1]);
     if (this.furnitureLayer) this.furnitureLayer.setCollisionByExclusion([-1]);
 
+    // --------------------------
+    // Spawn
+    // --------------------------
     const spawnLayer = this.map.getObjectLayer("Objects") || { objects: [] };
 
     let spawnObj =
@@ -86,6 +101,9 @@ export default class LessonHouseScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.wallLayer);
     this.physics.add.collider(this.player, this.furnitureLayer);
 
+    // --------------------------
+    // NPCs
+    // --------------------------
     this.npcs = [];
     this.createNPCs();
 
@@ -99,26 +117,51 @@ export default class LessonHouseScene extends Phaser.Scene {
     PerksManager.setScene(this);
     this.soundManager = new SoundManager(this);
 
+    // --------------------------
     // Camera
+    // --------------------------
     this.physics.world.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
+
     this.cameras.main
       .setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels)
       .startFollow(this.player,true,0.08,0.08)
       .setZoom(3);
 
     // --------------------------
-    // DIALOGUE MANAGER SETUP
+    // Dialogue
     // --------------------------
     DialogueManager.init(this);
     DialogueManager.attachInputListeners();
 
+    // --------------------------
+    // Input + Animation (IMPORTANT ORDER)
+    // --------------------------
+    this.interactKey = this.input.keyboard.addKey("Z");
+
+    if (!this.anims.exists("book_idle")) {
+      this.anims.create({
+        key: "book_idle",
+        frames: this.anims.generateFrameNumbers("book", {
+          start: 0,
+          end: 4
+        }),
+        frameRate: 6,
+        repeat: -1
+      });
+    }
+
+    // --------------------------
     // Books + Exit
+    // --------------------------
     this.createBooks();
     this.createExitZone();
 
     SceneTransition.start(this, () => {
-  console.log("Lesson scene loaded");
-});
+      console.log("Lesson scene loaded");
+    });
+
+    console.log("Lesson ID received:", this.lesson);
+console.log("Lesson data:", LessonManager.getLesson(this.lesson));
   }
 
   update() {
@@ -127,18 +170,17 @@ export default class LessonHouseScene extends Phaser.Scene {
       this.playerController.update(this.npcs);
     }
 
-    // Depth sorting
     this.player.setDepth(this.player.y);
     this.npcs.forEach(npc => npc.setDepth(npc.y));
 
-    // IMPORTANT: update DialogueManager proximity
     DialogueManager.updateProximity(this.player, this.npcs);
   }
 
-  // --------------------------
-  // NPC CREATION
-  // --------------------------
+  // =====================================================
+  // NPCs
+  // =====================================================
   createNPCs() {
+
     const npcLayer = this.map.getObjectLayer("NPC Objects");
     if (!npcLayer) return;
 
@@ -162,174 +204,180 @@ export default class LessonHouseScene extends Phaser.Scene {
         }
       }
 
-      // CRITICAL: DialogueManager expects npc.dialogue
       npc.dialogue = dialogueValue;
       npc.lessonId = this.lesson;
 
       npc.interact = () => {
 
-  const lessonId = npc.lessonId;
+        const lessonId = npc.lessonId;
 
-  console.log("Instructor interact triggered");
-  // Must read all books first
-  if (!LessonManager.isAllBooksRead(lessonId)) {
-    DialogueManager.start(npc.dialogue);
-    return;
-  }
-
-  // If quiz already passed
-  if (GameState.hasPassedQuiz(lessonId)) {
-    DialogueManager.start([
-      "You have already passed this lesson.",
-      "Proceed to activate the Rift."
-    ]);
-    return;
-  }
-
-  // Ask confirmation before starting quiz
-  DialogueManager.start([
-    "You have studied well.",
-    "Are you ready for the quiz?",
-    {
-      options: [
-        {
-          text: "Yes",
-          action: () => {
-            new QuizUI(lessonId);
-          }
-        },
-        {
-          text: "Not yet",
-          action: () => {
-            DialogueManager.start(["Come back when you are ready."]);
-          }
+        if (!LessonManager.isAllBooksRead(lessonId)) {
+          DialogueManager.start(npc.dialogue);
+          return;
         }
-      ]
-    }
-  ]);
-};
+
+        if (GameState.hasPassedQuiz(lessonId)) {
+          DialogueManager.start([
+            "You have already passed this lesson.",
+            "Proceed to activate the Rift."
+          ]);
+          return;
+        }
+
+        DialogueManager.start([
+          "You have studied well.",
+          "Are you ready for the quiz?",
+          {
+            options: [
+              {
+                text: "Yes",
+                action: () => new QuizUI(lessonId)
+              },
+              {
+                text: "Not yet",
+                action: () =>
+                  DialogueManager.start(["Come back when you are ready."])
+              }
+            ]
+          }
+        ]);
+      };
 
       this.physics.add.collider(this.player, npc);
-
       this.npcs.push(npc);
     });
   }
 
-  // --------------------------
-  // BOOKS (NOW USE DialogueManager)
-  // --------------------------
-  createBooks() {
+  // =====================================================
+// BOOKS (Inventory Style)
+// =====================================================
+createBooks() {
 
   const lessonData = LessonManager.getLesson(this.lesson);
-
-  if (!lessonData) {
-    console.error("Lesson not found:", this.lesson);
-    return;
-  }
+  if (!lessonData) return;
 
   LessonManager.initLessonProgress(this.lesson);
 
-  const positions = [
-    { x:140, y:180 },
-    { x:260, y:180 },
-    { x:140, y:230 },
-    { x:260, y:230 }
-  ];
+  const bookLayer = this.map.getObjectLayer("lesson object");
+  if (!bookLayer) return;
 
-  lessonData.books.forEach((bookData, i) => {
+  bookLayer.objects.forEach(obj => {
 
-    const book = this.add.rectangle(
-      positions[i].x,
-      positions[i].y,
-      16,
-      16,
-      0xff0000
-    );
+    const lessonProp =
+      obj.properties?.find(p => p.name === "lesson")?.value;
 
-    this.physics.add.existing(book, true);
+    const bookKey =
+      obj.properties?.find(p => p.name === "bookKey")?.value;
 
-    book.setData("bookKey", bookData.key);
-    book.setData("text", bookData.text);
+    if (lessonProp !== this.lesson) return;
+
+    const bookData = lessonData.books.find(b => b.key === bookKey);
+    if (!bookData) return;
+
+    if (LessonManager.isBookRead(this.lesson, bookKey)) return;
+
+    const book = this.physics.add.staticSprite(obj.x, obj.y, "book")
+      .setOrigin(0,1)
+      .setDepth(obj.y);
+
+    book.play("book_idle");
+
+    // Match hitbox to sprite
+    if (book.body) {
+      book.body.setSize(16, 32);
+      book.body.setOffset(8,8);
+    }
 
     this.physics.add.overlap(this.player, book, () => {
 
-  if (Phaser.Input.Keyboard.JustDown(
-      this.input.keyboard.addKey("Z")
-  )) {
+      if (!Phaser.Input.Keyboard.JustDown(this.interactKey)) return;
 
-    const bookKey = book.getData("bookKey");
-    const text = book.getData("text");
+      // ✅ Mark as collected
+      LessonManager.markBookRead(this.lesson, bookKey);
 
-    // Show book text FIRST
-    DialogueManager.start([text]);
-
-    // Mark book immediately (no callback timing issues)
-    LessonManager.markBookRead(this.lesson, bookKey);
-
-    // Delay completion check slightly (prevents race condition)
-    this.time.delayedCall(200, () => {
-
-      if (LessonManager.isAllBooksRead(this.lesson)) {
-
-        const progress =
-          GameState.player.lessonProgress?.[this.lesson];
-
-        if (!progress?._completionShown) {
-
-          progress._completionShown = true;
-          GameState.player = GameState.player;
-
-          DialogueManager.start([
-            "You have completed all lesson materials.",
-            "Talk to the instructor to begin the quiz."
-          ]);
-        }
+      // ✅ Play pickup feedback
+      if (this.soundManager) {
+        this.soundManager.play?.("energy_gain");
       }
 
+      // ✅ Visual feedback
+      book.setTint(0x00ff00);
+
+      this.tweens.add({
+        targets: book,
+        alpha: 0,
+        scale: 1.3,
+        duration: 400,
+        ease: "Power2",
+        onComplete: () => book.destroy()
+      });
+
+      // ✅ Show clean system message
+      DialogueManager.start([
+        `Book Collected: ${bookData.title}`,
+        "Inspect it in your inventory."
+      ]);
+
+      // ✅ Completion Check
+      this.time.delayedCall(200, () => {
+
+        if (LessonManager.isAllBooksRead(this.lesson)) {
+
+          const progress =
+            GameState.player.lessonProgress?.[this.lesson];
+
+          if (!progress?._completionShown) {
+
+            progress._completionShown = true;
+            GameState.player = GameState.player;
+
+            DialogueManager.start([
+              "All lesson materials completed!",
+              "Talk to the instructor to begin the quiz."
+            ]);
+          }
+        }
+
+      });
+
     });
-
-  }
-
-});
-
   });
-
 }
 
-  // --------------------------
+  // =====================================================
   // EXIT
-  // --------------------------
+  // =====================================================
   createExitZone() {
 
     const zone = this.add.zone(
-      this.map.widthInPixels/2,
+      this.map.widthInPixels / 2,
       this.map.heightInPixels - 20,
-      60,40
+      60,
+      40
     );
 
     this.physics.world.enable(zone);
 
-    this.physics.add.overlap(this.player,zone,()=>{
+    this.physics.add.overlap(this.player, zone, () => {
       this.nearExit = true;
     });
 
-    this.physics.world.on("worldstep",()=>{
-      if (!this.physics.overlap(this.player,zone))
+    this.physics.world.on("worldstep", () => {
+      if (!this.physics.overlap(this.player, zone))
         this.nearExit = false;
     });
 
     this.input.keyboard.on("keydown-Z", () => {
 
-  if (this.nearExit) {
+      if (this.nearExit) {
 
-    SceneTransition.start(this, () => {
+        SceneTransition.start(this, () => {
+          this.scene.start("JScriptoriaCityScene", {
+            spawn: "LessonDoorReturn"
+          });
+        });
 
-      this.scene.start("JScriptoriaCityScene", {
-        spawn: "LessonDoorReturn"
-      });
-
+      }
     });
-  }
-});
   }
 }

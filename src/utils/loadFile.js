@@ -12,40 +12,70 @@ export function importSaveFile(playerSprite = null) {
 
     const reader = new FileReader();
     reader.onload = event => {
-      try {
-        const data = JSON.parse(event.target.result);
+  try {
+    const raw = JSON.parse(event.target.result);
 
-        if (!verifySaveToken(data)) {
-          alert("Invalid or tampered save file.");
-          return;
-        }
+    // 🔐 Validate token
+    if (!verifySaveToken(raw)) {
+      alert("Invalid or tampered save file.");
+      return;
+    }
 
-        GameState.player = data.payload;
+    const payload = raw.payload;
 
-        // Save active slot in localStorage
-        localStorage.setItem("activeSaveFile", file.name);
-        localStorage.setItem(file.name, event.target.result);
+    // ✅ Merge with default to auto-migrate safely
+    const safeSave = {
+      ...GameState.player, // current defaults
+      ...payload,
 
-        const gs = GameState.player;
-        gs.hp = Math.min(gs.hp, gs.max_hp);
-        gs.energy = Math.min(gs.energy, gs.max_energy);
+      items: {
+        ...(GameState.player?.items || {}),
+        ...(payload.items || {})
+      },
 
-        if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
-        if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
+      perks: {
+        ...(GameState.player?.perks || {}),
+        ...(payload.perks || {})
+      },
 
-        if (playerSprite) {
-          const pos = gs.worldState.position || { x: 100, y: 100 };
-          playerSprite.setPosition(pos.x, pos.y);
-        }
+      worldState: {
+        ...(GameState.player?.worldState || {}),
+        ...(payload.worldState || {})
+      },
 
-        console.log("[LoadFile] Player data loaded:", gs);
-        alert("Save Loaded Successfully!");
-
-      } catch (err) {
-        console.error("Failed to load save file", err);
-        alert("Save file is corrupted.");
+      lessonProgress: {
+        ...(GameState.player?.lessonProgress || {}),
+        ...(payload.lessonProgress || {})
       }
     };
+
+    GameState.player = safeSave;
+
+    // Save active slot
+    localStorage.setItem("activeSaveFile", file.name);
+    localStorage.setItem(file.name, event.target.result);
+
+    const gs = GameState.player;
+
+    gs.hp = Math.min(gs.hp, gs.max_hp);
+    gs.energy = Math.min(gs.energy, gs.max_energy);
+
+    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+    if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
+
+    if (playerSprite) {
+      const pos = gs.worldState.position || { x: 100, y: 100 };
+      playerSprite.setPosition(pos.x, pos.y);
+    }
+
+    console.log("[LoadFile] Loaded safely:", gs);
+    alert("Save Loaded Successfully!");
+
+  } catch (err) {
+    console.error("Save load failed", err);
+    alert("Save file is corrupted.");
+  }
+};
 
     reader.readAsText(file);
   };

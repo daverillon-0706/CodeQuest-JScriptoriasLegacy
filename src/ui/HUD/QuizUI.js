@@ -1,4 +1,5 @@
 import QuizManager from "../../systems/learning/QuizManager";
+import GameState from "../../GameState";
 
 export default class QuizUI {
   constructor(category) {
@@ -127,14 +128,52 @@ export default class QuizUI {
   }
 
   showResult(passed) {
-    this.container.innerHTML = `
-      <div class="quiz-box">
-        <h2>${passed ? "You have passed the quiz! Congratulations!" : "You failed the quiz, try again next time!"}</h2>
-        <button id="quiz-close">Close</button>
-      </div>
-    `;
 
-    this.container.querySelector("#quiz-close")
-      .onclick = () => this.container.remove();
+  if (passed) {
+
+    // Mark quiz as passed (if you have this system)
+    GameState.markQuizPassed?.(this.quiz.category);
+
+    // ---- PROGRESSION UNLOCK ----
+    if (GameState.player.currentLessonIndex === undefined) {
+      GameState.player.currentLessonIndex = 0;
+    }
+
+    // Find lesson order dynamically if you use LESSON_ORDER
+    const LESSON_ORDER = [
+      "syntax",
+      "datatypes",
+      "variables",
+      "operators",
+      "conditions",
+      "array",
+      "functions"
+    ];
+
+    const lessonOrder = LESSON_ORDER.indexOf(this.quiz.category);
+
+    if (lessonOrder >= 0 &&
+        GameState.player.currentLessonIndex <= lessonOrder) {
+
+      GameState.player.currentLessonIndex = lessonOrder + 1;
+    }
+
+    // Trigger save
+    GameState.player = GameState.player;
   }
+
+  this.container.innerHTML = `
+    <div class="quiz-box">
+      <h2>
+        ${passed
+          ? "You have passed the quiz! Congratulations!"
+          : "You failed the quiz, try again next time!"}
+      </h2>
+      <button id="quiz-close">Close</button>
+    </div>
+  `;
+
+  this.container.querySelector("#quiz-close")
+    .onclick = () => this.container.remove();
+}
 }

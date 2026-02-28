@@ -30,7 +30,7 @@ export const LESSON_DATA = {
     ]
   },
 
-  dataTypes: {
+  datatypes: {
     displayName: "JavaScript Data Types",
     books: [
       {

@@ -132,8 +132,7 @@
 
 <script type="module">
 import GameState from "./src/GameState.js";
-import {addSaveToken} from "./src/utils/saveToken.js";
-import {verifySaveToken} from "./src/utils/saveToken.js";
+import { addSaveToken, verifySaveToken } from "./src/utils/saveToken.js";
 
 // -------------------
 // ELEMENTS
@@ -141,7 +140,7 @@ import {verifySaveToken} from "./src/utils/saveToken.js";
 const nameInput  = document.getElementById("playerName");
 const newGameBtn = document.getElementById("newGameBtn");
 const continueBtn = document.getElementById("continueBtn");
-const fileInput = document.getElementById("saveFileInput");
+const fileInput   = document.getElementById("saveFileInput");
 
 // -------------------
 // TOKEN GENERATOR
@@ -150,9 +149,9 @@ function generateToken(){
   return crypto.randomUUID() + "-" + Date.now();
 }
 
-// -------------------
+// ===============================
 // NEW GAME
-// -------------------
+// ===============================
 newGameBtn.addEventListener("click", () => {
 
   const name = nameInput.value.trim();
@@ -202,14 +201,14 @@ newGameBtn.addEventListener("click", () => {
     }
   };
 
-  // Save locally
+  // Save to GameState
   GameState.player = newPlayer;
 
-  // Save active session locally
-localStorage.setItem(
-  "codequest_active_save",
-  JSON.stringify(newPlayer)
-);
+  // Save active session
+  localStorage.setItem(
+    "codequest_active_save",
+    JSON.stringify(newPlayer)
+  );
 
   // Wrap with security token
   const wrapped = addSaveToken(newPlayer);
@@ -226,13 +225,13 @@ localStorage.setItem(
   a.click();
 
   alert("Save file created! Keep it safe.");
-
   window.location.href = "game.html";
 });
 
-// -------------------
+
+// ===============================
 // CONTINUE GAME
-// -------------------
+// ===============================
 continueBtn.addEventListener("click", () => {
 
   const file = fileInput.files[0];
@@ -241,33 +240,33 @@ continueBtn.addEventListener("click", () => {
   const reader = new FileReader();
 
   reader.onload = e => {
-    try{
+
+    try {
       const data = JSON.parse(e.target.result);
 
-      // Validate token wrapper
+      // Validate save wrapper
       if(!verifySaveToken(data)){
         alert("Invalid or corrupted save file.");
         return;
       }
 
-      GameState.player = data.payload;
+      const payload = data.payload;
 
-      if(data.payload.token !== data.token){
-  alert("Save tampered.");
-  return;
+      // Load into GameState
+      GameState.player = payload;
 
-      // Save active session locally
-localStorage.setItem(
-  "codequest_active_save",
-  JSON.stringify(newPlayer)
-);
-}
+      // Store active session locally
+      localStorage.setItem(
+        "codequest_active_save",
+        JSON.stringify(payload)
+      );
 
       alert("Save loaded successfully!");
       window.location.href = "game.html";
 
-    }catch{
-      alert("Failed to load save.");
+    } catch(err) {
+      console.error("Save load error:", err);
+      alert("Failed to load save file.");
     }
   };
 

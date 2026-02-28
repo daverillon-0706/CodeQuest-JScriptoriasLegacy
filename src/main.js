@@ -36,7 +36,7 @@ const config = {
   pixelArt: true,
   physics: {
     default: "arcade",
-    arcade: { debug: false }
+    arcade: { debug: true }
   },
   scene: [
     JScriptoriaCityScene,

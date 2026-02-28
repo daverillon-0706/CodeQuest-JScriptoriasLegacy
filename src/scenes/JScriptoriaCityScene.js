@@ -57,7 +57,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   preload() {
     this.load.tilemapTiledJSON("JScriptoriaCity", "/maps/JScriptoriaCity.tmj");
 
-    const cityTilesets = ["house","headquarters","guild", "monolith_syntax", "monolith_datatypes", "monolith_variables", "monolith_operators", "monolith_conditions", "monolith_array", "monolith_functions", "inn","library","road_full","roads", "school-sheet"];
+    const cityTilesets = ["house","headquarters","guild", "monolith_syntax", "monolith_datatypes", "monolith_variables", "monolith_operators", "monolith_conditions", "monolith_array", "monolith_functions", "inn","library","road_full","roads", "school-sheet", "walls"];
     const outskirtsTilesets = ["cliff","grasswalk","hole","kiosk", "road_dirt_path", "stone_path","tree"];
     const indoorTilesets = ["lowerwall","upperwall"];
 
@@ -137,7 +137,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.codingKeyHandler = null;
     this.codingDamageHandler = null;
     this.nearbyDoor = null;
-    this.createLessonDoor();
+    this.createLessonDoorsFromMap();
 
     this.player.takeDamage = (amount = 1) => {
 
@@ -338,15 +338,29 @@ this.physics.add.overlap(
     if (this.nearbyDoor) {
 
   const targetScene = this.nearbyDoor.getData("scene");
-  const lessonData = this.nearbyDoor.getData("lesson");
+  const lesson   = this.nearbyDoor.getData("lesson");
+  const lessonOrder = this.nearbyDoor.getData("order");
+
+  const player = GameState.player;
+
+const ownedKeystones = player.items?.keyItems?.filter(id =>
+  id.startsWith("keystone")
+) || [];
+
+// lessonOrder is 0-based index from Tiled
+if (lessonOrder > ownedKeystones.length) {
+  this.dialogueManager.start([
+    "The door is sealed by ancient magic.",
+    "Complete the previous Rift to unlock this lesson."
+  ]);
+  return;
+}
 
   SceneTransition.start(this, () => {
-
     this.scene.start(targetScene, {
-      lesson: lessonData,
+      lesson: lesson,
       spawn: "MalePlayer"
     });
-
   });
 
   return;
@@ -1455,28 +1469,38 @@ removeGameOverUI() {
     this.gameOverUI = null;
   }
 }
-createLessonDoor() {
+createLessonDoorsFromMap() {
 
-  const doorX = 611; // CHANGE to your house door coords
-  const doorY = 440;
+  const doorLayer = this.map.getObjectLayer("LessonDoors");
+  if (!doorLayer) return;
 
-  const doorZone = this.add.zone(doorX, doorY, 40, 40);
-  this.physics.world.enable(doorZone);
-  doorZone.setData("scene", "LessonHouseScene");
-  doorZone.setData("lesson", "syntax");
+  this.lessonDoors = [];
 
-  this.physics.add.overlap(this.player, doorZone, () => {
-    this.nearbyDoor = doorZone;
+  doorLayer.objects.forEach(obj => {
+
+    const doorX = obj.x + (obj.width / 2);
+    const doorY = obj.y + (obj.height / 2);
+
+    const doorZone = this.add.zone(doorX, doorY, obj.width, obj.height);
+
+    this.physics.world.enable(doorZone);
+
+    doorZone.body.setAllowGravity(false);
+    doorZone.body.setImmovable(true);
+
+    const lesson = obj.properties?.find(p => p.name === "lesson")?.value;
+    const order  = obj.properties?.find(p => p.name === "order")?.value;
+
+    doorZone.setData("scene", "LessonHouseScene");
+    doorZone.setData("lesson", lesson);
+    doorZone.setData("order", order);
+
+    this.physics.add.overlap(this.player, doorZone, () => {
+      this.nearbyDoor = doorZone;
+    });
+
+    this.lessonDoors.push(doorZone);
   });
-
-  /* Clear when leaving
-  this.physics.world.on("worldstep", () => {
-    if (!this.physics.overlap(this.player, doorZone)) {
-      if (this.nearbyDoor === doorZone) {
-        this.nearbyDoor = null;
-      }
-    }
-  });*/
 }
 /*
 handlePerkEffects() {

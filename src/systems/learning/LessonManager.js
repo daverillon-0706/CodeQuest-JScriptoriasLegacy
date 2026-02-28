@@ -3,71 +3,79 @@ import GameState from "../../GameState.js";
 
 class LessonManager {
 
+  // --------------------------
+  // GET LESSON DATA
+  // --------------------------
   static getLesson(lessonId) {
     return LESSON_DATA[lessonId];
   }
 
+  // --------------------------
+  // INITIALIZE LESSON PROGRESS
+  // --------------------------
   static initLessonProgress(lessonId) {
 
     const player = GameState.player;
-if (!player) return;
+    if (!player) return;
 
-player.lessonProgress = player.lessonProgress || {};
+    player.lessonProgress = player.lessonProgress || {};
 
-if (!player.lessonProgress[lessonId]) {
-  player.lessonProgress[lessonId] = {
-    booksRead: {},
-    quizCompleted: false,
-    keycardRewarded: false
-  };
+    if (!player.lessonProgress[lessonId]) {
 
-  GameState.player = player; // save initialization
-}
-  // 🔥 Ensure lessonProgress exists
-  if (!GameState.player.lessonProgress) {
-    GameState.player.lessonProgress = {};
+      player.lessonProgress[lessonId] = {
+        booksRead: {},
+        quizCompleted: false,
+        keycardRewarded: false
+      };
+
+      GameState.player = player; // Save initialization
+    }
   }
 
-  // 🔥 Ensure specific lesson exists
-  if (!GameState.player.lessonProgress[lessonId]) {
-
-    GameState.player.lessonProgress[lessonId] = {
-      booksRead: {},
-      quizCompleted: false,
-      keycardRewarded: false
-    };
-
-  }
-}
-
+  // --------------------------
+  // MARK BOOK AS READ
+  // --------------------------
   static markBookRead(lessonId, bookKey) {
 
-  const player = GameState.player;
-  if (!player) return;
+    const player = GameState.player;
+    if (!player) return;
 
-  player.lessonProgress = player.lessonProgress || {};
-  player.codexProgress = player.codexProgress || {};
-  player.codexProgress.unlockedLessons =
-    player.codexProgress.unlockedLessons || [];
+    player.lessonProgress = player.lessonProgress || {};
+    player.codexProgress = player.codexProgress || {};
+    player.codexProgress.unlockedLessons =
+      player.codexProgress.unlockedLessons || [];
 
-  const progress = player.lessonProgress[lessonId];
-  if (!progress) return;
+    const progress = player.lessonProgress[lessonId];
+    if (!progress) return;
 
-  // ✅ Use booksRead object properly
-  progress.booksRead = progress.booksRead || {};
+    progress.booksRead = progress.booksRead || {};
 
-  if (!progress.booksRead[bookKey]) {
-    progress.booksRead[bookKey] = true;
+    if (!progress.booksRead[bookKey]) {
+      progress.booksRead[bookKey] = true;
+    }
+
+    // Unlock lesson in codex
+    if (!player.codexProgress.unlockedLessons.includes(lessonId)) {
+      player.codexProgress.unlockedLessons.push(lessonId);
+    }
+
+    GameState.player = player; // Save changes
   }
 
-  // ✅ Unlock lesson in codex
-  if (!player.codexProgress.unlockedLessons.includes(lessonId)) {
-    player.codexProgress.unlockedLessons.push(lessonId);
+  // --------------------------
+  // CHECK IF SINGLE BOOK READ
+  // --------------------------
+  static isBookRead(lessonId, bookKey) {
+
+    const progress = GameState.player.lessonProgress?.[lessonId];
+    if (!progress) return false;
+
+    return !!progress.booksRead?.[bookKey];
   }
 
-  GameState.player = player; // save
-}
-
+  // --------------------------
+  // CHECK IF ALL BOOKS READ
+  // --------------------------
   static isAllBooksRead(lessonId) {
 
     const lesson = this.getLesson(lessonId);
