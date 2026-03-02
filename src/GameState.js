@@ -127,6 +127,8 @@ const GameState = {
       // 🔥 Progression (IMPORTANT)
       currentLessonIndex: value.currentLessonIndex ?? 0,
 
+      name: value.name ?? "",
+      token: value.token ?? "",
       hp: value.hp ?? 3,
       max_hp: value.max_hp ?? 3,
       energy: value.energy ?? 10,
@@ -314,3 +316,4 @@ const GameState = {
 
 window.GameState = GameState;
 export default GameState;
+export const DEFAULT_PLAYER_TEMPLATE = DEFAULT_PLAYER;

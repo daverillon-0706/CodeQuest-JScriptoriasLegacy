@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="90" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="40">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="90" height="90" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="59">
  <editorsettings>
   <export target="JScriptoriaCity.tmj" format="json"/>
  </editorsettings>
@@ -510,8 +510,93 @@
   </object>
  </objectgroup>
  <objectgroup id="7" name="NPC objects"/>
- <objectgroup id="12" name="CityNPCs"/>
  <objectgroup id="8" name="door objects"/>
+ <objectgroup id="12" name="CityNPCs">
+  <object id="40" x="480.667" y="480.333" width="16" height="16">
+   <properties>
+    <property name="dialogue" value="[&quot;Oh, so it is you. The one Master Elysia approached for assistance.&quot;,&quot;The name is Orin Breakpoint. I am a professor here in J.S. Academy. A pleasure to meet the Master's aquaintance.&quot;,&quot;If you need of any assistance, please feel free to ask.&quot;]"/>
+    <property name="npcId" value="orin"/>
+   </properties>
+  </object>
+  <object id="42" x="704.667" y="528.667" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="43" x="688.667" y="768" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value="elysia"/>
+   </properties>
+  </object>
+  <object id="44" x="897.333" y="448.667" width="16" height="16">
+   <properties>
+    <property name="dialogue" value="[&quot;Ah, aren't you the Master's aquaintance? Finally, someone that I haven't met before!&quot;,&quot;The name is Kaelen Scriptforge at your service.&quot;,&quot;What's my role? Well, I am the head guildmaster of this building named Scriptforge Guild! Pretty cool, right?&quot;,&quot;My guild offers a lot of items you can use when traveling to the outskirts! Not good if your health is low, oh no!&quot;,&quot;That's why I stocked up on supplies to help my guild members and you!&quot;,&quot;Oh right. My items are not free, you see. We use Cryptos as our currency. Digital money, I tell you, super convenient!&quot;,&quot;Hmm... since you are the Master's aquaintance, I'll give you some Cryptos! Sound's good, buddy?&quot;,&quot;That's more like it! If you want, go buy our items now! Just press Z over the door.&quot;,&quot;Hehe... Well, the inside is really messy because of the attack just happened recently. So, right now, just go to that door and I'll give you the items you need.&quot;]"/>
+    <property name="npcId" value="kaelen"/>
+   </properties>
+  </object>
+  <object id="46" x="1086" y="1055.33" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="47" x="464.667" y="993.333" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value="selena"/>
+   </properties>
+  </object>
+  <object id="48" x="720.667" y="48" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="49" x="640" y="113.333" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="50" x="656" y="1153.33" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="51" x="15.3333" y="1359.33" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="52" x="16.6667" y="912.667" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="53" x="16" y="16" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+  <object id="55" x="1023.33" y="800.667" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value="mira"/>
+   </properties>
+  </object>
+  <object id="56" x="912" y="544" width="16" height="16">
+   <properties>
+    <property name="dialogue" value=""/>
+    <property name="npcId" value=""/>
+   </properties>
+  </object>
+ </objectgroup>
  <objectgroup id="9" name="chests"/>
  <objectgroup id="11" name="LessonDoors">
   <object id="32" name="syntax_door" x="609.333" y="416.667" width="16" height="16">

@@ -68,6 +68,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     // Sprites
     this.load.spritesheet("player_male", "/assets/sprites/player/player_male.png", { frameWidth:16, frameHeight:16 });
     this.load.spritesheet("kaelen", "/assets/sprites/npc/kaelen.png", { frameWidth:16, frameHeight:16 });
+    this.load.spritesheet("orin", "/assets/sprites/npc/orin.png", { frameWidth:16, frameHeight:16 });
+    this.load.spritesheet("mira", "/assets/sprites/npc/mira.png", { frameWidth:16, frameHeight:16 });
+    this.load.spritesheet("selena", "/assets/sprites/npc/selena.png", { frameWidth:16, frameHeight:16 });
+    this.load.spritesheet("elysia", "/assets/sprites/npc/elysia.png", { frameWidth:16, frameHeight:16 });
     this.load.spritesheet("chest", "/assets/icons/item/chest.png", { frameWidth:16, frameHeight:16 });
 
     // ---- Bug Sprites ----
@@ -130,8 +134,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   this.player.activePerks = {};
 }
     //GameState.player = this.player;
-    this.syncGameStateToSprite();
-    this.updateHUD();
+    //this.syncGameStateToSprite();
+    //this.updateHUD();
     this.player.isCoding = false;
     this.compilerWindow = null;
     this.codingKeyHandler = null;
@@ -146,12 +150,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   if (this.player.customData.HP < 0) {
     this.player.customData.HP = 0;
   }
-  this.syncGameStateToSprite();
-  this.updateHUD();
-
-  
-  console.log("Player HP:", this.player.customData.HP);
-
   // Game Over check
   if (this.player.customData.HP <= 0) {
     this.onPlayerGameOver();
@@ -243,7 +241,7 @@ this.blasterSFX = this.sound.add("blaster", {volume: 0.5});
 
     // ---- SYSTEMS ----
     this.createAnimations();
-    this.createNPCs();
+    this.createCityNPCs();
     this.playerController = new PlayerController(this,this.player,this.MOVE_SPEED);
     PerksManager.setScene(this);
     window.currentScene = this;
@@ -308,6 +306,7 @@ this.physics.add.overlap(
 
     // ---- INTERACTIONS ----
     this.input.keyboard.on("keydown-Z",()=> {
+      console.log("CanTalkTo:", this.playerController?.canTalkTo);
       if(ChestSystem.interact()) return;
       if(this.dialogueManager.activeDialogue){
         if(this.dialogueManager.isTyping) this.dialogueManager._finishTypingInstant();
@@ -317,7 +316,17 @@ this.physics.add.overlap(
       if (this.shopSystem.tryInteract(this.player)) return;
 
       const npc = this.playerController.canTalkTo;
-      if(npc?.customData.dialogue?.length) this.dialogueManager.start(npc.customData.dialogue);
+
+if (npc?.customData?.dialogue?.length) {
+  this.dialogueManager.start(npc.customData.dialogue);
+  return;
+}
+
+if (npc?.interact) {
+  npc.interact();
+  return;
+}
+
       const trigger = this.sceneTriggers?.getNearbyTrigger?.();
       if(trigger){
         this.sceneTriggers.activateTrigger(trigger,{
@@ -384,7 +393,12 @@ if (lessonOrder > ownedKeystones.length) {
     });
   }
 });
-
+  this.syncGameStateToSprite();
+  this.updateHUD();
+// ---- SAFETY REFRESH AFTER FULL SCENE INIT ----
+  this.time.delayedCall(0, () => {
+    this.updateHUD();
+  });
 SceneTransition.start(this, () => {
   console.log("City scene loaded");
 });
@@ -393,7 +407,16 @@ SceneTransition.start(this, () => {
   update(time, delta) {
   if(!this.playerController) return;
   this.playerController.update(this.npcs);
+  console.log("NPC COUNT:", this.npcs.length);
 
+  // Update NPC name positions
+if (this.cityNPCs) {
+  this.cityNPCs.forEach(npc => {
+    if (npc.nameText && npc.active) {
+      npc.nameText.setPosition(npc.x, npc.y - 32);
+    }
+  });
+}
   if(this.bugManager) {
     this.bugManager.update(time, delta);
 
@@ -544,32 +567,79 @@ if (!anims.exists("rift-idle")) {
 }
 }
   // ================= NPCs =================
-  createNPCs() {
-  const npcLayer = this.map.getObjectLayer("NPC Objects");
-  if (!npcLayer) return;
+  createCityNPCs() {
+
+  const layer = this.map.getObjectLayer("CityNPCs");
+  console.log("CityNPCs layer:", layer);
+  if (!layer) {
+    console.warn("CityNPCs layer not found.");
+    return;
+  }
 
   this.npcs = [];
 
-  npcLayer.objects.forEach(obj => {
+  
+  layer.objects.forEach(obj => {
+console.log("Processing NPC object:", obj);
+    // ✅ SAFELY HANDLE PROPERTIES
+    const props = Array.isArray(obj.properties)
+      ? obj.properties
+      : [];
 
-    const x = Math.round(obj.x / this.TILE_SIZE) * this.TILE_SIZE;
-    const y = Math.round(obj.y / this.TILE_SIZE) * this.TILE_SIZE;
+    const npcIdProp = props.find(p => p.name === "npcId");
+    const dialogueProp = props.find(p => p.name === "dialogue");
+    const nameProp = props.find(p => p.name === "name");
 
-    const npc = this.physics.add.sprite(x, y, "kaelen", 0)
-      .setOrigin(0, 1)
+    const npcId = npcIdProp?.value || "kaelen";
+
+    let dialogue = ["Hello."];
+    if (dialogueProp?.value) {
+      try {
+        dialogue = JSON.parse(dialogueProp.value);
+      } catch {
+        dialogue = [dialogueProp.value];
+      }
+    }
+
+    const npc = this.physics.add.sprite(obj.x, obj.y, npcId, 0)
+      .setOrigin(0.5, 0.5) // <-- use the fixed origin
       .setImmovable(true)
-      .setSize(12, 8)
-      .setOffset(2, 8)
-      .setDepth(y)
-      .play("npc-idle-down");
+      .setSize(12,8)
+      .setOffset(2,8)
+      .setDepth(obj.y);
 
-    npc.customData = {};
+    // ================= NAME ABOVE HEAD =================
+    const npcName = nameProp?.value || npcId;
 
-    const prop = obj.properties?.find(p => p.name === "dialogue");
-    npc.customData.dialogue = prop ? JSON.parse(prop.value) : [];
+    /*
+    const nameText = this.add.text(
+      obj.x,
+      obj.y - 32,
+      npcName,
+      {
+        fontSize: "8px",
+        fill: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 5
+      }
+    )
+
+    .setOrigin(0.5)
+    .setDepth(9999);
+
+    npc.nameText = nameText;
+*/
+    npc.customData = {
+      dialogue,
+      npcId,
+      name: npcName
+    };
+
+    npc.interact = () => {
+      DialogueManager.start(dialogue);
+    };
 
     this.physics.add.collider(this.player, npc);
-
     this.npcs.push(npc);
   });
 }

@@ -56,17 +56,25 @@ export default class LessonsUI {
   // =====================================================
 
   isCategoryUnlocked(categoryId, index, categoryKeys) {
-    // First category always unlocked
-    if (index === 0) return true;
 
-    const previousCategory = categoryKeys[index - 1];
+  const progress =
+    GameState.player?.lessonProgress?.[categoryId];
 
-    return GameState.player?.lessonProgress?.[
-      previousCategory
-    ]?.quizPassed === true;
-  }
+  // ✅ If category already completed, it's unlocked
+  if (progress?.quizPassed) return true;
 
-  // =====================================================
+  // ✅ If books are fully collected → unlock
+  const lesson = LESSON_DATA[categoryId];
+  const books = lesson?.books || [];
+
+  const allRead = books.every(
+    b => progress?.booksRead?.[b.key]
+  );
+
+  return allRead;
+}
+
+    // =====================================================
   // TREE BUILDER
   // =====================================================
 
@@ -83,16 +91,16 @@ export default class LessonsUI {
         GameState.player?.lessonProgress?.[lessonId];
 
       const books = lesson.books || [];
+
       const allRead = books.every(
         b => progress?.booksRead?.[b.key]
       );
 
-      const isUnlocked =
-        this.isCategoryUnlocked(
-          lessonId,
-          index,
-          categoryKeys
-        );
+      const isUnlocked = this.isCategoryUnlocked(
+        lessonId,
+        index,
+        categoryKeys
+      );
 
       /* ---------------- GROUP ---------------- */
 
@@ -111,20 +119,25 @@ export default class LessonsUI {
         ${!isUnlocked ? " 🔒" : ""}
       `;
 
+      // 🔒 Locked styling
       if (!isUnlocked) {
         header.style.opacity = "0.5";
-        header.style.cursor = "not-allowed";
       }
 
+      // ✅ Single clean click handler
+      header.addEventListener("click", () => {
+        if (!isUnlocked) {
+          alert("🔒 This lesson is locked. Collect required books to unlock it.");
+          return;
+        }
+
+        group.classList.toggle("open");
+      });
+
+      // ✅ Completed styling
       if (allRead && isUnlocked) {
         header.style.background = "#1b3f1b";
         header.style.color = "#4caf50";
-      }
-
-      if (isUnlocked) {
-        header.addEventListener("click", () => {
-          group.classList.toggle("open");
-        });
       }
 
       group.appendChild(header);
@@ -134,37 +147,39 @@ export default class LessonsUI {
       const subList = document.createElement("div");
       subList.classList.add("lesson-sublist");
 
-      if (isUnlocked) {
-        books.forEach(book => {
-          const btn = document.createElement("div");
-          btn.classList.add("lesson-subitem");
+      // 🔥 Always render books — but disable if locked
+      books.forEach(book => {
+        const btn = document.createElement("div");
+        btn.classList.add("lesson-subitem");
 
-          const isRead =
-            progress?.booksRead?.[book.key];
+        const isRead = progress?.booksRead?.[book.key];
 
-          const displayName =
-            book.title || this.formatKey(book.key);
+        const displayName =
+          book.title || this.formatKey(book.key);
 
-          btn.innerHTML = `
-            ${displayName}
-            ${isRead ? " ✅" : ""}
-          `;
+        btn.innerHTML = `
+          ${displayName}
+          ${isRead ? " ✅" : ""}
+        `;
 
-          if (isRead) {
-            btn.style.color = "#4caf50";
-          }
+        // ✅ Style if read
+        if (isRead) {
+          btn.style.color = "#4caf50";
+        }
 
+        // 🔒 If category locked — disable interaction
+        if (!isUnlocked) {
+          btn.style.opacity = "0.4";
+          btn.style.pointerEvents = "none";
+        } else {
           btn.addEventListener("click", (e) => {
             e.stopPropagation();
-            this.loadLessonContent(
-              lessonId,
-              book.key
-            );
+            this.loadLessonContent(lessonId, book.key);
           });
+        }
 
-          subList.appendChild(btn);
-        });
-      }
+        subList.appendChild(btn);
+      });
 
       group.appendChild(subList);
       this.treeContainer.appendChild(group);

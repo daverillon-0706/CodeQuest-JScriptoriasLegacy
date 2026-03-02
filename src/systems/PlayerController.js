@@ -149,18 +149,19 @@ if (
     this.canTalkTo = null;
 
     npcs.forEach(npc => {
-      const dist = Phaser.Math.Distance.Between(
-        this.player.x,
-        this.player.y,
-        npc.x,
-        npc.y
-      );
 
-      if (dist < 24 && dist < closestDist) {
-        closestDist = dist;
-        this.canTalkTo = npc;
-      }
-    });
+  if (!npc.active) return;
+
+  const dist = Phaser.Math.Distance.BetweenPoints(
+    this.player.getCenter(),
+    npc.getCenter()
+  );
+
+  if (dist < 30 && dist < closestDist) {
+    closestDist = dist;
+    this.canTalkTo = npc;
+  }
+});
 
     // ---- DEBUG ----
     this.logPlayerPosition(this.scene.game.loop.delta);

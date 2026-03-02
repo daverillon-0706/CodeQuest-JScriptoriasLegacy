@@ -131,7 +131,7 @@
   </div>
 
 <script type="module">
-import GameState from "./src/GameState.js";
+import GameState, { DEFAULT_PLAYER_TEMPLATE } from "./src/GameState.js";
 import { addSaveToken, verifySaveToken } from "./src/utils/saveToken.js";
 
 // -------------------
@@ -159,56 +159,15 @@ newGameBtn.addEventListener("click", () => {
 
   const token = generateToken();
 
+  // 🔥 Clone the real default template
   const newPlayer = {
-    saveVersion: 2,
-
-    // Identity
+    ...structuredClone(DEFAULT_PLAYER_TEMPLATE),
     name,
-    token,
-
-    // Core stats
-    hp: 3,
-    max_hp: 3,
-    energy: 10,
-    max_energy: 10,
-    cryptos: 0,
-
-    perks: {
-      passive: null,
-      offense: null,
-      defense: null,
-      consumables: [null, null]
-    },
-
-    perkInventory: [],
-
-    items: {
-      keyItems: [],
-      consumables: []
-    },
-
-    lessonsUnlocked: [],
-
-    codexProgress: {
-      enemiesScanned: [],
-      loreUnlocked: []
-    },
-
-    worldState: {
-      chestsOpened: [],
-      questsCompleted: [],
-      position: { x:100, y:100 }
-    }
+    token
   };
 
-  // Save to GameState
+  // ✅ Save using GameState ONLY
   GameState.player = newPlayer;
-
-  // Save active session
-  localStorage.setItem(
-    "codequest_active_save",
-    JSON.stringify(newPlayer)
-  );
 
   // Wrap with security token
   const wrapped = addSaveToken(newPlayer);
@@ -221,7 +180,7 @@ newGameBtn.addEventListener("click", () => {
 
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${name}_save.codequest.json`;
+  a.download = `${name}_codequest_save.json`;
   a.click();
 
   alert("Save file created! Keep it safe.");
@@ -252,14 +211,8 @@ continueBtn.addEventListener("click", () => {
 
       const payload = data.payload;
 
-      // Load into GameState
+      // ✅ Load into GameState ONLY
       GameState.player = payload;
-
-      // Store active session locally
-      localStorage.setItem(
-        "codequest_active_save",
-        JSON.stringify(payload)
-      );
 
       alert("Save loaded successfully!");
       window.location.href = "game.html";
