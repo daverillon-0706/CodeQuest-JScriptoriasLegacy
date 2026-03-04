@@ -159,20 +159,21 @@ newGameBtn.addEventListener("click", () => {
 
   const token = generateToken();
 
-  // 🔥 Clone the real default template
   const newPlayer = {
     ...structuredClone(DEFAULT_PLAYER_TEMPLATE),
     name,
     token
   };
 
-  // ✅ Save using GameState ONLY
+  // ✅ Set GameState
   GameState.player = newPlayer;
+
+  // ✅ Persist player for game.html
+  localStorage.setItem("activePlayer", JSON.stringify(newPlayer));
 
   // Wrap with security token
   const wrapped = addSaveToken(newPlayer);
 
-  // Download save file
   const blob = new Blob(
     [JSON.stringify(wrapped, null, 2)],
     { type:"application/json" }
@@ -203,7 +204,6 @@ continueBtn.addEventListener("click", () => {
     try {
       const data = JSON.parse(e.target.result);
 
-      // Validate save wrapper
       if(!verifySaveToken(data)){
         alert("Invalid or corrupted save file.");
         return;
@@ -211,8 +211,11 @@ continueBtn.addEventListener("click", () => {
 
       const payload = data.payload;
 
-      // ✅ Load into GameState ONLY
+      // ✅ Set GameState
       GameState.player = payload;
+
+      // ✅ Persist player for game.html
+      localStorage.setItem("activePlayer", JSON.stringify(payload));
 
       alert("Save loaded successfully!");
       window.location.href = "game.html";

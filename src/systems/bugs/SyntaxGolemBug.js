@@ -182,8 +182,6 @@ export default class SyntaxGolemBug extends Bug {
   takeDamage(amount) {
   if (this.isDead) return;
 
-  this.isDead = true;
-
   // Stop flash warning
   if (this.flashTween) {
     this.flashTween.stop();
@@ -209,7 +207,7 @@ export default class SyntaxGolemBug extends Bug {
   }
 
   // Destroy safely
-  this.destroy();
+  this.die();
 }
 
 }

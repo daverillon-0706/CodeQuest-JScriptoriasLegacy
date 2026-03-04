@@ -1,6 +1,5 @@
 import Bug from "../Bug.js";
 import GameState from "../../GameState.js";
-import { Game } from "phaser";
 
 export default class RangeSlimeBug extends Bug {
   constructor(scene, x, y) {

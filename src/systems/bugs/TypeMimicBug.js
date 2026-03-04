@@ -251,8 +251,6 @@ dealChaseDamage(player) {
   takeDamage(amount) {
   if (this.isDead) return;
 
-  this.isDead = true;
-
   // Stop timers/tweens
   if (this.moveTimer) {
     this.moveTimer.remove(false);
@@ -287,7 +285,7 @@ dealChaseDamage(player) {
   }
 
   // Finally destroy safely
-  this.destroy();
+  this.die();
 }
 
 

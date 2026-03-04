@@ -33,148 +33,7 @@ export default class HUD {
   window.hud = this;
 
   this.updateHUD();
-}
-
-  // -------------------------
-  // DOM CACHE
-  // -------------------------
-  cacheElements() {
-    this.playerBtn = document.getElementById("tablet-open-btn");
-    this.overlay = document.getElementById("tablet-overlay");
-    this.tablet = document.getElementById("tablet-hud");
-    this.closeBtn = document.getElementById("tablet-close");
-    this.backBtn = document.getElementById("tablet-back");
-    this.tabletTitle = document.getElementById("tablet-title");
-    
-    this.perkDetailIcon = document.getElementById("perk-detail-icon");
-this.perkDetailName = document.getElementById("perk-detail-name");
-this.perkDetailDesc = document.getElementById("perk-detail-desc");
-this.perkEquipBtn = document.getElementById("perk-equip-btn");
-this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
-
-
-
-    this.quickInv = document.getElementById("quick-inv");
-    this.quickQuests = document.getElementById("quick-quests");
-    this.quickCodex = document.getElementById("quick-codex");
-    this.quickCompiler = document.getElementById("quick-compiler");
-
-    this.compilerBubble = document.getElementById("compiler-output-box");
-  }
-
-  // =========================================================
-  // ❤️ HEART RENDERER
-  // =========================================================
-  renderHearts(hp, maxHp) {
-    const container = document.getElementById("hearts-container");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    for (let i = 0; i < maxHp; i++) {
-      const heart = document.createElement("img");
-
-      heart.src =
-        i < hp
-          ? "/public/assets/ui/heart_full.png"
-          : "/public/assets/ui/heart_empty.png";
-
-      heart.className = "heart-icon";
-      heart.style.imageRendering = "pixelated";
-
-      container.appendChild(heart);
-    }
-  }
-
-  // =========================================================
-  // ⚡ ENERGY RENDERER
-  // =========================================================
-  renderEnergy(energy, maxEnergy) {
-    const container = document.getElementById("energy-container");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    for (let i = 0; i < maxEnergy; i++) {
-      const orb = document.createElement("img");
-
-      orb.src =
-        i < energy
-          ? "/public/assets/ui/energy_full.png"
-          : "/public/assets/ui/energy_empty.png";
-
-      orb.className = "energy-icon";
-      orb.style.imageRendering = "pixelated";
-
-      container.appendChild(orb);
-    }
-  }
-  // -------------------------
-  // HUD UPDATE (SAFE)
-  // -------------------------
-  updateHUD() {
-  const player = GameState.player;
-  if (!player) return;
-
-  const { hp, max_hp, energy, max_energy, cryptos } = player;
-
-  // -------------------------
-  // TEXT VALUES
-  // -------------------------
-  document.getElementById("playerHP-text") &&
-    (document.getElementById("playerHP-text").textContent = hp);
-
-  document.getElementById("playerEnergy-text") &&
-    (document.getElementById("playerEnergy-text").textContent = energy);
-
-  document.getElementById("cryptos-count") &&
-    (document.getElementById("cryptos-count").textContent = cryptos);
-
-  // -------------------------
-  // SPRITE RENDERING
-  // -------------------------
-  this.renderHearts(hp, max_hp);
-  this.renderEnergy(energy, max_energy);
-
-  // --------------------------
-  // QUICK SLOT ICONS: PERKS
-  // --------------------------
-  const perkSlots = ["passive", "offense", "defense"];
-  perkSlots.forEach((slot) => {
-  const perkId = player.perks[slot];
-  const iconImg = document.querySelector(`.quick-slot.${slot} .perk-icon img`);
-  if (!iconImg) return;
-
-  iconImg.src = perkId
-    ? `/public/assets/icons/buffs/${perkId}.png`
-    : "/public/assets/icons/empty-slot.png";
-
-  // Highlight if currently active
-  if (perkId && player.activePerks[perkId]) {
-    iconImg.classList.add("active-perk");
-  } else {
-    iconImg.classList.remove("active-perk");
-  }
-});
-
-
-  // --------------------------
-  // QUICK SLOT ICONS: CONSUMABLES
-  // --------------------------
-  const quickConsumables = player.perks.consumables;
-  quickConsumables.forEach((id, index) => {
-    const slot = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
-    if (!slot) return;
-
-    slot.dataset.id = id ?? "";
-    const img = slot.querySelector('.perk-icon img');
-    img.src = id ? `/public/assets/icons/item/consumables/${id}.png` : "";
-  });
-
-  // --------------------------
-// QUICK SLOT CLICK HANDLERS
-// --------------------------
-document.querySelectorAll(".quick-slot").forEach((slotEl) => {
+  document.querySelectorAll(".quick-slot").forEach((slotEl) => {
   if (slotEl.dataset.listenerAdded) return; // prevent duplicates
   slotEl.dataset.listenerAdded = true;
 
@@ -244,6 +103,157 @@ document.querySelectorAll(".quick-slot").forEach((slotEl) => {
     }
   });
 });
+}
+
+  // -------------------------
+  // DOM CACHE
+  // -------------------------
+  cacheElements() {
+    this.playerBtn = document.getElementById("tablet-open-btn");
+    this.overlay = document.getElementById("tablet-overlay");
+    this.tablet = document.getElementById("tablet-hud");
+    this.closeBtn = document.getElementById("tablet-close");
+    this.backBtn = document.getElementById("tablet-back");
+    this.tabletTitle = document.getElementById("tablet-title");
+    
+    this.perkDetailIcon = document.getElementById("perk-detail-icon");
+this.perkDetailName = document.getElementById("perk-detail-name");
+this.perkDetailDesc = document.getElementById("perk-detail-desc");
+this.perkEquipBtn = document.getElementById("perk-equip-btn");
+this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
+
+
+
+    this.quickInv = document.getElementById("quick-inv");
+    this.quickQuests = document.getElementById("quick-quests");
+    this.quickCodex = document.getElementById("quick-codex");
+    this.quickCompiler = document.getElementById("quick-compiler");
+
+    this.compilerBubble = document.getElementById("compiler-output-box");
+  }
+
+  // =========================================================
+  // ❤️ HEART RENDERER
+  // =========================================================
+  renderHearts(hp, maxHp) {
+  const container = document.getElementById("hearts-container");
+  if (!container) return;
+
+  console.log("Rendering hearts:", hp, "/", maxHp);
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < maxHp; i++) {
+    const heart = document.createElement("img");
+    heart.src =
+      i < hp
+        ? "/public/assets/ui/heart_full.png"
+        : "/public/assets/ui/heart_empty.png";
+
+    heart.className = "heart-icon";
+    heart.style.imageRendering = "pixelated";
+    container.appendChild(heart);
+  }
+}
+
+  // =========================================================
+  // ⚡ ENERGY RENDERER
+  // =========================================================
+  renderEnergy(energy, maxEnergy) {
+    const container = document.getElementById("energy-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    for (let i = 0; i < maxEnergy; i++) {
+      const orb = document.createElement("img");
+
+      orb.src =
+        i < energy
+          ? "/public/assets/ui/energy_full.png"
+          : "/public/assets/ui/energy_empty.png";
+
+      orb.className = "energy-icon";
+      orb.style.imageRendering = "pixelated";
+
+      container.appendChild(orb);
+    }
+  }
+  // -------------------------
+  // HUD UPDATE (SAFE)
+  // -------------------------
+  updateHUD() {
+    console.log("HUD UPDATE CALLED");
+console.log("GameState.player =", GameState.player);
+  const player = GameState.player;
+  if (!player) return;
+  console.log("HUD synced from:", player);
+  console.log("Sprite customData:", this.player?.customData);
+
+  const hp = player.hp ?? 0;
+const max_hp = player.max_hp ?? 0;
+const energy = player.energy ?? 0;
+const max_energy = player.max_energy ?? 0;
+const cryptos = player.cryptos ?? 0;
+
+  // -------------------------
+  // TEXT VALUES
+  // -------------------------
+  document.getElementById("playerHP-text") &&
+    (document.getElementById("playerHP-text").textContent = hp);
+
+  document.getElementById("playerEnergy-text") &&
+    (document.getElementById("playerEnergy-text").textContent = energy);
+
+  document.getElementById("cryptos-count") &&
+    (document.getElementById("cryptos-count").textContent = cryptos);
+
+  // -------------------------
+  // SPRITE RENDERING
+  // -------------------------
+  this.renderHearts(hp, max_hp);
+  this.renderEnergy(energy, max_energy);
+
+  
+  // --------------------------
+  // QUICK SLOT ICONS: PERKS
+  // --------------------------
+  const perkSlots = ["passive", "offense", "defense"];
+  perkSlots.forEach((slot) => {
+  const perkId = player.perks[slot];
+  const iconImg = document.querySelector(`.quick-slot.${slot} .perk-icon img`);
+  if (!iconImg) return;
+
+  iconImg.src = perkId
+    ? `/public/assets/icons/buffs/${perkId}.png`
+    : "/public/assets/icons/empty-slot.png";
+
+  // Highlight if currently active
+  if (perkId && player.activePerks[perkId]) {
+    iconImg.classList.add("active-perk");
+  } else {
+    iconImg.classList.remove("active-perk");
+  }
+});
+
+
+  // --------------------------
+  // QUICK SLOT ICONS: CONSUMABLES
+  // --------------------------
+  const quickConsumables = player.perks.consumables;
+  quickConsumables.forEach((id, index) => {
+    const slot = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
+    if (!slot) return;
+
+    slot.dataset.id = id ?? "";
+    const img = slot.querySelector('.perk-icon img');
+    img.src = id ? `/public/assets/icons/item/consumables/${id}.png` : "";
+  });
+
+  // --------------------------
+// QUICK SLOT CLICK HANDLERS
+// --------------------------
+
 
 
 
@@ -567,7 +577,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 window.addEventListener("gamestate-updated", () => {
   syncInventory();
+
+  const hud = window.hud;
+  if (!hud) return;
+
   if (document.getElementById("app-inventory")?.classList.contains("active")) {
-    this.inventory.loadInventory(); // refresh UI instead of new InventoryUI()
+    hud.inventory.loadInventory();
   }
+
+  hud.updateHUD();
 });
