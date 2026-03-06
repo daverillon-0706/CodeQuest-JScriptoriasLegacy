@@ -80,8 +80,55 @@ export default class ShopSystem {
   }
 
   // =========================
-  // Limit check
+  // PERMANENT UPGRADES
   // =========================
+  if (item.id === "heart_container") {
+
+    if (player.max_hp >= 13) {
+      console.log("[Shop] Max HP already at cap");
+      return;
+    }
+
+    player.cryptos -= item.price;
+    player.max_hp += 1;
+    player.hp = player.max_hp; // full heal
+
+    GameState.player = player;
+    console.log(`[Shop] Max HP increased → ${player.max_hp}`);
+    
+
+if (this.scene.refreshHUD)
+  this.scene.refreshHUD();
+
+return;
+  }
+
+  if (item.id === "energy_container") {
+
+    if (player.max_energy >= 10) {
+      console.log("[Shop] Max Energy already at cap");
+      return;
+    }
+
+    player.cryptos -= item.price;
+    player.max_energy += 1;
+    player.energy = player.max_energy;
+
+GameState.player = player;
+
+    console.log(`[Shop] Max Energy increased → ${player.max_energy}`);
+    
+
+if (this.scene.refreshHUD)
+  this.scene.refreshHUD();
+
+return;
+  }
+
+  // =========================
+  // NORMAL CONSUMABLES
+  // =========================
+
   const owned =
     player.items.consumables.find(c => c.id === item.id)?.amount ?? 0;
 
@@ -90,47 +137,9 @@ export default class ShopSystem {
     return;
   }
 
-  // =========================
-  // Deduct currency
-  // =========================
   player.cryptos -= item.price;
 
-  // =========================
-  // APPLY SPECIAL EFFECTS
-  // =========================
-  switch (item.id) {
-
-  case "heart_container":
-    player.max_hp += 1;
-
-    // FULL REFILL
-    player.hp = player.max_hp;
-
-    console.log(
-      `[Shop] Max HP increased → ${player.max_hp} (Fully healed)`
-    );
-    break;
-
-  case "energy_container":
-    player.max_energy += 1;
-
-    // FULL REFILL
-    player.energy = player.max_energy;
-
-    console.log(
-      `[Shop] Max Energy increased → ${player.max_energy} (Fully refilled)`
-    );
-    break;
-}
-
-  // =========================
-  // Save stat changes
-  // =========================
   GameState.player = player;
-
-  // =========================
-  // Add to inventory
-  // =========================
   GameState.addConsumable(item.id, 1);
 
   console.log(`[Shop] Bought ${item.name}`);

@@ -1614,6 +1614,15 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       this.lessonDoors.push(doorZone);
     });
   }
+  refreshHUD() {
+  const gs = GameState.player;
+  if (!gs) return;
+
+  if (this.updateHUD) this.updateHUD();
+  if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+  if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
+  if (window.updateCryptos) window.updateCryptos(gs.cryptos);
+}
   /*
   handlePerkEffects() {
     const player = this.player;

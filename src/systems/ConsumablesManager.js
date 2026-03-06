@@ -42,6 +42,7 @@ export default class ConsumablesManager {
         return false;
     }
 
+    scene?.refreshHUD?.(); // 🔥 UPDATE HUD
     console.log("[Consumables] Used:", id);
     return true;
 }
@@ -64,16 +65,16 @@ export default class ConsumablesManager {
     },
 
     vital_drink1: (scene, player) => {
-      return this.heal(player, 1);
-    },
+  return this.energize(player, 1);
+},
 
-    vital_drink2: (scene, player) => {
-      return this.heal(player, 2);
-    },
+vital_drink2: (scene, player) => {
+  return this.energize(player, 2);
+},
 
-    vital_drink3: (scene, player) => {
-      return this.heal(player, 3);
-    },
+vital_drink3: (scene, player) => {
+  return this.energize(player, 3);
+},
 
     revital_vial: (scene, player) => {
       player.hp = player.max_hp;
@@ -82,33 +83,44 @@ export default class ConsumablesManager {
       return true;
     },
 
-    heart_container: (scene, player) => {
-      if (player.max_hp >= 13) return false;
-
-      player.max_hp += 1;
-      player.hp += 1;
-      GameState.player = player;
-      return true;
-    },
-
-    energy_container: (scene, player) => {
-      if (player.max_energy >= 10) return false;
-
-      player.max_energy += 1;
-      player.energy += 1;
-      GameState.player = player;
-      return true;
-    },
-
+    
     adrenaline: (scene, player) => {
-      scene.player?.applyAdrenaline?.();
-      return true;
-    },
+  if (!scene.player) return false;
+
+  const originalSpeed = scene.player.moveSpeed || 200;
+
+  scene.player.moveSpeed = originalSpeed * 1.5;
+
+  scene.time.delayedCall(10000, () => {
+    scene.player.moveSpeed = originalSpeed;
+  });
+
+  return true;
+},
 
     escape_diamond: (scene, player) => {
-      scene.forceEscapeBattle?.();
-      return true;
+  if (!scene.player || !scene.bugs) return false;
+
+  const radius = 10 * 32; // 10 tiles (assuming 32px tiles)
+  const px = scene.player.x;
+  const py = scene.player.y;
+
+  scene.bugs.getChildren().forEach(bug => {
+    const dist = Phaser.Math.Distance.Between(px, py, bug.x, bug.y);
+
+    if (dist <= radius) {
+      bug.stunned = true;
+      bug.setTint(0x00ffff);
+
+      scene.time.delayedCall(3000, () => {
+        bug.stunned = false;
+        bug.clearTint();
+      });
     }
+  });
+
+  return true;
+},
   };
 
   static heal(player, amount) {
@@ -118,4 +130,11 @@ export default class ConsumablesManager {
     GameState.player = player;
     return true;
   }
+  static energize(player, amount) {
+  if (player.energy >= player.max_energy) return false;
+
+  player.energy = Math.min(player.energy + amount, player.max_energy);
+  GameState.player = player;
+  return true;
+}
 }
