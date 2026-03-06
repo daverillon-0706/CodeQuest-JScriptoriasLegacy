@@ -56,6 +56,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.minimapY = 0;
 
     this.isUIBlockingInput = false;
+    this.stunned = false;
   }
   // ================= PRELOAD =================
   preload() {

@@ -70,6 +70,15 @@ export default class Bug extends Phaser.Physics.Arcade.Sprite {
 }
 
   update() {
-    // default: do nothing
+
+  if (this.stunned) {
+
+    if (this.body instanceof Phaser.Physics.Arcade.Body) {
+      this.body.setVelocity(0,0);
+    }
+
+    return;
   }
+
+}
 }

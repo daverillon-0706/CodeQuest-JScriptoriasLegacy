@@ -49,6 +49,13 @@ export default class RangeSlimeBug extends Bug {
   update(time) {
     if (this.isDead) return;
     
+    if (this.stunned) {
+    if (this.body) {
+      this.body.setVelocity(0, 0);
+    }
+    this.anims.stop();
+    return;
+  }
     const player = this.scene.player;
     if (!player) return;
 

@@ -40,6 +40,14 @@ export default class ReferenceWispBug extends Bug {
   update(time) {
     if (this.isDead) return;
     
+    if (this.stunned) {
+    if (this.body) {
+      this.body.setVelocity(0, 0);
+    }
+    this.anims.stop();
+    return;
+  }
+  
     if (!this.active || !this.scene || !this.scene.player) return;
     const player = this.scene.player;
     if (!player) return;

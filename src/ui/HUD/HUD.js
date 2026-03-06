@@ -12,98 +12,114 @@ import ConsumablesManager from "../../systems/ConsumablesManager.js";
 
 export default class HUD {
   constructor() {
-  this.cacheElements();
+    this.cacheElements();
 
-  // Initialize App UIs
-  this.codex = new CodexUI();
-  this.inventory = new InventoryUI(); // ✅ initialize once
-  this.quests = new QuestsUI();
-  this.compiler = new CompilerUI();
-  this.lessons = new LessonsUI();
+    // Initialize App UIs
+    this.codex = new CodexUI();
+    this.inventory = new InventoryUI(); // ✅ initialize once
+    this.quests = new QuestsUI();
+    this.compiler = new CompilerUI();
+    this.lessons = new LessonsUI();
 
-  // Optional: sync inventory once at startup
-  syncInventory();
+    // Optional: sync inventory once at startup
+    syncInventory();
 
-  this.bubbleInterval = null;
-  this.selectedPerk = null;
+    this.bubbleInterval = null;
+    this.selectedPerk = null;
 
-  this.attachEvents();
-  this.attachCompilerEvents();
+    this.attachEvents();
+    this.attachCompilerEvents();
 
-  window.hud = this;
+    window.hud = this;
 
-  this.updateHUD();
-  document.querySelectorAll(".quick-slot").forEach((slotEl) => {
-  if (slotEl.dataset.listenerAdded) return; // prevent duplicates
-  slotEl.dataset.listenerAdded = true;
+    this.updateHUD();
+    document.querySelectorAll(".quick-slot").forEach((slotEl) => {
+      if (slotEl.dataset.listenerAdded) return; // prevent duplicates
+      slotEl.dataset.listenerAdded = true;
 
-  slotEl.addEventListener("click", () => {
-    const type = slotEl.classList.contains("passive")
-      ? "passive"
-      : slotEl.classList.contains("offense")
-      ? "offense"
-      : slotEl.classList.contains("item")
-      ? "consumable"
-      : "defense";
+      slotEl.addEventListener("click", () => {
+        const type = slotEl.classList.contains("passive")
+          ? "passive"
+          : slotEl.classList.contains("offense")
+            ? "offense"
+            : slotEl.classList.contains("item")
+              ? "consumable"
+              : "defense";
 
-    const playerPerks = player.perks ?? {};
-    const activePerks = player.activePerks ?? {};
+        const player = GameState.player;
+const playerPerks = player?.perks ?? {};
+const activePerks = player?.activePerks ?? {};
 
-    switch (type) {
-      case "passive": {
-        const perkId = playerPerks.passive;
-        if (!perkId) return;
+        switch (type) {
+          case "passive": {
+            const perkId = playerPerks.passive;
+            if (!perkId) return;
 
-        const perkData = PassivePerks[perkId];
-        if (!perkData) return;
+            const perkData = PassivePerks[perkId];
+            if (!perkData) return;
 
-        this.showPerkDetails({ id: perkId, type, ...perkData });
-        break;
-      }
+            this.showPerkDetails({ id: perkId, type, ...perkData });
+            break;
+          }
 
-      case "offense": {
-        const perkId = playerPerks.offense;
-        if (!perkId) return;
+          case "offense": {
+            const perkId = playerPerks.offense;
+            if (!perkId) return;
 
-        // Activate if not already active
-        if (!activePerks[perkId]) {
-          PerksManager.activateOffense(perkId);
-        }
-        break;
-      }
+            // Activate if not already active
+            if (!activePerks[perkId]) {
+              PerksManager.activateOffense(perkId);
+            }
+            break;
+          }
 
-      case "defense": {
-        const perkId = playerPerks.defense;
-        if (!perkId) return;
+          case "defense": {
+            const perkId = playerPerks.defense;
+            if (!perkId) return;
 
-        if (!activePerks[perkId]) {
-          PerksManager.activateDefense(perkId);
-        }
-        break;
-      }
+            if (!activePerks[perkId]) {
+              PerksManager.activateDefense(perkId);
+            }
+            break;
+          }
 
-      case "consumable": {
-        const consumableId = slotEl.dataset.id;
-        if (!consumableId) return;
+          case "consumable": {
 
-        const scene = window.currentScene;
-        const success = ConsumablesManager.use(consumableId, scene);
-        if (success) {
-          syncInventory();
-          alert(`✅ Used ${inventoryData.cons[consumableId].name}`);
-          this.updateHUD();
-        } else {
-          alert(`❌ No ${inventoryData.cons[consumableId].name} left!`);
-        }
-        break;
-      }
+  const consumableId = slotEl.dataset.id;
+  if (!consumableId) return;
 
-      default:
-        console.warn("Unknown quick-slot type:", type);
+  const scene = window.currentScene;
+  const itemName = inventoryData?.cons?.[consumableId]?.name ?? "Item";
+
+  const result = ConsumablesManager.use(consumableId, scene);
+
+  if (result.success) {
+
+    syncInventory();
+    alert(`✅ Used ${itemName}`);
+    this.updateHUD();
+
+  } else {
+
+    if (result.reason === "blocked") {
+      alert(`⚠ ${itemName} cannot be used because HP/Energy is full.`);
     }
-  });
-});
+
+    else if (result.reason === "no_item") {
+      alert(`❌ No ${itemName} left!`);
+    }
+
+  }
+
+  break;
 }
+
+          default:
+            console.warn("Unknown quick-slot type:", type);
+        }
+      });
+    });
+  }
 
   // -------------------------
   // DOM CACHE
@@ -115,12 +131,12 @@ export default class HUD {
     this.closeBtn = document.getElementById("tablet-close");
     this.backBtn = document.getElementById("tablet-back");
     this.tabletTitle = document.getElementById("tablet-title");
-    
+
     this.perkDetailIcon = document.getElementById("perk-detail-icon");
-this.perkDetailName = document.getElementById("perk-detail-name");
-this.perkDetailDesc = document.getElementById("perk-detail-desc");
-this.perkEquipBtn = document.getElementById("perk-equip-btn");
-this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
+    this.perkDetailName = document.getElementById("perk-detail-name");
+    this.perkDetailDesc = document.getElementById("perk-detail-desc");
+    this.perkEquipBtn = document.getElementById("perk-equip-btn");
+    this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
 
 
 
@@ -136,25 +152,25 @@ this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
   // ❤️ HEART RENDERER
   // =========================================================
   renderHearts(hp, maxHp) {
-  const container = document.getElementById("hearts-container");
-  if (!container) return;
+    const container = document.getElementById("hearts-container");
+    if (!container) return;
 
-  console.log("Rendering hearts:", hp, "/", maxHp);
+    console.log("Rendering hearts:", hp, "/", maxHp);
 
-  container.innerHTML = "";
+    container.innerHTML = "";
 
-  for (let i = 0; i < maxHp; i++) {
-    const heart = document.createElement("img");
-    heart.src =
-      i < hp
-        ? "/public/assets/ui/heart_full.png"
-        : "/public/assets/ui/heart_empty.png";
+    for (let i = 0; i < maxHp; i++) {
+      const heart = document.createElement("img");
+      heart.src =
+        i < hp
+          ? "/public/assets/ui/heart_full.png"
+          : "/public/assets/ui/heart_empty.png";
 
-    heart.className = "heart-icon";
-    heart.style.imageRendering = "pixelated";
-    container.appendChild(heart);
+      heart.className = "heart-icon";
+      heart.style.imageRendering = "pixelated";
+      container.appendChild(heart);
+    }
   }
-}
 
   // =========================================================
   // ⚡ ENERGY RENDERER
@@ -184,80 +200,80 @@ this.perkUnequipBtn = document.getElementById("perk-unequip-btn");
   // -------------------------
   updateHUD() {
     console.log("HUD UPDATE CALLED");
-console.log("GameState.player =", GameState.player);
-  const player = GameState.player;
-  if (!player) return;
-  console.log("HUD synced from:", player);
-  console.log("Sprite customData:", this.player?.customData);
+    console.log("GameState.player =", GameState.player);
+    const player = GameState.player;
+    if (!player) return;
+    console.log("HUD synced from:", player);
+    console.log("Sprite customData:", this.player?.customData);
 
-  const hp = player.hp ?? 0;
-const max_hp = player.max_hp ?? 0;
-const energy = player.energy ?? 0;
-const max_energy = player.max_energy ?? 0;
-const cryptos = player.cryptos ?? 0;
+    const hp = player.hp ?? 0;
+    const max_hp = player.max_hp ?? 0;
+    const energy = player.energy ?? 0;
+    const max_energy = player.max_energy ?? 0;
+    const cryptos = player.cryptos ?? 0;
 
-  // -------------------------
-  // TEXT VALUES
-  // -------------------------
-  document.getElementById("playerHP-text") &&
-    (document.getElementById("playerHP-text").textContent = hp);
+    // -------------------------
+    // TEXT VALUES
+    // -------------------------
+    document.getElementById("playerHP-text") &&
+      (document.getElementById("playerHP-text").textContent = hp);
 
-  document.getElementById("playerEnergy-text") &&
-    (document.getElementById("playerEnergy-text").textContent = energy);
+    document.getElementById("playerEnergy-text") &&
+      (document.getElementById("playerEnergy-text").textContent = energy);
 
-  document.getElementById("cryptos-count") &&
-    (document.getElementById("cryptos-count").textContent = cryptos);
+    document.getElementById("cryptos-count") &&
+      (document.getElementById("cryptos-count").textContent = cryptos);
 
-  // -------------------------
-  // SPRITE RENDERING
-  // -------------------------
-  this.renderHearts(hp, max_hp);
-  this.renderEnergy(energy, max_energy);
+    // -------------------------
+    // SPRITE RENDERING
+    // -------------------------
+    this.renderHearts(hp, max_hp);
+    this.renderEnergy(energy, max_energy);
 
-  
-  // --------------------------
-  // QUICK SLOT ICONS: PERKS
-  // --------------------------
-  const perkSlots = ["passive", "offense", "defense"];
-  perkSlots.forEach((slot) => {
-  const perkId = player.perks[slot];
-  const iconImg = document.querySelector(`.quick-slot.${slot} .perk-icon img`);
-  if (!iconImg) return;
 
-  iconImg.src = perkId
-    ? `/public/assets/icons/buffs/${perkId}.png`
-    : "/public/assets/icons/empty-slot.png";
+    // --------------------------
+    // QUICK SLOT ICONS: PERKS
+    // --------------------------
+    const perkSlots = ["passive", "offense", "defense"];
+    perkSlots.forEach((slot) => {
+      const perkId = player.perks[slot];
+      const iconImg = document.querySelector(`.quick-slot.${slot} .perk-icon img`);
+      if (!iconImg) return;
 
-  // Highlight if currently active
-  if (perkId && player.activePerks[perkId]) {
-    iconImg.classList.add("active-perk");
-  } else {
-    iconImg.classList.remove("active-perk");
+      iconImg.src = perkId
+        ? `/public/assets/icons/buffs/${perkId}.png`
+        : "/public/assets/icons/empty-slot.png";
+
+      // Highlight if currently active
+      if (perkId && player.activePerks[perkId]) {
+        iconImg.classList.add("active-perk");
+      } else {
+        iconImg.classList.remove("active-perk");
+      }
+    });
+
+
+    // --------------------------
+    // QUICK SLOT ICONS: CONSUMABLES
+    // --------------------------
+    const quickConsumables = player.perks.consumables;
+    quickConsumables.forEach((id, index) => {
+      const slot = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
+      if (!slot) return;
+
+      slot.dataset.id = id ?? "";
+      const img = slot.querySelector('.perk-icon img');
+      img.src = id ? `/public/assets/icons/item/consumables/${id}.png` : "";
+    });
+
+    // --------------------------
+    // QUICK SLOT CLICK HANDLERS
+    // --------------------------
+
+
+
+
   }
-});
-
-
-  // --------------------------
-  // QUICK SLOT ICONS: CONSUMABLES
-  // --------------------------
-  const quickConsumables = player.perks.consumables;
-  quickConsumables.forEach((id, index) => {
-    const slot = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
-    if (!slot) return;
-
-    slot.dataset.id = id ?? "";
-    const img = slot.querySelector('.perk-icon img');
-    img.src = id ? `/public/assets/icons/item/consumables/${id}.png` : "";
-  });
-
-  // --------------------------
-// QUICK SLOT CLICK HANDLERS
-// --------------------------
-
-
-
-
-}
   // -------------------------
   // EVENTS
   // -------------------------
@@ -298,22 +314,22 @@ const cryptos = player.cryptos ?? 0;
 
     //For initializing the Equip and Unequip function
     this.perkEquipBtn?.addEventListener("click", () => {
-  if (!this.selectedPerk) return;
+      if (!this.selectedPerk) return;
 
-  PerksManager.equip(this.selectedPerk);
-  this.updateHUD();
-  this.renderTabletPerks();
-  this.showPerkDetails(this.selectedPerk);
-});
+      PerksManager.equip(this.selectedPerk);
+      this.updateHUD();
+      this.renderTabletPerks();
+      this.showPerkDetails(this.selectedPerk);
+    });
 
-this.perkUnequipBtn?.addEventListener("click", () => {
-  if (!this.selectedPerk) return;
+    this.perkUnequipBtn?.addEventListener("click", () => {
+      if (!this.selectedPerk) return;
 
-  PerksManager.unequip(this.selectedPerk.type);
-  this.updateHUD();
-  this.renderTabletPerks();
-  this.showPerkDetails(this.selectedPerk);
-});
+      PerksManager.unequip(this.selectedPerk.type);
+      this.updateHUD();
+      this.renderTabletPerks();
+      this.showPerkDetails(this.selectedPerk);
+    });
 
 
     // App icons
@@ -392,37 +408,37 @@ this.perkUnequipBtn?.addEventListener("click", () => {
   }
 
   openApp(appId) {
-  this.closeAllApps();
+    this.closeAllApps();
 
-  const win = document.getElementById(appId);
-  if (!win) return;
+    const win = document.getElementById(appId);
+    if (!win) return;
 
-  // =========================
-  // INVENTORY LOAD PIPELINE
-  // =========================
-  if (appId === "app-inventory") {
+    // =========================
+    // INVENTORY LOAD PIPELINE
+    // =========================
+    if (appId === "app-inventory") {
 
-    syncInventory(); // update UI state from GameState
-    this.inventory.loadInventory(); // refresh the grid instead of creating new instance;
+      syncInventory(); // update UI state from GameState
+      this.inventory.loadInventory(); // refresh the grid instead of creating new instance;
 
-    console.log(
-      "[HUD] Inventory synced & loaded"
-    );
+      console.log(
+        "[HUD] Inventory synced & loaded"
+      );
+    }
+
+    // =========================
+
+    win.classList.remove("hidden");
+    win.classList.add("active");
+
+    this.tabletTitle.textContent =
+      win.querySelector("h3")?.textContent || "App";
+
+    this.backBtn?.classList.remove("hidden");
+    document
+      .getElementById("tablet-home")
+      ?.classList.add("hidden");
   }
-
-  // =========================
-
-  win.classList.remove("hidden");
-  win.classList.add("active");
-
-  this.tabletTitle.textContent =
-    win.querySelector("h3")?.textContent || "App";
-
-  this.backBtn?.classList.remove("hidden");
-  document
-    .getElementById("tablet-home")
-    ?.classList.add("hidden");
-}
 
 
   quickOpen(appId) {
@@ -430,115 +446,115 @@ this.perkUnequipBtn?.addEventListener("click", () => {
     setTimeout(() => this.openApp(appId), 10);
   }
 
- // -------------------------
-// PERKS TABLET
-// -------------------------
-renderTabletPerks() {
-  console.log("[HUD] Rendering tablet perks");
+  // -------------------------
+  // PERKS TABLET
+  // -------------------------
+  renderTabletPerks() {
+    console.log("[HUD] Rendering tablet perks");
 
-  const passiveList = document.getElementById("perk-passive-list");
-  const offenseList = document.getElementById("perk-offense-list");
-  const defenseList = document.getElementById("perk-defense-list");
+    const passiveList = document.getElementById("perk-passive-list");
+    const offenseList = document.getElementById("perk-offense-list");
+    const defenseList = document.getElementById("perk-defense-list");
 
-  if (!passiveList || !offenseList || !defenseList) return;
+    if (!passiveList || !offenseList || !defenseList) return;
 
-  // Clear existing list
-  passiveList.innerHTML = "";
-  offenseList.innerHTML = "";
-  defenseList.innerHTML = "";
+    // Clear existing list
+    passiveList.innerHTML = "";
+    offenseList.innerHTML = "";
+    defenseList.innerHTML = "";
 
-  // Helper to create a perk item
-  const createPerkItem = (perk, id, type) => {
-    const item = document.createElement("div");
-    item.className = "perk-item";
+    // Helper to create a perk item
+    const createPerkItem = (perk, id, type) => {
+      const item = document.createElement("div");
+      item.className = "perk-item";
 
-    const icon = document.createElement("img");
-    icon.src = `/public/assets/icons/buffs/${id}.png`;
-    icon.alt = perk.name;
-    icon.className = "perk-icon";
-    icon.style.imageRendering = "pixelated";
+      const icon = document.createElement("img");
+      icon.src = `/public/assets/icons/buffs/${id}.png`;
+      icon.alt = perk.name;
+      icon.className = "perk-icon";
+      icon.style.imageRendering = "pixelated";
 
-    const info = document.createElement("div");
-    info.className = "perk-info";
+      const info = document.createElement("div");
+      info.className = "perk-info";
 
-    const name = document.createElement("div");
-    name.className = "perk-name";
-    name.textContent = perk.name;
+      const name = document.createElement("div");
+      name.className = "perk-name";
+      name.textContent = perk.name;
 
-    const desc = document.createElement("div");
-    desc.className = "perk-desc";
-    desc.textContent = perk.desc ?? perk.description ?? "";
+      const desc = document.createElement("div");
+      desc.className = "perk-desc";
+      desc.textContent = perk.desc ?? perk.description ?? "";
 
-    info.append(name, desc);
-    item.append(icon, info);
+      info.append(name, desc);
+      item.append(icon, info);
 
-    // Clicking the perk shows details on the right
-    item.addEventListener("click", () => {
-      this.showPerkDetails({ id, type, ...perk });
+      // Clicking the perk shows details on the right
+      item.addEventListener("click", () => {
+        this.showPerkDetails({ id, type, ...perk });
+      });
+
+      return item;
+    };
+
+    // Populate Passive perks
+    Object.entries(PassivePerks).forEach(([id, perk]) => {
+      passiveList.appendChild(createPerkItem(perk, id, "passive"));
     });
 
-    return item;
-  };
+    // Populate Offense perks
+    Object.entries(OffensePerks).forEach(([id, perk]) => {
+      offenseList.appendChild(createPerkItem(perk, id, "offense"));
+    });
 
-  // Populate Passive perks
-  Object.entries(PassivePerks).forEach(([id, perk]) => {
-    passiveList.appendChild(createPerkItem(perk, id, "passive"));
-  });
-
-  // Populate Offense perks
-  Object.entries(OffensePerks).forEach(([id, perk]) => {
-    offenseList.appendChild(createPerkItem(perk, id, "offense"));
-  });
-
-  // Populate Defense perks
-  Object.entries(DefensePerks).forEach(([id, perk]) => {
-    defenseList.appendChild(createPerkItem(perk, id, "defense"));
-  });
-}
+    // Populate Defense perks
+    Object.entries(DefensePerks).forEach(([id, perk]) => {
+      defenseList.appendChild(createPerkItem(perk, id, "defense"));
+    });
+  }
 
 
 
-showPerkDetails(perk) {
-  console.log("[HUD] showPerkDetails:", perk);
-  this.selectedPerk = perk;
+  showPerkDetails(perk) {
+    console.log("[HUD] showPerkDetails:", perk);
+    this.selectedPerk = perk;
 
-  const icon = document.getElementById("perk-detail-icon");
-  const name = document.getElementById("perk-detail-name");
-  const desc = document.getElementById("perk-detail-desc");
-  const equipBtn = document.getElementById("perk-equip-btn");
-  const unequipBtn = document.getElementById("perk-unequip-btn");
+    const icon = document.getElementById("perk-detail-icon");
+    const name = document.getElementById("perk-detail-name");
+    const desc = document.getElementById("perk-detail-desc");
+    const equipBtn = document.getElementById("perk-equip-btn");
+    const unequipBtn = document.getElementById("perk-unequip-btn");
 
-  icon.src = `/public/assets/icons/buffs/${perk.id}.png`;
-  icon.style.imageRendering = "pixelated";
+    icon.src = `/public/assets/icons/buffs/${perk.id}.png`;
+    icon.style.imageRendering = "pixelated";
 
-  name.textContent = perk.name;
-  desc.textContent = perk.desc ?? perk.description ?? "";
+    name.textContent = perk.name;
+    desc.textContent = perk.desc ?? perk.description ?? "";
 
-  const equipped = PerksManager.isEquipped(perk.id);
+    const equipped = PerksManager.isEquipped(perk.id);
 
-  equipBtn.disabled = equipped;
-  unequipBtn.disabled = !equipped;
+    equipBtn.disabled = equipped;
+    unequipBtn.disabled = !equipped;
 
-  // Equip button
-  equipBtn.onclick = () => {
-    console.log("[HUD] Equip clicked:", perk.id);
-    PerksManager.equip(perk);
-    this.updateHUD();          // refresh Quick Access slots
-    this.renderTabletPerks();  // refresh the perk list
-    this.showPerkDetails(perk); // refresh details panel
-  };
+    // Equip button
+    equipBtn.onclick = () => {
+      console.log("[HUD] Equip clicked:", perk.id);
+      PerksManager.equip(perk);
+      this.updateHUD();          // refresh Quick Access slots
+      this.renderTabletPerks();  // refresh the perk list
+      this.showPerkDetails(perk); // refresh details panel
+    };
 
-  // Unequip button
-  unequipBtn.onclick = () => {
-    console.log("[HUD] Unequip clicked:", perk.type);
-    PerksManager.unequip(perk.type);
-    this.updateHUD();
-    this.renderTabletPerks();
-    this.showPerkDetails(perk);
-  };
-}
+    // Unequip button
+    unequipBtn.onclick = () => {
+      console.log("[HUD] Unequip clicked:", perk.type);
+      PerksManager.unequip(perk.type);
+      this.updateHUD();
+      this.renderTabletPerks();
+      this.showPerkDetails(perk);
+    };
+  }
 
-// -------------------------
+  // -------------------------
   // ENABLE / DISABLE PERK BUTTONS
   // -------------------------
   disablePerkButton(perkId) {
