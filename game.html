@@ -1,461 +1,466 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>codequest-game</title>
-    <link rel="stylesheet" href="/src/style.css">
 
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: #000;
-      }
-    </style>
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>codequest-game</title>
+  <link rel="stylesheet" href="/src/style.css">
 
-    <div class="game-border">
-      <div id="stage">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
 
-        <!-- Game viewport -->
-        <div id="game-container">
+<body>
 
-          <!-- SHOP UI -->
+  <div class="game-border">
+    <div id="stage">
 
-        </div>
+      <!-- Game viewport -->
+      <div id="game-container">
 
-        <div id="dialogue-box" class="dialogue-box hidden">
-          <p id="dialogue-text"></p>
-          <div id="dialogue-options" class="hidden"></div>
-          <button id="dialogue-next">▶</button>
-        </div>
+        <!-- SHOP UI -->
 
       </div>
 
-    </div>
-
-    <!-- HUD (Tablet version) -->
-
-    <div id="shop-ui" class="shop-hidden">
-  <div class="shop-container">
-    <h2>Debug Shop</h2>
-    <div id="shop-items"></div>
-    <button id="shop-close">Close</button>
-  </div>
-</div>
-
-<!-- PLAYER STATS HUD (Top-left) -->
-<div id="player-stats" class="hud-top-left">
-  <div class="hud-bg">
-    <!-- Player Icon -->
-    <div class="stats-right">
-      <button id="tablet-open-btn" class="tablet-icon-btn" title="Open Tablet">
-        <img src="/public/assets/icons/ui/tablet.png" alt="Tablet Icon">
-      </button>
-    </div>
-
-    <div class="stats-left">
-
-
-      <!-- HP Row -->
-      <div class="bar-row">
-        <label>HP</label>
-        <div class="hearts-container"></div>
+      <div id="dialogue-box" class="dialogue-box hidden">
+        <p id="dialogue-text"></p>
+        <div id="dialogue-options" class="hidden"></div>
+        <button id="dialogue-next">▶</button>
       </div>
 
-      <!-- Energy Row -->
-      <div class="bar-row">
-        <label>Energy</label>
-        <div class="energy-container"></div>
-      </div>
-
-      <!-- Cryptos Row -->
-      <div class="bar-row">
-        <label>Cryptos</label>
-        <div class="cryptos">
-          <img src="/public/assets/icons/hud/cryptos.png" alt="crypto" class="coin-icon">
-          <span id="cryptos-count"></span>
-        </div>
-      </div>
-
-      <!-- Quick Toggle Buttons -->
-      <div class="quick-toggles">
-        <button class="quick-btn" id="quick-inv">Inventory</button>
-        <button class="quick-btn" id="quick-quests">Quests</button>
-        <button class="quick-btn" id="quick-codex">Codex</button>
-        <button class="quick-btn" id="quick-compiler">Compiler</button>
-      </div>
-
-    </div>
-
-    
-  </div>
-</div>
-
-<!-- QUICK ACCESS BAR -->
-<div id="quick-access">
-
-  <!-- Slot 1: Passive -->
-  <button class="quick-slot passive" data-slot="passive" title="Passive Perk">
-    <div class="perk-frame">
-      <!-- FRAME -->
-      <img
-           src="/public/assets/icons/ui/quick_access_ui1.png"
-           alt="">
-    </div>
-    <div class="perk-icon">
-      <!-- PERK ICON -->
-      <img  
-           src="/public/assets/icons/buffs/hp_boost.png"
-           alt="">
-    </div>
-  </button>
-
-  <!-- Slot 2: Offense -->
-  <button class="quick-slot offense" data-slot="offense" title="Offense Perk">
-    <div class="perk-frame">
-      <!-- FRAME -->
-      <img
-           src="/public/assets/icons/ui/quick_access_ui2.png"
-           alt="">
-    </div>
-    <div class="perk-icon">
-      <!-- PERK ICON -->
-      <img  
-           src="/public/assets/icons/buffs/pixel_gun.png"
-           alt="">
-    </div>
-  </button>
-
-  <!-- Slot 3: Defense -->
-  <button class="quick-slot defense" data-slot="defense" title="Defense Perk">
-    <div class="perk-frame">
-      <!-- FRAME -->
-      <img
-           src="/public/assets/icons/ui/quick_access_ui3.png"
-           alt="">
-    </div>
-    <div class="perk-icon">
-      <!-- PERK ICON -->
-      <img  
-           src="/public/assets/icons/buffs/magic_mushroom.png"
-           alt="">
-    </div>
-  </button>
-
-  <!-- Slot 4: Consumable -->
-  <button class="quick-slot item" data-slot="item-1" data-id="" title="Consumable">
-    <div class="perk-frame">
-      <!-- FRAME -->
-      <img
-           src="/public/assets/icons/ui/quick_access_ui4.png"
-           alt="">
-    </div>
-    <div class="perk-icon">
-      <!-- PERK ICON -->
-      <img  
-           src=""
-           alt="">
-    </div>
-  </button>
-
-  <!-- Slot 5: Consumable -->
-  <button class="quick-slot item" data-slot="item-2" data-id=""  title="Consumable">
-    <div class="perk-frame">
-      <!-- FRAME -->
-      <img
-           src="/public/assets/icons/ui/quick_access_ui5.png"
-           alt="">
-    </div>
-    <div class="perk-icon">
-      <!-- PERK ICON -->
-      <img  
-           src=""
-           alt="">
-    </div>
-  </button>
-
-</div>
-
-<!-- MINIMAP (Top-right) -->
-  
-<div id="minimap-container" class="hud-top-right">
-  <canvas id="minimapCanvas" width="280" height="280"></canvas>
-  <div id="map-name">J. Scriptoria City</div>
-</div>
-
-
-
-
-<div id="compiler-output-box" class="compiler-output hidden"></div>
-
-
-<!-- TABLET OVERLAY -->
-<div id="tablet-overlay" class="hidden">
-
-  <div id="tablet-hud">
-
-    <!-- HEADER -->
-    <header class="tablet-header">
-      <button id="tablet-back" class="tablet-nav-btn hidden">←</button>
-      <h2 id="tablet-title">Tablet Home</h2>
-      <button id="tablet-close" class="tablet-close">✕</button>
-    </header>
-
-    <!-- ================= HOME GRID ================= -->
-    <div id="tablet-home" class="tablet-grid">
-
-      <div class="app-icon" data-app="app-codex">
-        <div class="icon-img codex-icon"></div>
-        <p>Codex</p>
-      </div>
-
-      <div class="app-icon" data-app="app-inventory">
-        <div class="icon-img inventory-icon"></div>
-        <p>Inventory</p>
-      </div>
-
-      <div class="app-icon" data-app="app-perks">
-        <div class="icon-img perks-icon"></div>
-        <p>Perks</p>
-      </div>
-
-      <div class="app-icon" data-app="app-quests">
-        <div class="icon-img quests-icon"></div>
-        <p>Quests</p>
-      </div>
-
-      <div class="app-icon" data-app="app-compiler">
-        <div class="icon-img compiler-icon"></div>
-        <p>Compiler</p>
-      </div>
-
-      <div class="app-icon" data-app="app-logs">
-        <div class="icon-img logs-icon"></div>
-        <p>Logs</p>
-      </div>
-
-      <div class="app-icon" data-app="app-lessons">
-        <div class="icon-img lessons-icon"></div>
-        <p>Lessons</p>
-      </div>
-
-      <div class="app-icon" data-app="app-achievements">
-        <div class="icon-img achievements-icon"></div>
-        <p>Achievements</p>
-      </div>
-
-      <div class="app-icon" data-app="app-settings">
-        <div class="icon-img settings-icon"></div>
-        <p>Settings</p>
-      </div>
-
-      <div class="app-icon" data-app="app-save">
-        <div class="icon-img save-icon"></div>
-        <p>Save</p>
-      </div>
-
-      <div class="app-icon" data-app="app-logout">
-        <div class="icon-img logout-icon"></div>
-        <p>Logout</p>
-      </div>
-
-    </div>
-
-    <!-- ================= CODEX ================= -->
-    <div id="app-codex" class="tablet-panel hidden">
-
-      <div class="codex-container">
-
-        <aside class="codex-sidebar">
-          <h3>Categories</h3>
-          <ul class="codex-category-list">
-            <li class="cat active" data-cat="stories">📘 Stories</li>
-            <li class="cat" data-cat="lore">📜 Lore</li>
-            <li class="cat" data-cat="characters">🧑 Characters</li>
-            <li class="cat" data-cat="locations">🌍 Locations</li>
-            <li class="cat" data-cat="bugs">🧩 Bugs</li>
-            <li class="cat" data-cat="achievements">🏆 Achievements</li>
-            <li class="cat" data-cat="lessons">📖 Lessons</li>
-          </ul>
-        </aside>
-
-        <section class="codex-list">
-          <h3 class="codex-list-title">Entries</h3>
-          <ul id="codex-items" class="codex-items"></ul>
-        </section>
-
-        <section class="codex-reader">
-          <div id="codex-reader-content" class="reader-content">
-            <div id="codex-entry-icon" class="entry-icon hidden">
-              <img src="" alt="">
-            </div>
-            <p>Select an entry to read.</p>
-          </div>
-
-          <div id="codex-pages" class="reader-pages hidden">
-            <button id="page-prev">◀</button>
-            <span id="page-number">Page 1</span>
-            <button id="page-next">▶</button>
-          </div>
-        </section>
-
-      </div>
-    </div>
-
-    <!-- ================= INVENTORY ================= -->
-    <div id="app-inventory" class="tablet-panel hidden">
-      <h3>Inventory</h3>
-
-      <div class="inventory-wrapper">
-
-        <div class="inventory-left">
-          <div id="inventory-tabs">
-            <button class="inv-tab active" data-tab="key">Key Items</button>
-            <button class="inv-tab" data-tab="cons">Consumables</button>
-          </div>
-
-          <div id="inventory-grid"></div>
-        </div>
-
-        <div class="inventory-right">
-          <div id="inventory-details" class="hidden">
-            <button id="inv-details-close">✕</button>
-            <div class="inv-item-icon">
-              <img src="" alt="">
-            </div>
-            <h2 id="inv-item-name"></h2>
-            <p id="inv-item-desc"></p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ================= PERKS (NEW) ================= -->
-    <div id="app-perks" class="tablet-panel hidden">
-  <h3>Perks</h3>
-
-  <div class="perks-sections">
-
-    <!-- Perk detail view (right side) -->
-    <div class="perk-details">
-      <img id="perk-detail-icon" class="perk-icon large" />
-      <h4 id="perk-detail-name">Select a perk</h4>
-      <p id="perk-detail-desc"></p>
-
-      <div class="perk-actions">
-        <button id="perk-equip-btn" disabled>Equip</button>
-        <button id="perk-unequip-btn" disabled>Unequip</button>
-      </div>
-    </div>
-
-    <!-- Perk lists (left side) -->
-    <section class="perk-group passive">
-      <h4>Passive</h4>
-      <div id="perk-passive-list" class="perk-list"></div>
-    </section>
-
-    <section class="perk-group offense">
-      <h4>Offense</h4>
-      <div id="perk-offense-list" class="perk-list"></div>
-    </section>
-
-    <section class="perk-group defense">
-      <h4>Defense</h4>
-      <div id="perk-defense-list" class="perk-list"></div>
-    </section>
-
-  </div>
-</div>
-
-
-    <!-- ================= QUESTS ================= -->
-    <div id="app-quests" class="tablet-panel hidden">
-      <h3>Quests</h3>
-      <!-- your existing quests UI stays -->
-    </div>
-
-    <!-- ================= COMPILER ================= -->
-    <div id="app-compiler" class="tablet-panel hidden">
-      <h3>Compiler</h3>
-      <textarea id="compiler-code" placeholder="Write JavaScript here..."></textarea>
-      <button id="compiler-run">Run</button>
-    </div>
-
-    <!-- ================= LOGS ================= -->
-    <div id="app-logs" class="tablet-panel hidden">
-      <h3>Dialogue Logs</h3>
-    </div>
-
-    <!-- ================= LESSONS ================= -->
-    <div id="app-lessons" class="tablet-panel hidden">
-  <h3 id="lessons-title">Lessons</h3>
-
-  <div class="lessons-layout">
-
-    <!-- LEFT: Categories + Lesson List -->
-    <div class="lessons-sidebar">
-  <div id="lessons-tree"></div>
-</div>
-
-    <!-- RIGHT: Content -->
-    <div class="lessons-content-wrapper">
-      <div id="lessons-content">
-        Select a lesson to read.
-      </div>
-
-      <div class="lessons-pagination">
-        <button id="lesson-prev" style="display:none;">◀</button>
-        <button id="lesson-next" style="display:none;">▶</button>
-      </div>
     </div>
 
   </div>
-</div>
 
-    <!-- ================= ACHIEVEMENTS ================= -->
-    <div id="app-achievements" class="tablet-panel hidden">
-      <h3>Achievements</h3>
+  <!-- HUD (Tablet version) -->
+
+  <div id="shop-ui" class="shop-hidden">
+    <div class="shop-container">
+      <h2>Debug Shop</h2>
+      <div id="shop-items"></div>
+      <button id="shop-close">Close</button>
     </div>
+  </div>
 
-    <!-- ================= SETTINGS ================= -->
-    <div id="app-settings" class="tablet-panel hidden">
-      <h3>Settings</h3>
+  <!-- PLAYER STATS HUD (Top-left) -->
+  <div id="player-stats" class="hud-top-left">
+    <div class="hud-bg">
+      <!-- Player Icon -->
+      <div class="stats-right">
+        <button id="tablet-open-btn" class="tablet-icon-btn" title="Open Tablet">
+          <img src="/public/assets/icons/ui/tablet.png" alt="Tablet Icon">
+        </button>
+      </div>
+
+      <div class="stats-left">
+
+
+        <!-- HP Row -->
+        <div class="bar-row">
+          <label>HP</label>
+          <div class="hearts-container"></div>
+        </div>
+
+        <!-- Energy Row -->
+        <div class="bar-row">
+          <label>Energy</label>
+          <div class="energy-container"></div>
+        </div>
+
+        <!-- Cryptos Row -->
+        <div class="bar-row">
+          <label>Cryptos</label>
+          <div class="cryptos">
+            <img src="/public/assets/icons/hud/cryptos.png" alt="crypto" class="coin-icon">
+            <span id="cryptos-count"></span>
+          </div>
+        </div>
+
+        <!-- Quick Toggle Buttons -->
+        <div class="quick-toggles">
+          <button class="quick-btn" id="quick-inv">Inventory</button>
+          <button class="quick-btn" id="quick-quests">Quests</button>
+          <button class="quick-btn" id="quick-codex">Codex</button>
+          <button class="quick-btn" id="quick-compiler">Compiler</button>
+        </div>
+
+      </div>
+
+
     </div>
+  </div>
 
-    <!-- ================= SAVE / LOAD ================= -->
-<div id="app-save" class="tablet-panel hidden">
-  <h3>Save / Load Game</h3>
+  <!-- QUICK ACCESS BAR -->
+  <div id="quick-access">
 
-  <div class="save-load-grid">
-
-    <button id="save-btn" class="tablet-action-btn">
-      💾 Save Game
+    <!-- Slot 1: Passive -->
+    <button class="quick-slot passive" data-slot="passive" title="Passive Perk">
+      <div class="perk-frame">
+        <!-- FRAME -->
+        <img src="/public/assets/icons/ui/quick_access_ui1.png" alt="">
+      </div>
+      <div class="perk-icon">
+        <!-- PERK ICON -->
+        <img src="/public/assets/icons/buffs/hp_boost.png" alt="">
+      </div>
     </button>
 
-    <button id="load-btn" class="tablet-action-btn">
-      📂 Load Game
+    <!-- Slot 2: Offense -->
+    <button class="quick-slot offense" data-slot="offense" title="Offense Perk">
+      <div class="perk-frame">
+        <!-- FRAME -->
+        <img src="/public/assets/icons/ui/quick_access_ui2.png" alt="">
+      </div>
+      <div class="perk-icon">
+        <!-- PERK ICON -->
+        <img src="/public/assets/icons/buffs/pixel_gun.png" alt="">
+      </div>
+    </button>
+
+    <!-- Slot 3: Defense -->
+    <button class="quick-slot defense" data-slot="defense" title="Defense Perk">
+      <div class="perk-frame">
+        <!-- FRAME -->
+        <img src="/public/assets/icons/ui/quick_access_ui3.png" alt="">
+      </div>
+      <div class="perk-icon">
+        <!-- PERK ICON -->
+        <img src="/public/assets/icons/buffs/magic_mushroom.png" alt="">
+      </div>
+    </button>
+
+    <!-- Slot 4: Consumable -->
+    <button class="quick-slot item" data-slot="item-1" data-id="" title="Consumable">
+      <div class="perk-frame">
+        <!-- FRAME -->
+        <img src="/public/assets/icons/ui/quick_access_ui4.png" alt="">
+      </div>
+      <div class="perk-icon">
+        <!-- PERK ICON -->
+        <img src="" alt="">
+      </div>
+    </button>
+
+    <!-- Slot 5: Consumable -->
+    <button class="quick-slot item" data-slot="item-2" data-id="" title="Consumable">
+      <div class="perk-frame">
+        <!-- FRAME -->
+        <img src="/public/assets/icons/ui/quick_access_ui5.png" alt="">
+      </div>
+      <div class="perk-icon">
+        <!-- PERK ICON -->
+        <img src="" alt="">
+      </div>
     </button>
 
   </div>
-</div>
-    <!-- ================= LOGOUT ================= -->
-    <div id="app-logout" class="tablet-panel hidden">
-      <h3>Logout</h3>
-      <button id="logout-btn">Logout</button>
-    </div>
 
+  <!-- MINIMAP (Top-right) -->
+
+  <div id="minimap-container" class="hud-top-right">
+    <canvas id="minimapCanvas" width="280" height="280"></canvas>
+    <div id="map-name">J. Scriptoria City</div>
   </div>
-</div>
 
 
 
-<!--
+
+  <div id="compiler-output-box" class="compiler-output hidden"></div>
+
+
+  <!-- TABLET OVERLAY -->
+  <div id="tablet-overlay" class="hidden">
+
+    <div id="tablet-hud">
+
+      <!-- HEADER -->
+      <header class="tablet-header">
+        <button id="tablet-back" class="tablet-nav-btn hidden">←</button>
+        <h2 id="tablet-title">Tablet Home</h2>
+        <button id="tablet-close" class="tablet-close">✕</button>
+      </header>
+
+      <!-- ================= HOME GRID ================= -->
+      <div id="tablet-home" class="tablet-grid">
+
+        <div class="app-icon" data-app="app-codex">
+          <div class="icon-img codex-icon"></div>
+          <p>Codex</p>
+        </div>
+
+        <div class="app-icon" data-app="app-inventory">
+          <div class="icon-img inventory-icon"></div>
+          <p>Inventory</p>
+        </div>
+
+        <div class="app-icon" data-app="app-perks">
+          <div class="icon-img perks-icon"></div>
+          <p>Perks</p>
+        </div>
+
+        <div class="app-icon" data-app="app-quests">
+          <div class="icon-img quests-icon"></div>
+          <p>Quests</p>
+        </div>
+
+        <div class="app-icon" data-app="app-compiler">
+          <div class="icon-img compiler-icon"></div>
+          <p>Compiler</p>
+        </div>
+
+        <div class="app-icon" data-app="app-tutorial">
+          <div class="icon-img tutorial-icon"></div>
+          <p>Guide</p>
+        </div>
+
+        <div class="app-icon" data-app="app-lessons">
+          <div class="icon-img lessons-icon"></div>
+          <p>Lessons</p>
+        </div>
+
+        <div class="app-icon" data-app="app-achievements">
+          <div class="icon-img achievements-icon"></div>
+          <p>Achievements</p>
+        </div>
+
+        <div class="app-icon" data-app="app-settings">
+          <div class="icon-img settings-icon"></div>
+          <p>Settings</p>
+        </div>
+
+        <div class="app-icon" data-app="app-save">
+          <div class="icon-img save-icon"></div>
+          <p>Save</p>
+        </div>
+
+        <div class="app-icon" data-app="app-logout">
+          <div class="icon-img logout-icon"></div>
+          <p>Logout</p>
+        </div>
+
+      </div>
+
+      <!-- ================= CODEX ================= -->
+      <div id="app-codex" class="tablet-panel hidden">
+
+        <div class="codex-container">
+
+          <aside class="codex-sidebar">
+            <h3>Categories</h3>
+            <ul class="codex-category-list">
+              <li class="cat active" data-cat="stories">📘 Stories</li>
+              <li class="cat" data-cat="lore">📜 Lore</li>
+              <li class="cat" data-cat="characters">🧑 Characters</li>
+              <li class="cat" data-cat="locations">🌍 Locations</li>
+              <li class="cat" data-cat="bugs">🧩 Bugs</li>
+              <li class="cat" data-cat="achievements">🏆 Achievements</li>
+              <li class="cat" data-cat="lessons">📖 Lessons</li>
+            </ul>
+          </aside>
+
+          <section class="codex-list">
+            <h3 class="codex-list-title">Entries</h3>
+            <ul id="codex-items" class="codex-items"></ul>
+          </section>
+
+          <section class="codex-reader">
+            <div id="codex-reader-content" class="reader-content">
+              <div id="codex-entry-icon" class="entry-icon hidden">
+                <img src="" alt="">
+              </div>
+              <p>Select an entry to read.</p>
+            </div>
+
+            <div id="codex-pages" class="reader-pages hidden">
+              <button id="page-prev">◀</button>
+              <span id="page-number">Page 1</span>
+              <button id="page-next">▶</button>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- ================= INVENTORY ================= -->
+      <div id="app-inventory" class="tablet-panel hidden">
+        <h3>Inventory</h3>
+
+        <div class="inventory-wrapper">
+
+          <div class="inventory-left">
+            <div id="inventory-tabs">
+              <button class="inv-tab active" data-tab="key">Key Items</button>
+              <button class="inv-tab" data-tab="cons">Consumables</button>
+            </div>
+
+            <div id="inventory-grid"></div>
+          </div>
+
+          <div class="inventory-right">
+            <div id="inventory-details" class="hidden">
+              <button id="inv-details-close">✕</button>
+              <div class="inv-item-icon">
+                <img src="" alt="">
+              </div>
+              <h2 id="inv-item-name"></h2>
+              <p id="inv-item-desc"></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ================= PERKS (NEW) ================= -->
+      <div id="app-perks" class="tablet-panel hidden">
+        <h3>Perks</h3>
+
+        <div class="perks-sections">
+
+          <!-- Perk detail view (right side) -->
+          <div class="perk-details">
+            <img id="perk-detail-icon" class="perk-icon large" />
+            <h4 id="perk-detail-name">Select a perk</h4>
+            <p id="perk-detail-desc"></p>
+
+            <div class="perk-actions">
+              <button id="perk-equip-btn" disabled>Equip</button>
+              <button id="perk-unequip-btn" disabled>Unequip</button>
+            </div>
+          </div>
+
+          <!-- Perk lists (left side) -->
+          <section class="perk-group passive">
+            <h4>Passive</h4>
+            <div id="perk-passive-list" class="perk-list"></div>
+          </section>
+
+          <section class="perk-group offense">
+            <h4>Offense</h4>
+            <div id="perk-offense-list" class="perk-list"></div>
+          </section>
+
+          <section class="perk-group defense">
+            <h4>Defense</h4>
+            <div id="perk-defense-list" class="perk-list"></div>
+          </section>
+
+        </div>
+      </div>
+
+
+      <!-- ================= QUESTS ================= -->
+      <div id="app-quests" class="tablet-panel hidden">
+        <h3>Quests</h3>
+        <!-- your existing quests UI stays -->
+      </div>
+
+      <!-- ================= COMPILER ================= -->
+      <div id="app-compiler" class="tablet-panel hidden">
+        <h3>Compiler</h3>
+        <textarea id="compiler-code" placeholder="Write JavaScript here..."></textarea>
+        <button id="compiler-run">Run</button>
+      </div>
+
+      <!-- ================= TUTORIAL ================= -->
+      <div id="app-tutorial" class="app-window hidden">
+        <h3>Game Guide</h3>
+
+        <div id="tutorial-content"></div>
+
+        <div class="tutorial-buttons">
+          <button id="tutorial-prev">Back</button>
+          <button id="tutorial-next">Next</button>
+        </div>
+      </div>
+
+      <!-- ================= LESSONS ================= -->
+      <div id="app-lessons" class="tablet-panel hidden">
+        <h3 id="lessons-title">Lessons</h3>
+
+        <div class="lessons-layout">
+
+          <!-- LEFT: Categories + Lesson List -->
+          <div class="lessons-sidebar">
+            <div id="lessons-tree"></div>
+          </div>
+
+          <!-- RIGHT: Content -->
+          <div class="lessons-content-wrapper">
+            <div id="lessons-content">
+              Select a lesson to read.
+            </div>
+
+            <div class="lessons-pagination">
+              <button id="lesson-prev" style="display:none;">◀</button>
+              <button id="lesson-next" style="display:none;">▶</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ================= ACHIEVEMENTS ================= -->
+      <div id="app-achievements" class="tablet-panel hidden">
+        <h3>Achievements</h3>
+      </div>
+
+      <!-- ================= SETTINGS ================= -->
+      <div id="app-settings" class="tablet-panel hidden">
+        <h3>Settings</h3>
+      </div>
+
+      <!-- ================= SAVE / LOAD ================= -->
+      <div id="app-save" class="tablet-panel hidden">
+        <h3>Save / Load Game</h3>
+
+        <div class="save-load-grid">
+
+          <button id="save-btn" class="tablet-action-btn">
+            💾 Save Game
+          </button>
+
+          <button id="load-btn" class="tablet-action-btn">
+            📂 Load Game
+          </button>
+
+        </div>
+      </div>
+      <!-- ================= LOGOUT ================= -->
+      <div id="app-logout" class="tablet-panel hidden">
+        <h3>Logout</h3>
+        <button id="logout-btn">Logout</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="tutorial-ui" class="overlay hidden">
+    <div class="tutorial-box">
+
+      <h2>Welcome to CodeQuest!</h2>
+
+      <p><b>Movement</b>: Use Arrow Keys to move.</p>
+      <p><b>Attack</b>: Use the Space Bar to shoot</p>
+      <p><b>Interact</b>: Press Z near objects or people to talk with</p>
+      <p><b>Tablet</b>: Click items in the HUD</p>
+      <p><b>Defeat Bugs</b> to earn Cryptos and buy item upgrade health and energy.</p>
+
+      <button id="tutorial-close">Start Adventure</button>
+
+    </div>
+  </div>
+
+
+
+  <!--
 
 <div
   id="debug-controls"
@@ -500,53 +505,55 @@
 </div>
 -->
 
-    <!-- Correct Vite module import -->
-    <script type="module" src="/src/main.js"></script>
-    <script type="module" src="/src/ui/HUD/TabletSaveLoad.js"></script>
-    <script type="module" src="debug.js"></script>
-    <script src="/src/ui/HUD/HUD.js" type="module"></script>
-    
+  <!-- Correct Vite module import -->
+  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="/src/ui/HUD/TabletSaveLoad.js"></script>
+  <script src="/src/ui/data/guide.js"></script>
+  <script type="module" src="debug.js"></script>
+  <script src="/src/ui/HUD/HUD.js" type="module"></script>
 
 
-<script>
-function updateHearts(current, max) {
-  const container = document.querySelector('.hearts-container');
-  container.innerHTML = '';
-  for (let i = 0; i < max; i++) {
-    const img = document.createElement('img');
-    img.src = i < current 
-      ? '/public/assets/icons/hud/heart.png'
-      : '/public/assets/icons/hud/empty-heart.png';
-    img.classList.add('heart-icon');
-    container.appendChild(img);
-  }
-}
 
-function updateEnergy(current, max) {
-  const container = document.querySelector('.energy-container');
-  container.innerHTML = '';
-  for (let i = 0; i < max; i++) {
-    const img = document.createElement('img');
-    img.src = i < current 
-      ? '/public/assets/icons/hud/energy.png'
-      : '/public/assets/icons/hud/empty-energy.png';
-    img.classList.add('energy-icon');
-    container.appendChild(img);
-  }
-}
+  <script>
+    function updateHearts(current, max) {
+      const container = document.querySelector('.hearts-container');
+      container.innerHTML = '';
+      for (let i = 0; i < max; i++) {
+        const img = document.createElement('img');
+        img.src = i < current
+          ? '/public/assets/icons/hud/heart.png'
+          : '/public/assets/icons/hud/empty-heart.png';
+        img.classList.add('heart-icon');
+        container.appendChild(img);
+      }
+    }
 
-function updateCryptos(amount) {
-  document.getElementById('cryptos-count').textContent = amount;
-}
+    function updateEnergy(current, max) {
+      const container = document.querySelector('.energy-container');
+      container.innerHTML = '';
+      for (let i = 0; i < max; i++) {
+        const img = document.createElement('img');
+        img.src = i < current
+          ? '/public/assets/icons/hud/energy.png'
+          : '/public/assets/icons/hud/empty-energy.png';
+        img.classList.add('energy-icon');
+        container.appendChild(img);
+      }
+    }
 
-/*/ Example usage
-window.addEventListener('DOMContentLoaded', () => {
-  updateHearts(3, 12);
-  updateEnergy(2, 10);
-  updateCryptos(1200);
-});
-*/
+    function updateCryptos(amount) {
+      document.getElementById('cryptos-count').textContent = amount;
+    }
 
-</script>
-  </body>
+    /*/ Example usage
+    window.addEventListener('DOMContentLoaded', () => {
+      updateHearts(3, 12);
+      updateEnergy(2, 10);
+      updateCryptos(1200);
+    });
+    */
+
+  </script>
+</body>
+
 </html>

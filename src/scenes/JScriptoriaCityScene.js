@@ -22,6 +22,7 @@ import ShopSystem from "../systems/ShopSystem.js";
 import PerksManager from "../systems/PerksManager.js";
 import { OffensePerks, DefensePerks } from "../ui/data/perkData.js";
 import SceneTransition from "../systems/SceneTransition.js";
+import TutorialUI from "../ui/HUD/TutorialUI.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -62,7 +63,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   preload() {
     this.load.tilemapTiledJSON("JScriptoriaCity", "/maps/JScriptoriaCity.tmj");
 
-    const cityTilesets = ["house", "headquarters", "guild", "monolith_syntax", "monolith_datatypes", "monolith_variables", "monolith_operators", "monolith_conditions", "monolith_array", "monolith_functions", "inn", "library", "road_full", "roads", "school-sheet", "walls"];
+    const cityTilesets = ["house", "headquarters", "guild", "monolith_syntax", "monolith_datatypes", "monolith_variables", "monolith_operators", "monolith_conditions", "monolith_array", "monolith_functions", "inn", "library", "road_full", "roads", "school-sheet", "walls", "banner"];
     const outskirtsTilesets = ["cliff", "grasswalk", "hole", "kiosk", "road_dirt_path", "stone_path", "tree"];
     const indoorTilesets = ["lowerwall", "upperwall"];
 
@@ -185,6 +186,23 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     }
 
     PerksManager.setScene(this);
+
+    this.tutorialUI = new TutorialUI(this);
+
+  const player = GameState.player;
+
+  if (player?.isNewGame) {
+
+    this.time.delayedCall(500, () => {
+      this.tutorialUI.show();
+    });
+
+    // mark tutorial as seen
+    player.isNewGame = false;
+    GameState.player = player;
+  }
+
+  
 
     // Shop System Logic
     this.shopSystem = new ShopSystem(this);

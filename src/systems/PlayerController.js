@@ -65,6 +65,10 @@ this.lastShotTime = 0;
   update(npcs = []) {
     if (!this.player) return;
 
+    if (this.scene.isUIBlockingInput) {
+  this.player.body.setVelocity(0, 0);
+  return;
+}
     // Dynamic depth sorting
     this.player.setDepth(this.player.y);
     // 🚫 Skip movement if frozen (coding)
@@ -113,7 +117,7 @@ if (
     if (this.cursors.left.isDown) {
       this.player.body.setVelocityX(-speed);
       anim = "walk-left";
-      this.dir = "left";        // 🧭 track facing
+      this.dir = "left";        // track facing
     } 
     else if (this.cursors.right.isDown) {
       this.player.body.setVelocityX(speed);

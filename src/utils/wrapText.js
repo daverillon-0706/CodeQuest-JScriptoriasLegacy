@@ -1,4 +1,4 @@
-export function wrapText(text, maxChars = 50) {
+export function wrapText(text, maxChars = 100) {
 
     if (typeof text !== "string") {
         text = String(text ?? "");

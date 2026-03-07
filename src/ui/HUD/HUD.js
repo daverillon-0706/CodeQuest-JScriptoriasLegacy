@@ -9,6 +9,7 @@ import LessonsUI from "./LessonsUI.js";
 import GameState from "../../GameState.js";
 import PerksManager from "../../systems/PerksManager.js";
 import ConsumablesManager from "../../systems/ConsumablesManager.js";
+import TutorialUI from "./TutorialUI.js";
 
 export default class HUD {
   constructor() {
@@ -20,6 +21,22 @@ export default class HUD {
     this.quests = new QuestsUI();
     this.compiler = new CompilerUI();
     this.lessons = new LessonsUI();
+    this.guideSections = [
+      { title: "About the Game", text: "CodeQuest is a game where you explore, learn, and fight bugs." },
+      { title: "Player", text: "Basic movement: arrow keys or WASD to move." },
+      { title: "Weapon", text: "Shoot with the SPACE bar." },
+      { title: "Characters", text: "NPCs: interact using Z." },
+      { title: "Enemies", text: "The bugs attack when you enter their range." },
+      { title: "Compiler", text: "Appears during rift challenges and quizzes to run code." },
+      { title: "HP, Energy & Cryptos", text: "HP = Health, Energy = Ability resource, Cryptos = Currency." },
+      { title: "Tablet", text: "Use the tablet to manage inventory, quests, perks, and more." },
+      { title: "Lessons", text: "Lessons are found in houses. You cannot skip them." },
+      { title: "Quizzes", text: "Quizzes unlock after completing lessons inside houses." },
+      { title: "Monolith & Kiosks", text: "Monoliths summon rifts. Kiosks activate them." },
+      { title: "Rifts", text: "Invincible bugs that contain coding challenges required for progression." }
+    ];
+
+    this.currentGuideIndex = 0;
 
     // Optional: sync inventory once at startup
     syncInventory();
@@ -47,8 +64,8 @@ export default class HUD {
               : "defense";
 
         const player = GameState.player;
-const playerPerks = player?.perks ?? {};
-const activePerks = player?.activePerks ?? {};
+        const playerPerks = player?.perks ?? {};
+        const activePerks = player?.activePerks ?? {};
 
         switch (type) {
           case "passive": {
@@ -85,34 +102,34 @@ const activePerks = player?.activePerks ?? {};
 
           case "consumable": {
 
-  const consumableId = slotEl.dataset.id;
-  if (!consumableId) return;
+            const consumableId = slotEl.dataset.id;
+            if (!consumableId) return;
 
-  const scene = window.currentScene;
-  const itemName = inventoryData?.cons?.[consumableId]?.name ?? "Item";
+            const scene = window.currentScene;
+            const itemName = inventoryData?.cons?.[consumableId]?.name ?? "Item";
 
-  const result = ConsumablesManager.use(consumableId, scene);
+            const result = ConsumablesManager.use(consumableId, scene);
 
-  if (result.success) {
+            if (result.success) {
 
-    syncInventory();
-    alert(`✅ Used ${itemName}`);
-    this.updateHUD();
+              syncInventory();
+              alert(`✅ Used ${itemName}`);
+              this.updateHUD();
 
-  } else {
+            } else {
 
-    if (result.reason === "blocked") {
-      alert(`⚠ ${itemName} cannot be used because HP/Energy is full.`);
-    }
+              if (result.reason === "blocked") {
+                alert(`⚠ ${itemName} cannot be used because HP/Energy is full.`);
+              }
 
-    else if (result.reason === "no_item") {
-      alert(`❌ No ${itemName} left!`);
-    }
+              else if (result.reason === "no_item") {
+                alert(`❌ No ${itemName} left!`);
+              }
 
-  }
+            }
 
-  break;
-}
+            break;
+          }
 
           default:
             console.warn("Unknown quick-slot type:", type);
@@ -311,6 +328,20 @@ const activePerks = player?.activePerks ?? {};
       this.quickOpen("app-compiler")
     );
 
+    const prevBtn = document.getElementById("tutorial-prev");
+    const nextBtn = document.getElementById("tutorial-next");
+
+    prevBtn?.addEventListener("click", () => {
+      if (this.currentGuideIndex > 0) {
+        this.loadGuide(this.currentGuideIndex - 1);
+      }
+    });
+
+    nextBtn?.addEventListener("click", () => {
+      if (this.currentGuideIndex < this.guideSections.length - 1) {
+        this.loadGuide(this.currentGuideIndex + 1);
+      }
+    });
 
     //For initializing the Equip and Unequip function
     this.perkEquipBtn?.addEventListener("click", () => {
@@ -340,6 +371,13 @@ const activePerks = player?.activePerks ?? {};
 
         if (appId === "app-codex") this.codex.loadCodexList("stories");
         if (appId === "app-lessons") this.lessons.loadCategories();
+        if (appId === "app-tutorial") {
+          this.loadGuide(0);
+        }
+        if (appId === "app-logout") {
+          this.handleLogout();
+          return;
+        }
       });
     });
   }
@@ -440,6 +478,26 @@ const activePerks = player?.activePerks ?? {};
       ?.classList.add("hidden");
   }
 
+  loadGuide(index = 0) {
+    const container = document.getElementById("tutorial-content");
+    if (!container) return;
+
+    this.currentGuideIndex = index;
+
+    const section = this.guideSections[index];
+    if (!section) return;
+
+    container.innerHTML = `
+    <h4>${section.title}</h4>
+    <p>${section.text}</p>
+  `;
+
+    const prevBtn = document.getElementById("tutorial-prev");
+    const nextBtn = document.getElementById("tutorial-next");
+
+    if (prevBtn) prevBtn.disabled = index === 0;
+    if (nextBtn) nextBtn.disabled = index === this.guideSections.length - 1;
+  }
 
   quickOpen(appId) {
     this.openTablet();
@@ -573,9 +631,17 @@ const activePerks = player?.activePerks ?? {};
     });
   }
 
+  handleLogout() {
+    if (!confirm("Are you sure you want to logout?")) return;
 
+    // Clear saved session using GameState
+    if (window.GameState?.logout) {
+      window.GameState.logout();
+    }
 
-
+    // Redirect to login page
+    window.location.href = "index.html";
+  }
 }
 
 

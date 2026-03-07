@@ -6,6 +6,7 @@ const STORAGE_KEY = "codequest-player";
 const DEFAULT_PLAYER = {
   saveVersion: 2,
 
+  isNewGame: true,
   // Identity
   name: "",
   token: "",
@@ -127,6 +128,7 @@ const GameState = {
       // 🔥 Progression (IMPORTANT)
       currentLessonIndex: value.currentLessonIndex ?? 0,
 
+      isNewGame: value.isNewGame ?? true,
       name: value.name ?? "",
       token: value.token ?? "",
       hp: value.hp ?? 3,
@@ -157,7 +159,7 @@ const GameState = {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
 
-    // 🔥 Broadcast update
+    // Broadcast update
     window.dispatchEvent(
       new CustomEvent("gamestate-updated", { detail: toStore })
     );
