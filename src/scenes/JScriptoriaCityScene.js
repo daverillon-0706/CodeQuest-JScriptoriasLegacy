@@ -47,6 +47,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.rifts = [];
     this.riftKiosks = [];
     // ---- MINIMAP ----
+    this.monoliths = [];
     this.minimapCanvas = null;
     this.minimapCtx = null;
     this.minimapWidth = 280;
@@ -110,10 +111,13 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.groundLayer = this.map.createLayer("ground layer", tilesets);
     this.buildingLayer = this.map.createLayer("building layer", tilesets);
     this.wallLayer = this.map.createLayer("wall layer", tilesets);
+    this.monolithLayer = this.map.createLayer("monolith layer", tilesets);
     this.itemLayer = this.map.createLayer("item layer", tilesets);
     this.overlayLayer = this.map.createLayer("overlay layer", tilesets);
 
-    [this.buildingLayer, this.wallLayer, this.itemLayer].forEach(layer => layer.setCollisionByExclusion([-1]));
+    [this.buildingLayer, this.wallLayer, this.itemLayer, this.monolithLayer].forEach(layer => layer.setCollisionByExclusion([-1]));
+
+    this.scanMonolithTiles();
 
     // ---- PLAYER SPAWN ----
     const spawnLayer = this.map.getObjectLayer("Objects") || { objects: [] };
@@ -250,7 +254,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.drawMinimapMap(); // Draw static map once
 
     // ---- COLLIDERS ----
-    [this.buildingLayer, this.wallLayer, this.itemLayer]
+    [this.buildingLayer, this.wallLayer, this.itemLayer, this.monolithLayer]
       .forEach(layer => this.physics.add.collider(this.player, layer));
 
     this.overlayLayer.setDepth(1000);
@@ -468,6 +472,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if (this.minimap) {
       this.minimap.clear();
       this.drawMinimapMap();
+      this.drawHTMLMinimapMonoliths();
       this.drawMinimapPlayer();
       this.drawMinimapBugs();
     }
@@ -484,6 +489,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
       // Redraw
       this.drawHTMLMinimapMap();
+      this.drawHTMLMinimapMonoliths();
       this.drawHTMLMinimapPlayer();
       this.drawHTMLMinimapBugs();
     }
@@ -668,8 +674,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     });
   }
   // ================= BUG SPAWNING =================
-
-
   spawnBugsOnGrasswalk() {
     if (!this.groundLayer) return;
 
@@ -735,8 +739,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     console.log("Spawned:", spawnTotal, " | Active:", this.bugGroup.countActive(true));
   }
-
-
   // ================= RIFT SYSTEM =================
   createRiftSystemsFromMap() {
     const layer = this.map.getObjectLayer("rifts layer");
@@ -1340,7 +1342,50 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       this.minimap.fillCircle(x, y, 2);
     });
   }
+  drawHTMLMinimapMonoliths() {
+  if (!this.minimapCtx || !this.monoliths) return;
+
+  const ctx = this.minimapCtx;
+
+  this.monoliths.forEach(m => {
+
+    const x = m.x * this.mapScaleX;
+    const y = m.y * this.mapScaleY;
+
+    ctx.fillStyle = "yellow";
+
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+  });
+}
   // ================= HTML MINIMAP INIT =================
+  scanMonolithTiles() {
+  if (!this.monolithLayer) return;
+
+  this.monoliths = [];
+
+  this.monolithLayer.forEachTile(tile => {
+    if (tile.index === -1) return;
+
+    const tileset = this.map.tilesets.find(ts =>
+      tile.index >= ts.firstgid &&
+      tile.index < ts.firstgid + ts.total
+    );
+
+    if (!tileset) return;
+
+    if (tileset.name.startsWith("monolith")) {
+      this.monoliths.push({
+        x: tile.pixelX,
+        y: tile.pixelY
+      });
+    }
+  });
+
+  console.log("Detected Monoliths:", this.monoliths.length);
+}
   initHTMLMinimap() {
     this.minimapCanvas = document.getElementById("minimapCanvas");
     if (!this.minimapCanvas) {
