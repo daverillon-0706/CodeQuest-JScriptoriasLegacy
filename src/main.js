@@ -51,7 +51,7 @@ window.game = game;
 // Start scene
 // --------------------------
 game.scene.start("JScriptoriaCityScene", {
-  username: GameState.player.username
+  player: GameState.player
 });
 
 // --------------------------

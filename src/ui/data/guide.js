@@ -5,12 +5,12 @@ const nextBtn = document.getElementById("tutorial-next");
 
 const tutorialSections = [
   "CodeQuest is a programming adventure game where you defeat bugs by solving coding challenges...",
-  "Player: Move using WASD or Arrow keys. Interact with Z.",
+  "Player: Move using Arrow keys. Interact with Z.",
   "Weapon: Press Spacebar to shoot and defeat bugs.",
   "Characters: NPCs can be interacted with using Z for quests and hints.",
   "Enemies: Bugs attack when you get close. Avoid or defeat them to survive.",
   "Compiler: JavaScript compiler explained; appears in rift challenges and quizzes.",
-  "HP, Energy, Cryptos: HP is health, Energy is action points, Cryptos are currency.",
+  "HP, Energy, Cryptos: HP is health, Energy is perk usage, Cryptos are currency.",
   "Tablet: Shows your inventory, lessons, and quests.",
   "Lessons: Found in houses. Cannot skip lessons to proceed.",
   "Quizzes: After picking up lessons, quizzes test your knowledge.",

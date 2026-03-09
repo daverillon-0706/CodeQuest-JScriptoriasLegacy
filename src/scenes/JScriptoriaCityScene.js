@@ -1534,7 +1534,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     // Title
     const title = document.createElement("h1");
     title.textContent = "💀 GAME OVER 💀";
-    //title.textContent = "TS IS OVER GNG 🥀";
     container.appendChild(title);
 
     // ===== Retry Button =====

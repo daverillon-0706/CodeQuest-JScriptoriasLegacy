@@ -94,7 +94,7 @@ export const OffensePerks = {
       }
 
       const controller = scene.playerController;
-      console.log("[Perk] Pixel Gun ON");
+      alert("[Perk] Pixel Gun ON");
 
       // Temporarily increase fire rate
       controller.fireRate = controller.baseFireRate * 0.4;
@@ -102,7 +102,7 @@ export const OffensePerks = {
       // Reset after duration
       scene.time.delayedCall(10000, () => {
         controller.fireRate = controller.baseFireRate;
-        console.log("[Perk] Pixel Gun OFF");
+        alert("[Perk] Pixel Gun OFF");
       });
     },
 

@@ -159,7 +159,7 @@ const GameState = {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
 
-    // Broadcast update
+    // 🔥 Broadcast update
     window.dispatchEvent(
       new CustomEvent("gamestate-updated", { detail: toStore })
     );

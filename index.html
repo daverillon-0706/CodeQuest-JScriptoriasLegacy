@@ -169,7 +169,7 @@ newGameBtn.addEventListener("click", () => {
   GameState.player = newPlayer;
 
   // ✅ Persist player for game.html
-  localStorage.setItem("activePlayer", JSON.stringify(newPlayer));
+  localStorage.setItem("codequest-player", JSON.stringify(newPlayer));
 
   // Wrap with security token
   const wrapped = addSaveToken(newPlayer);
