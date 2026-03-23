@@ -15,24 +15,24 @@ export const inventoryData = {
       icon: "keycard_datatypes.png"
     },
 
-    keycard_variable: {
+    keycard_variables: {
       name: "Variable Keycard",
       desc: "Unlocks the Variables Quiz and Rift.",
       icon: "keycard_variable.png"
     },
 
-    keycard_operator: {
+    keycard_operators: {
       name: "Operator Keycard",
       desc: "Unlocks the Operators Rift.",
       icon: "keycard_operator.png"
     },
 
-    keycard_array: {
+    keycard_arrays: {
       name: "Array Keycard",
       desc: "Unlocks the Arrays Rift.",
       icon: "keycard_array.png"
     },
-    keycard_function: {
+    keycard_functions: {
       name: "Function Keycard",
       desc: "Unlocks the Functions Rift.",
       icon: "keycard_function.png"
@@ -48,27 +48,27 @@ export const inventoryData = {
       desc: "Unlocks the Data Types Rift.",
       icon: "keystone_datatypes.png"
     },
-    keystone_variable: {
+    keystone_variables: {
       name: "Variable Keystone",
       desc: "Unlocks the Variables Rift.",
       icon: "keystone_variable.png"
     },
-    keystone_operator: {
+    keystone_operators: {
       name: "Operator Keystone",
       desc: "Unlocks the Operators Rift.",
       icon: "keystone_operator.png"
     },
-    keystone_condition: {
+    keystone_conditions: {
       name: "Condition Keystone",
       desc: "Unlocks the Conditions Rift.",
       icon: "keystone_condition.png"
     },
-    keystone_array: {
+    keystone_arrays: {
       name: "Array Keystone",
       desc: "Unlocks the Array Rift.",
       icon: "keystone_array.png"
     },
-    keystone_function: {
+    keystone_functions: {
       name: "Function Keystone",
       desc: "Unlocks the Functions Rift.",
       icon: "keystone_function.png"

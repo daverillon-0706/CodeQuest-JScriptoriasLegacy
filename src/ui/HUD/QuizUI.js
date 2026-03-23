@@ -1,5 +1,6 @@
 import QuizManager from "../../systems/learning/QuizManager";
 import GameState from "../../GameState";
+import QuestSystem from "../../systems/quests/QuestSystem";
 
 export default class QuizUI {
   constructor(category) {
@@ -133,6 +134,11 @@ export default class QuizUI {
 
     // Mark quiz as passed (if you have this system)
     GameState.markQuizPassed?.(this.quiz.category);
+
+    const step = QuestSystem.getCurrentStep();
+  if (step?.id === "collect_books") {
+    QuestSystem.completeStep("collect_books");
+  }
 
     // ---- PROGRESSION UNLOCK ----
     if (GameState.player.currentLessonIndex === undefined) {

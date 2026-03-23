@@ -6,14 +6,14 @@ export const KEYSTONE_MAP = {
 
   DataTypes: "keystone_datatypes",
 
-  Variables: "keystone_variable",
+  Variables: "keystone_variables",
 
-  Operators: "keystone_operator",
+  Operators: "keystone_operators",
 
-  Conditions: "keystone_condition",
+  Conditions: "keystone_conditions",
 
-  Array: "keystone_array",
+  Arrays: "keystone_arrays",
 
-  Functions: "keystone_function"
+  Functions: "keystone_functions"
 
 };

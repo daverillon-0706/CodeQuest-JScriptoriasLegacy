@@ -211,7 +211,7 @@
   </object>
   <object id="22" name="rift_kiosk" x="1344.33" y="1392.5" width="16" height="32">
    <properties>
-    <property name="kioskName" value="Array Kiosk"/>
+    <property name="kioskName" value="Arrays Kiosk"/>
    </properties>
   </object>
   <object id="23" name="rift_kiosk" x="1359.83" y="127.833" width="16" height="32">

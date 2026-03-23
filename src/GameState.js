@@ -1,5 +1,6 @@
 const STORAGE_KEY = "codequest-player";
 
+
 // =========================
 // DEFAULT DATA
 // =========================
@@ -48,7 +49,11 @@ const DEFAULT_PLAYER = {
   worldState: {
     chestsOpened: [],
     questsCompleted: [],
-    position: { x: 100, y: 100 }
+    position: { x: 100, y: 100 },
+    questProgress: {
+    currentQuestIndex: 0,
+    currentStepIndex: 0
+  }
   },
 
   riftProgress: {},
@@ -194,7 +199,7 @@ const GameState = {
     const owned = this.getKeyItems();
     return KEY_ITEM_ORDER[owned.length] ?? null;
   },
-
+/*
   addKeyItem(id, ORDER) {
     const player = this.player;
     if (!player) return;
@@ -223,7 +228,25 @@ const GameState = {
     this.player = player;
     console.log("[KeyItem] Collected:", id);
   },
+*/
+addKeyItem(id) {
+  const player = this.player;
+  if (!player) return;
 
+  player.items.keyItems = player.items.keyItems || [];
+
+  const owned = player.items.keyItems;
+
+  if (owned.includes(id)) {
+    console.log("[KeyItem] Already owned:", id);
+    return;
+  }
+
+  owned.push(id);
+
+  this.player = player;
+  console.log("[KeyItem] Collected:", id);
+},
   addConsumable(id, amount = 1) {
     const player = this.player;
     if (!player) return;

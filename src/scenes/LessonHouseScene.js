@@ -7,6 +7,7 @@ import SceneTransition from "../systems/SceneTransition.js";
 import LessonManager from "../systems/learning/LessonManager.js";
 import GameState from "../GameState.js";
 import QuizUI from "../ui/HUD/QuizUI.js";
+import QuestSystem from "../systems/quests/QuestSystem.js";
 
 export default class LessonHouseScene extends Phaser.Scene {
 
@@ -89,7 +90,7 @@ export default class LessonHouseScene extends Phaser.Scene {
     let spawnObj =
       spawnLayer.objects.find(o => o.name === this.sceneData.spawn) ||
       spawnLayer.objects.find(o => o.name === "MalePlayer") ||
-      { x: 100, y: 100 };
+      { x: 152, y: 288 };
 
     this.player = this.physics.add.sprite(spawnObj.x, spawnObj.y, "player_male", 0)
       .setOrigin(0,1)
@@ -323,6 +324,12 @@ createBooks() {
 
         if (LessonManager.isAllBooksRead(this.lesson)) {
 
+          const step = QuestSystem.getCurrentStep();
+/*
+  if (step?.id === "collect_books") {
+    QuestSystem.completeStep("collect_books");
+  }
+    */
           const progress =
             GameState.player.lessonProgress?.[this.lesson];
 
