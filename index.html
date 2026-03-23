@@ -218,7 +218,7 @@ continueBtn.addEventListener("click", () => {
       localStorage.setItem("activePlayer", JSON.stringify(payload));
 
       alert("Save loaded successfully!");
-      window.location.href = "game.html";
+      window.location.href = "/game.html";
 
     } catch(err) {
       console.error("Save load error:", err);
