@@ -9,7 +9,8 @@ import LessonsUI from "./LessonsUI.js";
 import GameState from "../../GameState.js";
 import PerksManager from "../../systems/PerksManager.js";
 import ConsumablesManager from "../../systems/ConsumablesManager.js";
-import TutorialUI from "./TutorialUI.js";
+import GuideUI from "./GuideUI.js";
+import SaveLoadUI from "./SaveLoadUI.js";
 
 export default class HUD {
   constructor() {
@@ -21,22 +22,8 @@ export default class HUD {
     this.quests = new QuestsUI();
     this.compiler = new CompilerUI();
     this.lessons = new LessonsUI();
-    this.guideSections = [
-      { title: "About the Game", text: "CodeQuest is a game where you explore, learn, and fight bugs." },
-      { title: "Player", text: "Basic movement: arrow keys or WASD to move." },
-      { title: "Weapon", text: "Shoot with the SPACE bar." },
-      { title: "Characters", text: "NPCs: interact using Z." },
-      { title: "Enemies", text: "The bugs attack when you enter their range." },
-      { title: "Compiler", text: "Appears during rift challenges and quizzes to run code." },
-      { title: "HP, Energy & Cryptos", text: "HP = Health, Energy = Ability resource, Cryptos = Currency." },
-      { title: "Tablet", text: "Use the tablet to manage inventory, quests, perks, and more." },
-      { title: "Lessons", text: "Lessons are found in houses. You cannot skip them." },
-      { title: "Quizzes", text: "Quizzes unlock after completing lessons inside houses." },
-      { title: "Monolith & Kiosks", text: "Monoliths summon rifts. Kiosks activate them." },
-      { title: "Rifts", text: "Invincible bugs that contain coding challenges required for progression." }
-    ];
-
-    this.currentGuideIndex = 0;
+    this.guide = new GuideUI();
+    this.saveLoad = new SaveLoadUI();
 
     // Optional: sync inventory once at startup
     syncInventory();
@@ -180,8 +167,8 @@ export default class HUD {
       const heart = document.createElement("img");
       heart.src =
         i < hp
-          ? "/public/assets/ui/heart_full.png"
-          : "/public/assets/ui/heart_empty.png";
+          ? "/assets/ui/heart_full.png"
+          : "/assets/ui/heart_empty.png";
 
       heart.className = "heart-icon";
       heart.style.imageRendering = "pixelated";
@@ -203,8 +190,8 @@ export default class HUD {
 
       orb.src =
         i < energy
-          ? "/public/assets/ui/energy_full.png"
-          : "/public/assets/ui/energy_empty.png";
+          ? "/assets/ui/energy_full.png"
+          : "/assets/ui/energy_empty.png";
 
       orb.className = "energy-icon";
       orb.style.imageRendering = "pixelated";
@@ -258,8 +245,8 @@ export default class HUD {
       if (!iconImg) return;
 
       iconImg.src = perkId
-        ? `/public/assets/icons/buffs/${perkId}.png`
-        : "/public/assets/icons/empty-slot.png";
+        ? `/assets/icons/buffs/${perkId}.png`
+        : "/assets/icons/empty-slot.png";
 
       // Highlight if currently active
       if (perkId && player.activePerks[perkId]) {
@@ -280,16 +267,12 @@ export default class HUD {
 
       slot.dataset.id = id ?? "";
       const img = slot.querySelector('.perk-icon img');
-      img.src = id ? `/public/assets/icons/item/consumables/${id}.png` : "";
+      img.src = id ? `/assets/icons/item/consumables/${id}.png` : "";
     });
 
     // --------------------------
     // QUICK SLOT CLICK HANDLERS
     // --------------------------
-
-
-
-
   }
   // -------------------------
   // EVENTS
@@ -328,21 +311,6 @@ export default class HUD {
       this.quickOpen("app-compiler")
     );
 
-    const prevBtn = document.getElementById("tutorial-prev");
-    const nextBtn = document.getElementById("tutorial-next");
-
-    prevBtn?.addEventListener("click", () => {
-      if (this.currentGuideIndex > 0) {
-        this.loadGuide(this.currentGuideIndex - 1);
-      }
-    });
-
-    nextBtn?.addEventListener("click", () => {
-      if (this.currentGuideIndex < this.guideSections.length - 1) {
-        this.loadGuide(this.currentGuideIndex + 1);
-      }
-    });
-
     //For initializing the Equip and Unequip function
     this.perkEquipBtn?.addEventListener("click", () => {
       if (!this.selectedPerk) return;
@@ -372,7 +340,7 @@ export default class HUD {
         if (appId === "app-codex") this.codex.loadCodexList("stories");
         if (appId === "app-lessons") this.lessons.loadCategories();
         if (appId === "app-tutorial") {
-          this.loadGuide(0);
+          this.guide.open();
         }
         if (appId === "app-logout") {
           this.handleLogout();
@@ -380,6 +348,8 @@ export default class HUD {
         }
       });
     });
+
+    
   }
 
   attachCompilerEvents() {
@@ -477,7 +447,7 @@ export default class HUD {
       .getElementById("tablet-home")
       ?.classList.add("hidden");
   }
-
+/*
   loadGuide(index = 0) {
     const container = document.getElementById("tutorial-content");
     if (!container) return;
@@ -498,7 +468,7 @@ export default class HUD {
     if (prevBtn) prevBtn.disabled = index === 0;
     if (nextBtn) nextBtn.disabled = index === this.guideSections.length - 1;
   }
-
+*/
   quickOpen(appId) {
     this.openTablet();
     setTimeout(() => this.openApp(appId), 10);
@@ -527,7 +497,7 @@ export default class HUD {
       item.className = "perk-item";
 
       const icon = document.createElement("img");
-      icon.src = `/public/assets/icons/buffs/${id}.png`;
+      icon.src = `/assets/icons/buffs/${id}.png`;
       icon.alt = perk.name;
       icon.className = "perk-icon";
       icon.style.imageRendering = "pixelated";
@@ -582,7 +552,7 @@ export default class HUD {
     const equipBtn = document.getElementById("perk-equip-btn");
     const unequipBtn = document.getElementById("perk-unequip-btn");
 
-    icon.src = `/public/assets/icons/buffs/${perk.id}.png`;
+    icon.src = `/assets/icons/buffs/${perk.id}.png`;
     icon.style.imageRendering = "pixelated";
 
     name.textContent = perk.name;

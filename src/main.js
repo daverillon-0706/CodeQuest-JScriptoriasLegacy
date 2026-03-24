@@ -3,6 +3,8 @@ import JScriptoriaCityScene from "./scenes/JScriptoriaCityScene.js";
 import GameState from "./GameState.js";
 import LessonHouseScene from "./scenes/LessonHouseScene.js";
 import "./style.css";
+import "./ui/HUD/HUD.js";
+//import "./ui/HUD/TabletSaveLoad.js"; Already replaced as SaveLoadUI.js
 
 // --------------------------
 // Debug loaded player

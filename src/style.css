@@ -639,47 +639,47 @@ body {
 }
 
 .icon-img.perks-icon {
-  background-image: url('/public/assets/icons/hud/perk.png');
+  background-image: url('/assets/icons/hud/perk.png');
 }
 
 .icon-img.quests-icon {
-  background-image: url('/public/assets/icons/hud/quest.png');
+  background-image: url('/assets/icons/hud/quest.png');
 }
 
 .icon-img.compiler-icon {
-  background-image: url('/public/assets/icons/hud/compiler.png');
+  background-image: url('/assets/icons/hud/compiler.png');
 }
 
 .icon-img.achievements-icon {
-  background-image: url('/public/assets/icons/hud/achievements.png');
+  background-image: url('/assets/icons/hud/achievements.png');
 }
 
 .icon-img.settings-icon {
-  background-image: url('/public/assets/icons/hud/settings.png');
+  background-image: url('/assets/icons/hud/settings.png');
 }
 
 .icon-img.save-icon {
-  background-image: url('/public/assets/icons/hud/save.png');
+  background-image: url('/assets/icons/hud/save.png');
 }
 
 .icon-img.logout-icon {
-  background-image: url('/public/assets/icons/hud/logout.png');
+  background-image: url('/assets/icons/hud/logout.png');
 }
 
 .icon-img.tutorial-icon {
-  background-image: url('/public/assets/icons/hud/guide.png');
+  background-image: url('/assets/icons/hud/guide.png');
 }
 
 .icon-img.inventory-icon {
-  background-image: url('/public/assets/icons/hud/inventory.png');
+  background-image: url('/assets/icons/hud/inventory.png');
 }
 
 .icon-img.codex-icon {
-  background-image: url('/public/assets/icons/hud/codex.png');
+  background-image: url('/assets/icons/hud/codex.png');
 }
 
 .icon-img.lessons-icon {
-  background-image: url('/public/assets/icons/hud/lessons.png');
+  background-image: url('/assets/icons/hud/lessons.png');
 }
 
 /* Hover effect */
