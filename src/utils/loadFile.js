@@ -1,5 +1,6 @@
 import GameState from "../GameState.js";
 import { verifySaveToken } from "./saveToken.js";
+import { DEFAULT_PLAYER_TEMPLATE } from "../GameState.js";
 
 export function importSaveFile(playerSprite = null) {
   const input = document.createElement("input");
@@ -12,70 +13,82 @@ export function importSaveFile(playerSprite = null) {
 
     const reader = new FileReader();
     reader.onload = event => {
-  try {
-    const raw = JSON.parse(event.target.result);
+      try {
+        const raw = JSON.parse(event.target.result);
 
-    // 🔐 Validate token
-    if (!verifySaveToken(raw)) {
-      alert("Invalid or tampered save file.");
-      return;
-    }
+        // 🔐 Validate token
+        if (!verifySaveToken(raw)) {
+          alert("Invalid or tampered save file.");
+          return;
+        }
 
-    const payload = raw.payload;
+        const payload = raw.payload;
 
-    // ✅ Merge with default to auto-migrate safely
-    const safeSave = {
-      ...GameState.player, // current defaults
-      ...payload,
+        // ✅ Merge with default to auto-migrate safely
+        const safeSave = {
+          ...DEFAULT_PLAYER_TEMPLATE,
+          ...payload,
 
-      items: {
-        ...(GameState.player?.items || {}),
-        ...(payload.items || {})
-      },
+          items: {
+            ...DEFAULT_PLAYER_TEMPLATE.items,
+            ...(payload.items || {})
+          },
 
-      perks: {
-        ...(GameState.player?.perks || {}),
-        ...(payload.perks || {})
-      },
+          perks: {
+            ...DEFAULT_PLAYER_TEMPLATE.perks,
+            ...(payload.perks || {})
+          },
 
-      worldState: {
-        ...(GameState.player?.worldState || {}),
-        ...(payload.worldState || {})
-      },
+          worldState: {
+            ...DEFAULT_PLAYER_TEMPLATE.worldState,
+            ...(payload.worldState || {}),
 
-      lessonProgress: {
-        ...(GameState.player?.lessonProgress || {}),
-        ...(payload.lessonProgress || {})
+            questProgress: {
+              ...DEFAULT_PLAYER_TEMPLATE.worldState.questProgress,
+              ...(payload.worldState?.questProgress || {})
+            }
+          },
+
+          lessonProgress: {
+            ...DEFAULT_PLAYER_TEMPLATE.lessonProgress,
+            ...(payload.lessonProgress || {})
+          }
+        };
+
+        GameState.player = safeSave;
+
+        // Save active slot
+        localStorage.setItem("activeSaveFile", file.name);
+        localStorage.setItem(file.name, event.target.result);
+
+        const gs = GameState.player;
+
+        gs.hp = Math.min(gs.hp, gs.max_hp);
+        gs.energy = Math.min(gs.energy, gs.max_energy);
+
+        // persist corrected stats
+        GameState.player = gs;
+
+        if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+        if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
+
+        if (playerSprite) {
+          const pos = {
+            x: gs.worldState?.position?.x ?? 100,
+            y: gs.worldState?.position?.y ?? 100
+          };
+          playerSprite.setPosition(pos.x, pos.y);
+        };
+
+
+        console.log("[LoadFile] Loaded safely:", gs);
+        alert("Save Loaded Successfully!");
+
+      } catch (err) {
+        console.error("Save load failed", err);
+        alert("Save file is corrupted.");
       }
     };
-
-    GameState.player = safeSave;
-
-    // Save active slot
-    localStorage.setItem("activeSaveFile", file.name);
-    localStorage.setItem(file.name, event.target.result);
-
-    const gs = GameState.player;
-
-    gs.hp = Math.min(gs.hp, gs.max_hp);
-    gs.energy = Math.min(gs.energy, gs.max_energy);
-
-    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
-    if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
-
-    if (playerSprite) {
-      const pos = gs.worldState.position || { x: 100, y: 100 };
-      playerSprite.setPosition(pos.x, pos.y);
-    }
-
-    console.log("[LoadFile] Loaded safely:", gs);
-    alert("Save Loaded Successfully!");
-
-  } catch (err) {
-    console.error("Save load failed", err);
-    alert("Save file is corrupted.");
-  }
-};
 
     reader.readAsText(file);
   };

@@ -16,6 +16,7 @@ function generateToken(){
   return crypto.randomUUID() + "-" + Date.now();
 }
 
+const SAVE_KEY = "codequest_player";
 // ===============================
 // NEW GAME
 // ===============================
@@ -34,7 +35,7 @@ newGameBtn.addEventListener("click", () => {
 
   GameState.player = newPlayer;
 
-  localStorage.setItem("codequest-player", JSON.stringify(newPlayer));
+  localStorage.setItem(SAVE_KEY, JSON.stringify(newPlayer));
 
   const wrapped = addSaveToken(newPlayer);
 
@@ -76,7 +77,7 @@ continueBtn.addEventListener("click", () => {
 
       GameState.player = payload;
 
-      localStorage.setItem("activePlayer", JSON.stringify(payload));
+      localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
 
       alert("Save loaded successfully!");
       window.location.href = "/game.html";

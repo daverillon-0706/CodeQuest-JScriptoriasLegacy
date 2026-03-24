@@ -203,13 +203,12 @@ console.log("New Current Quest:", QuestSystem.getCurrentQuest());
 
   if (player?.isNewGame) {
 
-    this.time.delayedCall(500, () => {
-      this.tutorialUI.show();
-    });
+      player.isNewGame = false;
+      GameState.player = player;
 
-    // mark tutorial as seen
-    player.isNewGame = false;
-    GameState.player = player;
+      this.time.delayedCall(500, () => {
+      this.tutorialUI.show();     
+    });
   }
 
   

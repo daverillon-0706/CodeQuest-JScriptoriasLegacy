@@ -1,3 +1,6 @@
+import { exportSaveFile } from "../../utils/saveFile";
+import { importSaveFile } from "../../utils/loadFile";
+
 export default class SaveLoadUI {
   attachEvents() {
     const saveBtn = document.getElementById("save-btn");

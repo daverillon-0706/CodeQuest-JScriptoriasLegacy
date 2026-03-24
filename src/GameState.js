@@ -69,7 +69,15 @@ const GameState = {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
 
-    const parsed = JSON.parse(stored);
+    let parsed;
+
+try {
+  parsed = JSON.parse(stored);
+} catch (e) {
+  console.error("[GameState] Corrupted save, resetting.");
+  localStorage.removeItem(STORAGE_KEY);
+  return null;
+}
 
     // ✅ Safe fallback for old saves
     if (parsed.currentLessonIndex === undefined) {
@@ -91,9 +99,14 @@ const GameState = {
       },
 
       worldState: {
-        ...DEFAULT_PLAYER.worldState,
-        ...(parsed.worldState || {})
-      },
+  ...DEFAULT_PLAYER.worldState,
+  ...(parsed.worldState || {}),
+
+  questProgress: {
+    ...DEFAULT_PLAYER.worldState.questProgress,
+    ...(parsed.worldState?.questProgress || {})
+  }
+},
 
       lessonProgress: {
         ...DEFAULT_PLAYER.lessonProgress,
@@ -157,7 +170,15 @@ const GameState = {
         unlockedLessons: value.codexProgress?.unlockedLessons ?? []
       },
 
-      worldState: value.worldState ?? DEFAULT_PLAYER.worldState,
+      worldState: {
+  ...DEFAULT_PLAYER.worldState,
+  ...(value.worldState || {}),
+
+  questProgress: {
+    ...DEFAULT_PLAYER.worldState.questProgress,
+    ...(value.worldState?.questProgress || {})
+  }
+},
       riftProgress: value.riftProgress ?? {},
       lessonProgress: value.lessonProgress ?? {}
     };
