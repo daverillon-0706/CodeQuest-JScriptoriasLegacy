@@ -49,7 +49,7 @@ const DEFAULT_PLAYER = {
   worldState: {
     chestsOpened: [],
     questsCompleted: [],
-    position: { x: 100, y: 100 },
+    position: { x: 704, y: 759 },
     questProgress: {
     currentQuestIndex: 0,
     currentStepIndex: 0
