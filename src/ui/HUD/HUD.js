@@ -24,6 +24,7 @@ export default class HUD {
     this.lessons = new LessonsUI();
     this.guide = new GuideUI();
     this.saveLoad = new SaveLoadUI();
+    
 
     // Optional: sync inventory once at startup
     syncInventory();
@@ -342,6 +343,9 @@ export default class HUD {
         if (appId === "app-tutorial") {
           this.guide.open();
         }
+        if (appId === "app-save") {
+  this.saveLoad.attachEvents();
+}
         if (appId === "app-logout") {
           this.handleLogout();
           return;

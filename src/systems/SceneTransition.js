@@ -14,92 +14,72 @@ const hintList = [
 ];
 
 const SceneTransition = {
-
   start(scene, onComplete = () => {}) {
 
-    const overlay = scene.add.rectangle(
-      0,0,
-      scene.scale.width * 5,
-      scene.scale.height * 5,
-      0x000000,
-      0.9
-    )
-    .setOrigin(0)
-    .setDepth(10000);
+    // 🎲 Random text
+    const trivia = triviaList[Math.floor(Math.random() * triviaList.length)];
+    const hint = hintList[Math.floor(Math.random() * hintList.length)];
 
-    const barBg = scene.add.rectangle(
-      scene.scale.width / 2,
-      scene.scale.height / 2 + 40,
-      300,
-      20,
-      0x222222
-    )
-    .setDepth(10001);
+    // 🧱 Create overlay
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "black";
+    overlay.style.color = "#00ff88";
+    overlay.style.display = "flex";
+    overlay.style.flexDirection = "column";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = "9999";
+    overlay.style.fontFamily = "monospace";
 
-    const barFill = scene.add.rectangle(
-      scene.scale.width / 2 - 150,
-      scene.scale.height / 2 + 40,
-      0,
-      20,
-      0x00ff88
-    )
-    .setOrigin(0,0.5)
-    .setDepth(10002);
+    // 🧠 Text
+    const text = document.createElement("div");
+    text.style.textAlign = "center";
+    text.style.marginBottom = "20px";
+    text.innerText =
+      `💡 Trivia:\n${trivia}\n\n🧠 Hint:\n${hint}`;
 
-    const triviaText = scene.add.text(
-  scene.scale.width / 2,
-  scene.scale.height / 2 - 60,
-  "",
-  {
-    fontSize: "12px",        // 🔥 smaller
-    fill: "#00ff88",
-    align: "center",
-    wordWrap: { width: 400 }, // 🔥 force wrapping
-    lineSpacing: 6
-  }
-)
-.setOrigin(0.5)
-.setDepth(10001);
+    // 📊 Progress bar
+    const barBg = document.createElement("div");
+    barBg.style.width = "300px";
+    barBg.style.height = "20px";
+    barBg.style.background = "#222";
 
-    const randomTrivia = triviaList[Math.floor(Math.random() * triviaList.length)];
-const randomHint = hintList[Math.floor(Math.random() * hintList.length)];
+    const barFill = document.createElement("div");
+    barFill.style.width = "0%";
+    barFill.style.height = "100%";
+    barFill.style.background = "#00ff88";
 
-triviaText.setText(
-  "💡 Trivia:\n" +
-  randomTrivia +
-  "\n\n🧠 Hint:\n" +
-  randomHint
-);
+    barBg.appendChild(barFill);
 
+    overlay.appendChild(text);
+    overlay.appendChild(barBg);
+    document.body.appendChild(overlay);
+
+    // ⏳ Animate progress
     let progress = 0;
 
-    const timer = scene.time.addEvent({
-      delay: 30,
-      repeat: 100,
-      callback: () => {
+    const interval = setInterval(() => {
+      progress += 2;
+      barFill.style.width = progress + "%";
 
-        progress += 0.02;
-        barFill.width = 300 * progress;
+      if (progress >= 100) {
+        clearInterval(interval);
 
-        if (progress >= 1) {
+        // Fade out
+        overlay.style.transition = "opacity 0.4s";
+        overlay.style.opacity = "0";
 
-          timer.remove();
-
-          scene.tweens.add({
-            targets: [overlay, barBg, barFill, triviaText],
-            alpha: 0,
-            duration: 400,
-            onComplete: () => {
-              overlay.destroy();
-              barBg.destroy();
-              barFill.destroy();
-              triviaText.destroy();
-              onComplete();
-            }
-          });
-        }
+        setTimeout(() => {
+          overlay.remove();
+          onComplete();
+        }, 500);
       }
-    });
+    }, 30);
   }
 };
 

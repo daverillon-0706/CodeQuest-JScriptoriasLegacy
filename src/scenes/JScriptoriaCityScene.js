@@ -127,8 +127,16 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       || spawnLayer.objects.find(o => o.name === "MalePlayer")
       || { x: 704, y: 759 };
 
-    const spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
-    const spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
+    let spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
+    let spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
+
+    const savedPos = GameState.player?.worldState?.position;
+
+// ✅ Only use saved position if we're in City
+if (savedPos && this.scene.key === "JScriptoriaCityScene") {
+  spawnX = savedPos.x;
+  spawnY = savedPos.y;
+}
 
     this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
       .setOrigin(0, 1)
@@ -195,23 +203,23 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     this.tutorialUI = new TutorialUI(this);
     console.log("QUESTS:", QUESTS);
-console.log("Current Quest:", QuestSystem.getCurrentQuest());
+    console.log("Current Quest:", QuestSystem.getCurrentQuest());
 
 
-console.log("New Current Quest:", QuestSystem.getCurrentQuest());
-  const player = GameState.player;
+    console.log("New Current Quest:", QuestSystem.getCurrentQuest());
+    const player = GameState.player;
 
-  if (player?.isNewGame) {
+    if (player?.isNewGame) {
 
       player.isNewGame = false;
       GameState.player = player;
 
       this.time.delayedCall(500, () => {
-      this.tutorialUI.show();     
-    });
-  }
+        this.tutorialUI.show();
+      });
+    }
 
-  
+
 
     // Shop System Logic
     this.shopSystem = new ShopSystem(this);
@@ -358,16 +366,16 @@ console.log("New Current Quest:", QuestSystem.getCurrentQuest());
       const npc = this.playerController.canTalkTo;
 
       if (npc?.customData?.dialogue?.length) {
-  this.dialogueManager.start(npc.customData.dialogue);
+        this.dialogueManager.start(npc.customData.dialogue);
 
-  // ✅ QUEST HOOK
-  const step = QuestSystem.getCurrentStep();
-  if (step?.id === "talk_elysia") {
-    QuestSystem.completeStep("talk_elysia");
-  }
+        // ✅ QUEST HOOK
+        const step = QuestSystem.getCurrentStep();
+        if (step?.id === "talk_elysia") {
+          QuestSystem.completeStep("talk_elysia");
+        }
 
-  return;
-}
+        return;
+      }
 
       if (npc?.interact) {
         npc.interact();
@@ -387,14 +395,14 @@ console.log("New Current Quest:", QuestSystem.getCurrentQuest());
       const kiosk = this.getNearbyRiftKiosk();
       if (kiosk) {
 
-  const step = QuestSystem.getCurrentStep();
-  if (step?.id === "summon_rift") {
-    QuestSystem.completeStep("summon_rift");
-  }
+        const step = QuestSystem.getCurrentStep();
+        if (step?.id === "summon_rift") {
+          QuestSystem.completeStep("summon_rift");
+        }
 
-  this.activateRiftFromKiosk(kiosk);
-  return;
-}
+        this.activateRiftFromKiosk(kiosk);
+        return;
+      }
 
       // Door interaction
       if (this.nearbyDoor) {
@@ -417,11 +425,11 @@ console.log("New Current Quest:", QuestSystem.getCurrentQuest());
           ]);
           return;
         }
-// ✅ QUEST HOOK
-const step = QuestSystem.getCurrentStep();
-if (step?.id === "go_house") {
-  QuestSystem.completeStep("go_house");
-}
+        // ✅ QUEST HOOK
+        const step = QuestSystem.getCurrentStep();
+        if (step?.id === "go_house") {
+          QuestSystem.completeStep("go_house");
+        }
 
         SceneTransition.start(this, () => {
           this.scene.start(targetScene, {
@@ -633,7 +641,7 @@ if (step?.id === "go_house") {
 
 
     layer.objects.forEach(obj => {
-     // console.log("Processing NPC object:", obj);
+      // console.log("Processing NPC object:", obj);
       // ✅ SAFELY HANDLE PROPERTIES
       const props = Array.isArray(obj.properties)
         ? obj.properties
@@ -764,77 +772,77 @@ if (step?.id === "go_house") {
   }
   // ================= RIFT SYSTEM =================
   createRiftSystemsFromMap() {
-  const layer = this.map.getObjectLayer("rifts layer");
-  if (!layer) return;
+    const layer = this.map.getObjectLayer("rifts layer");
+    if (!layer) return;
 
-  const currentQuestIndex =
-    GameState.player.worldState.questProgress.currentQuestIndex;
+    const currentQuestIndex =
+      GameState.player.worldState.questProgress.currentQuestIndex;
 
-  const currentQuest = QUESTS[currentQuestIndex];
+    const currentQuest = QUESTS[currentQuestIndex];
 
-  layer.objects.forEach(obj => {
+    layer.objects.forEach(obj => {
 
-    // Rift spawns
-    if (obj.name === "rift_spawn") {
-      let riftName = obj.properties?.find(
-        p => p.name === "riftName"
-      )?.value;
+      // Rift spawns
+      if (obj.name === "rift_spawn") {
+        let riftName = obj.properties?.find(
+          p => p.name === "riftName"
+        )?.value;
 
-      riftName = RIFT_ID_MAP[riftName] ?? riftName;
+        riftName = RIFT_ID_MAP[riftName] ?? riftName;
 
-      console.log("Tiled Rift Property:", obj.properties);
-      console.log("Resolved Rift Name:", riftName);
+        console.log("Tiled Rift Property:", obj.properties);
+        console.log("Resolved Rift Name:", riftName);
 
-      const rift = new InternalRiftBug(this, obj.x, obj.y, riftName);
+        const rift = new InternalRiftBug(this, obj.x, obj.y, riftName);
 
-      // Add to physics + tracking
-      this.bugGroup.add(rift);
-      this.rifts.push(rift);
+        // Add to physics + tracking
+        this.bugGroup.add(rift);
+        this.rifts.push(rift);
 
-      // 🔒 Default: hidden
-      rift.setVisible(false);
-      rift.body.enable = false;
-      rift.isDormant = true;
-
-      // ✅ QUEST GATING (correct place)
-      if (rift.riftName !== currentQuest.id) {
-        // Not the active quest rift → keep disabled
+        // 🔒 Default: hidden
+        rift.setVisible(false);
+        rift.body.enable = false;
         rift.isDormant = true;
-      } else {
-        // Active quest rift → allow activation
-        rift.setVisible(true);
-        rift.body.enable = true;
-        rift.isDormant = false;
+
+        // ✅ QUEST GATING (correct place)
+        if (rift.riftName !== currentQuest.id) {
+          // Not the active quest rift → keep disabled
+          rift.isDormant = true;
+        } else {
+          // Active quest rift → allow activation
+          rift.setVisible(true);
+          rift.body.enable = true;
+          rift.isDormant = false;
+        }
+
+        rift.setInteractive({ useHandCursor: true });
+
+        rift.on("pointerdown", () => {
+          if (!rift.isDormant && !rift.isDebugging) {
+            this.openRiftCompiler(rift);
+          }
+        });
+
+        console.log("Registered Rift:", riftName);
       }
 
-      rift.setInteractive({ useHandCursor: true });
+      // Rift kiosks
+      if (obj.name === "rift_kiosk") {
+        const kioskName = obj.properties?.find(
+          p => p.name === "kioskName"
+        )?.value;
 
-      rift.on("pointerdown", () => {
-        if (!rift.isDormant && !rift.isDebugging) {
-          this.openRiftCompiler(rift);
-        }
-      });
+        this.riftKiosks.push({
+          x: obj.x,
+          y: obj.y,
+          kioskName,
+          cooldown: false
+        });
 
-      console.log("Registered Rift:", riftName);
-    }
-
-    // Rift kiosks
-    if (obj.name === "rift_kiosk") {
-      const kioskName = obj.properties?.find(
-        p => p.name === "kioskName"
-      )?.value;
-
-      this.riftKiosks.push({
-        x: obj.x,
-        y: obj.y,
-        kioskName,
-        cooldown: false
-      });
-
-      console.log("Loaded Kiosk:", kioskName);
-    }
-  });
-}
+        console.log("Loaded Kiosk:", kioskName);
+      }
+    });
+  }
   getNearbyRiftKiosk() {
     if (!this.riftKiosks) return null;
 
@@ -862,22 +870,22 @@ if (step?.id === "go_house") {
       .toLowerCase()
       .replace(/\s+/g, "");
 
-      console.log("Category: ", category);
+    console.log("Category: ", category);
 
     const requiredKeycard = `keycard_${category}`;
 
     console.log("Required:", requiredKeycard);
-console.log("Owned:", owned);
-console.log(
-  "Match result:",
-  owned.includes(requiredKeycard)
-);
+    console.log("Owned:", owned);
+    console.log(
+      "Match result:",
+      owned.includes(requiredKeycard)
+    );
     if (!GameState.hasKeyItem(requiredKeycard)) {
       console.log("❌ Missing keycard:", requiredKeycard);
       return;
     }
 
-    
+
     console.log("✅ Keycard verified:", requiredKeycard);
     // Convert "Syntax Kiosk" → "Syntax Monolith"
     const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
@@ -1250,74 +1258,74 @@ console.log(
     if (rift && rift.onCodingClosed) rift.onCodingClosed();
   }
   defeatRift(rift) {
-  if (!rift || !rift.completed) return;
+    if (!rift || !rift.completed) return;
 
-  console.log("RiftName:", rift.riftName);
-  console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);
+    console.log("RiftName:", rift.riftName);
+    console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);
 
-  const player = GameState.player;
-  if (!player) return;
+    const player = GameState.player;
+    if (!player) return;
 
-  // =========================
-  // Rift Progress Save
-  // =========================
-  player.riftProgress = player.riftProgress || {};
-  player.riftProgress[rift.riftName] =
-    player.riftProgress[rift.riftName] || {};
+    // =========================
+    // Rift Progress Save
+    // =========================
+    player.riftProgress = player.riftProgress || {};
+    player.riftProgress[rift.riftName] =
+      player.riftProgress[rift.riftName] || {};
 
-  player.riftProgress[rift.riftName].completed = true;
+    player.riftProgress[rift.riftName].completed = true;
 
-  // =========================
-  // Keystone Reward
-  // =========================
-  const keystoneId = KEYSTONE_MAP[rift.riftName];
+    // =========================
+    // Keystone Reward
+    // =========================
+    const keystoneId = KEYSTONE_MAP[rift.riftName];
 
-  if (keystoneId) {
-    player.items = player.items || {};
-    player.items.keyItems = player.items.keyItems || [];
+    if (keystoneId) {
+      player.items = player.items || {};
+      player.items.keyItems = player.items.keyItems || [];
 
-    const owned = player.items.keyItems;
+      const owned = player.items.keyItems;
 
-    if (!owned.includes(keystoneId)) {
-      const ownedKeystones = owned.filter(id =>
-        id.startsWith("keystone")
-      );
-
-      const expected = KEY_ITEM_ORDER[ownedKeystones.length];
-
-      if (keystoneId !== expected) {
-        console.warn(
-          `Keystone out of order. Expected: ${expected}, Got: ${keystoneId}`
+      if (!owned.includes(keystoneId)) {
+        const ownedKeystones = owned.filter(id =>
+          id.startsWith("keystone")
         );
-        return;
+
+        const expected = KEY_ITEM_ORDER[ownedKeystones.length];
+
+        if (keystoneId !== expected) {
+          console.warn(
+            `Keystone out of order. Expected: ${expected}, Got: ${keystoneId}`
+          );
+          return;
+        }
+
+        owned.push(keystoneId);
+        console.log("🗝️ Keystone added:", keystoneId);
       }
 
-      owned.push(keystoneId);
-      console.log("🗝️ Keystone added:", keystoneId);
+      console.log("Owned key items:", player.items.keyItems);
     }
 
-    console.log("Owned key items:", player.items.keyItems);
+    GameState.player = player;
+
+    // =========================
+    // QUEST HOOK (FIXED)
+    // =========================
+    const step = QuestSystem.getCurrentStep();
+
+    console.log("Current Step Object:", step);
+    console.log("Expected Step ID:", step?.id);
+
+    if (step?.id === "defeat_rift") {
+      console.log("✅ Completing quest step: defeat_rift");
+      QuestSystem.completeStep("defeat_rift");
+    } else {
+      console.warn("⚠️ Quest step not completed (not defeat_rift).");
+    }
+
+    alert(`🗝️ You obtained the ${rift.riftName} Keystone!`);
   }
-
-  GameState.player = player;
-
-  // =========================
-  // QUEST HOOK (FIXED)
-  // =========================
-  const step = QuestSystem.getCurrentStep();
-
-  console.log("Current Step Object:", step);
-  console.log("Expected Step ID:", step?.id);
-
-  if (step?.id === "defeat_rift") {
-    console.log("✅ Completing quest step: defeat_rift");
-    QuestSystem.completeStep("defeat_rift");
-  } else {
-    console.warn("⚠️ Quest step not completed (not defeat_rift).");
-  }
-
-  alert(`🗝️ You obtained the ${rift.riftName} Keystone!`);
-}
   syncSpriteFromGameState() {
     const gs = GameState.player;
     if (!gs) return;
@@ -1401,49 +1409,49 @@ console.log(
     });
   }
   drawHTMLMinimapMonoliths() {
-  if (!this.minimapCtx || !this.monoliths) return;
+    if (!this.minimapCtx || !this.monoliths) return;
 
-  const ctx = this.minimapCtx;
+    const ctx = this.minimapCtx;
 
-  this.monoliths.forEach(m => {
+    this.monoliths.forEach(m => {
 
-    const x = m.x * this.mapScaleX;
-    const y = m.y * this.mapScaleY;
+      const x = m.x * this.mapScaleX;
+      const y = m.y * this.mapScaleY;
 
-    ctx.fillStyle = "yellow";
+      ctx.fillStyle = "yellow";
 
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
 
-  });
-}
+    });
+  }
   // ================= HTML MINIMAP INIT =================
   scanMonolithTiles() {
-  if (!this.monolithLayer) return;
+    if (!this.monolithLayer) return;
 
-  this.monoliths = [];
+    this.monoliths = [];
 
-  this.monolithLayer.forEachTile(tile => {
-    if (tile.index === -1) return;
+    this.monolithLayer.forEachTile(tile => {
+      if (tile.index === -1) return;
 
-    const tileset = this.map.tilesets.find(ts =>
-      tile.index >= ts.firstgid &&
-      tile.index < ts.firstgid + ts.total
-    );
+      const tileset = this.map.tilesets.find(ts =>
+        tile.index >= ts.firstgid &&
+        tile.index < ts.firstgid + ts.total
+      );
 
-    if (!tileset) return;
+      if (!tileset) return;
 
-    if (tileset.name.startsWith("monolith")) {
-      this.monoliths.push({
-        x: tile.pixelX,
-        y: tile.pixelY
-      });
-    }
-  });
+      if (tileset.name.startsWith("monolith")) {
+        this.monoliths.push({
+          x: tile.pixelX,
+          y: tile.pixelY
+        });
+      }
+    });
 
-  console.log("Detected Monoliths:", this.monoliths.length);
-}
+    console.log("Detected Monoliths:", this.monoliths.length);
+  }
   initHTMLMinimap() {
     this.minimapCanvas = document.getElementById("minimapCanvas");
     if (!this.minimapCanvas) {
@@ -1736,14 +1744,14 @@ console.log(
     });
   }
   refreshHUD() {
-  const gs = GameState.player;
-  if (!gs) return;
+    const gs = GameState.player;
+    if (!gs) return;
 
-  if (this.updateHUD) this.updateHUD();
-  if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
-  if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
-  if (window.updateCryptos) window.updateCryptos(gs.cryptos);
-}
+    if (this.updateHUD) this.updateHUD();
+    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+    if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
+    if (window.updateCryptos) window.updateCryptos(gs.cryptos);
+  }
   /*
   handlePerkEffects() {
     const player = this.player;

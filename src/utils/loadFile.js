@@ -82,8 +82,38 @@ export function importSaveFile(playerSprite = null) {
 
 
         console.log("[LoadFile] Loaded safely:", gs);
-        alert("Save Loaded Successfully!");
+        //alert("Save Loaded Successfully!");
 
+        // ✅ Create loading overlay FIRST
+const loading = document.createElement("div");
+
+loading.style.position = "fixed";
+loading.style.top = "0";
+loading.style.left = "0";
+loading.style.width = "100%";
+loading.style.height = "100%";
+loading.style.display = "flex";
+loading.style.alignItems = "center";
+loading.style.justifyContent = "center";
+loading.style.fontSize = "24px";
+loading.style.background = "rgba(0, 0, 0, 0.9)";
+loading.style.color = "white";
+loading.style.zIndex = "9999";
+
+document.body.appendChild(loading);
+
+// ✅ Animate text AFTER adding to DOM
+let dots = 0;
+const interval = setInterval(() => {
+  dots = (dots + 1) % 4;
+  loading.innerText = "🔄 Loading save" + ".".repeat(dots);
+}, 300);
+
+// 🔄 Reload + cleanup
+setTimeout(() => {
+  clearInterval(interval); // ✅ stop animation
+  window.location.reload();
+}, 800);
       } catch (err) {
         console.error("Save load failed", err);
         alert("Save file is corrupted.");
