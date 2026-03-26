@@ -93,15 +93,15 @@ export default class LessonHouseScene extends Phaser.Scene {
       { x: 152, y: 288 };
 
       // ✅ Load saved position for this scene
-const savedPos = GameState.getScenePosition("LessonHouseScene");
+//const savedPos = GameState.getScenePosition("LessonHouseScene");
 
 let spawnX = Math.round(spawnObj.x / 16) * 16;
 let spawnY = Math.round(spawnObj.y / 16) * 16;
 
-if (savedPos) {
-  spawnX = savedPos.x;
-  spawnY = savedPos.y;
-}
+//if (savedPos) {
+ // spawnX = savedPos.x;
+  //spawnY = savedPos.y;
+//}
 
     this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
       .setOrigin(0,1)

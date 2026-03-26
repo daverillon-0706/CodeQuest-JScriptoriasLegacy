@@ -127,18 +127,18 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       || spawnLayer.objects.find(o => o.name === "MalePlayer")
       || { x: 704, y: 759 };
 
-    const savedPos = GameState.getScenePosition("JScriptoriaCityScene");
+    //const savedPos = GameState.getScenePosition("JScriptoriaCityScene");
 
     let spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
     let spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
 
     // ✅ Load saved position for this scene
-
+/*
     if (savedPos) {
       spawnX = savedPos.x;
       spawnY = savedPos.y;
     }
-
+*/
     this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
       .setOrigin(0, 1)
       .setCollideWorldBounds(true)
@@ -433,7 +433,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         }
 
         // ---- SAVE PLAYER POSITION BEFORE TRANSITION ----
-        this.savePlayerPosition();
+        //this.savePlayerPosition();
 
         // ---- SWITCH SCENE ----
         SceneTransition.start(this, () => {
@@ -1757,7 +1757,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   savePlayerPosition() {
     const player = GameState.player;
     if (!player) return;
-/*
+
     GameState.player = {
       ...player,
       worldState: {
@@ -1765,8 +1765,9 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         position: { x: this.player.x, y: this.player.y }
       }
     };
-    */
+  /*
     GameState.setScenePosition(this.scene.key, player.x, player.y);
     console.log("[GameState] Saved player position:", this.player.x, this.player.y);
+    */
   }
 }
