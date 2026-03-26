@@ -82,7 +82,6 @@ export function importSaveFile(playerSprite = null) {
 
 
         console.log("[LoadFile] Loaded safely:", gs);
-        //alert("Save Loaded Successfully!");
 
         // ✅ Create loading overlay FIRST
 const loading = document.createElement("div");

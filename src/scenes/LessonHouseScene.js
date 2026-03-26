@@ -92,7 +92,18 @@ export default class LessonHouseScene extends Phaser.Scene {
       spawnLayer.objects.find(o => o.name === "MalePlayer") ||
       { x: 152, y: 288 };
 
-    this.player = this.physics.add.sprite(spawnObj.x, spawnObj.y, "player_male", 0)
+      const savedPos = GameState.player?.worldState?.position;
+
+let spawnX = Math.round(spawnObj.x / 16) * 16;
+let spawnY = Math.round(spawnObj.y / 16) * 16;
+
+// ✅ Use saved position if it exists
+if (savedPos) {
+  spawnX = savedPos.x;
+  spawnY = savedPos.y;
+}
+
+    this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
       .setOrigin(0,1)
       .setCollideWorldBounds(true)
       .setSize(12,8)
@@ -187,7 +198,7 @@ console.log("Lesson data:", LessonManager.getLesson(this.lesson));
 
     npcLayer.objects.forEach(obj => {
 
-      const npc = this.physics.add.sprite(obj.x, obj.y, "kaelen", 0)
+      const npc = this.physics.add.sprite(obj.x, obj.y, "orin", 0)
         .setOrigin(0,1)
         .setImmovable(true)
         .setSize(12,8)
@@ -375,16 +386,26 @@ createBooks() {
     });
 
     this.input.keyboard.on("keydown-Z", () => {
+  if (this.nearExit) {
 
-      if (this.nearExit) {
+    // Save player position in house
+    const player = GameState.player;
+    if (player) {
+      GameState.player = {
+        ...player,
+        worldState: {
+          ...player.worldState,
+          position: { x: this.player.x, y: this.player.y }
+        }
+      };
+    }
 
-        SceneTransition.start(this, () => {
-          this.scene.start("JScriptoriaCityScene", {
-            spawn: "LessonDoorReturn"
-          });
-        });
-
-      }
+    SceneTransition.start(this, () => {
+      this.scene.start("JScriptoriaCityScene", {
+        spawn: "LessonDoorReturn"
+      });
     });
+  }
+});
   }
 }

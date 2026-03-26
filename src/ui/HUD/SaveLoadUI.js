@@ -29,8 +29,9 @@ export default class SaveLoadUI {
             loadBtn.addEventListener("click", () => {
                 console.log("[SaveLoadUI] Load clicked");
                 importSaveFile();
-                alert("📂 Save file loaded!");
+                
             });
+            alert("📂 Save file loaded!");
         }
     }
 }
