@@ -49,7 +49,9 @@ const DEFAULT_PLAYER = {
   worldState: {
     chestsOpened: [],
     questsCompleted: [],
-    position: { x: 704, y: 759 },
+    positions: { 
+      city: {x: 704, y: 759 }
+    },
     questProgress: {
     currentQuestIndex: 0,
     currentStepIndex: 0
@@ -102,9 +104,9 @@ try {
   ...DEFAULT_PLAYER.worldState,
   ...(parsed.worldState || {}),
 
-  position: {
-    ...DEFAULT_PLAYER.worldState.position,
-    ...(parsed.worldState?.position || {})
+  positions: {
+    ...DEFAULT_PLAYER.worldState.positions,
+    ...(parsed.worldState?.positions || {})
   },
 
   questProgress: {
@@ -179,9 +181,9 @@ try {
   ...DEFAULT_PLAYER.worldState,
   ...(value.worldState || {}),
 
-  position: {
-    ...DEFAULT_PLAYER.worldState.position,
-    ...(value.worldState?.position || {})
+  positions: {
+    ...DEFAULT_PLAYER.worldState.positions,
+    ...(value.worldState?.positions || {})
   },
 
   questProgress: {
@@ -367,7 +369,24 @@ addKeyItem(id) {
   hasPassedQuiz(category) {
     const progress = this.getLessonProgress(category);
     return progress?.quizCompleted === true;
-  }
+  },
+
+  // Get the saved position for a specific scene
+getScenePosition(sceneKey, fallback = { x: 0, y: 0 }) {
+  const positions = this.player?.worldState?.positions || {};
+  return positions[sceneKey] || fallback;
+},
+
+// Save the position for a specific scene
+setScenePosition(sceneKey, x, y) {
+  const player = this.player;
+  if (!player) return;
+
+  player.worldState.positions = player.worldState.positions || {};
+  player.worldState.positions[sceneKey] = { x, y };
+
+  this.player = player;
+}
 };
 
 window.GameState = GameState;

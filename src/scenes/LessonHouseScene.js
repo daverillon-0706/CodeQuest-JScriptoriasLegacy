@@ -36,8 +36,8 @@ export default class LessonHouseScene extends Phaser.Scene {
     );
 
     this.load.spritesheet(
-      "kaelen",
-      "/assets/sprites/npcs/kaelen.png",
+      "orin",
+      "/assets/sprites/npcs/orin.png",
       { frameWidth:16, frameHeight:16 }
     );
 
@@ -92,12 +92,12 @@ export default class LessonHouseScene extends Phaser.Scene {
       spawnLayer.objects.find(o => o.name === "MalePlayer") ||
       { x: 152, y: 288 };
 
-      const savedPos = GameState.player?.worldState?.position;
+      // ✅ Load saved position for this scene
+const savedPos = GameState.getScenePosition("LessonHouseScene");
 
 let spawnX = Math.round(spawnObj.x / 16) * 16;
 let spawnY = Math.round(spawnObj.y / 16) * 16;
 
-// ✅ Use saved position if it exists
 if (savedPos) {
   spawnX = savedPos.x;
   spawnY = savedPos.y;
@@ -391,13 +391,8 @@ createBooks() {
     // Save player position in house
     const player = GameState.player;
     if (player) {
-      GameState.player = {
-        ...player,
-        worldState: {
-          ...player.worldState,
-          position: { x: this.player.x, y: this.player.y }
-        }
-      };
+      // Save player position for this scene
+GameState.setScenePosition("LessonHouseScene", this.player.x, this.player.y);
     }
 
     SceneTransition.start(this, () => {

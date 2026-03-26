@@ -127,16 +127,17 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       || spawnLayer.objects.find(o => o.name === "MalePlayer")
       || { x: 704, y: 759 };
 
+    const savedPos = GameState.getScenePosition("JScriptoriaCityScene");
+
     let spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
     let spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
 
-    const savedPos = GameState.player?.worldState?.position;
+    // ✅ Load saved position for this scene
 
-// ✅ Only use saved position if we're in City
-if (savedPos && this.scene.key === "JScriptoriaCityScene") {
-  spawnX = savedPos.x;
-  spawnY = savedPos.y;
-}
+    if (savedPos) {
+      spawnX = savedPos.x;
+      spawnY = savedPos.y;
+    }
 
     this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
       .setOrigin(0, 1)
@@ -406,41 +407,41 @@ if (savedPos && this.scene.key === "JScriptoriaCityScene") {
 
       if (this.nearbyDoor) {
 
-    const targetScene = this.nearbyDoor.getData("scene");
-    const lesson = this.nearbyDoor.getData("lesson");
-    const lessonOrder = this.nearbyDoor.getData("order");
+        const targetScene = this.nearbyDoor.getData("scene");
+        const lesson = this.nearbyDoor.getData("lesson");
+        const lessonOrder = this.nearbyDoor.getData("order");
 
-    const player = GameState.player;
+        const player = GameState.player;
 
-    const ownedKeystones = player.items?.keyItems?.filter(id =>
-      id.startsWith("keystone")
-    ) || [];
+        const ownedKeystones = player.items?.keyItems?.filter(id =>
+          id.startsWith("keystone")
+        ) || [];
 
-    // lessonOrder is 0-based index from Tiled
-    if (lessonOrder > ownedKeystones.length) {
-      this.dialogueManager.start([
-        "The door is locked.",
-        "Collect the previous keystone to unlock this lesson."
-      ]);
-      return;
-    }
+        // lessonOrder is 0-based index from Tiled
+        if (lessonOrder > ownedKeystones.length) {
+          this.dialogueManager.start([
+            "The door is locked.",
+            "Collect the previous keystone to unlock this lesson."
+          ]);
+          return;
+        }
 
-    // ✅ QUEST HOOK
-    const step = QuestSystem.getCurrentStep();
-    if (step?.id === "go_house") {
-      QuestSystem.completeStep("go_house");
-    }
+        // ✅ QUEST HOOK
+        const step = QuestSystem.getCurrentStep();
+        if (step?.id === "go_house") {
+          QuestSystem.completeStep("go_house");
+        }
 
-    // ---- SAVE PLAYER POSITION BEFORE TRANSITION ----
-    this.savePlayerPosition();
+        // ---- SAVE PLAYER POSITION BEFORE TRANSITION ----
+        this.savePlayerPosition();
 
-    // ---- SWITCH SCENE ----
-    SceneTransition.start(this, () => {
-      this.scene.start(targetScene, { lesson, spawn: "MalePlayer" });
-    });
+        // ---- SWITCH SCENE ----
+        SceneTransition.start(this, () => {
+          this.scene.start(targetScene, { lesson, spawn: "MalePlayer" });
+        });
 
-    return;
-}
+        return;
+      }
     });
 
     //this.input.keyboard.on("keydown-F", () => {
@@ -1756,7 +1757,7 @@ if (savedPos && this.scene.key === "JScriptoriaCityScene") {
   savePlayerPosition() {
     const player = GameState.player;
     if (!player) return;
-
+/*
     GameState.player = {
       ...player,
       worldState: {
@@ -1764,6 +1765,8 @@ if (savedPos && this.scene.key === "JScriptoriaCityScene") {
         position: { x: this.player.x, y: this.player.y }
       }
     };
+    */
+    GameState.setScenePosition(this.scene.key, player.x, player.y);
     console.log("[GameState] Saved player position:", this.player.x, this.player.y);
-}
+  }
 }
