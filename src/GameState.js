@@ -102,6 +102,11 @@ try {
   ...DEFAULT_PLAYER.worldState,
   ...(parsed.worldState || {}),
 
+  position: {
+    ...DEFAULT_PLAYER.worldState.position,
+    ...(parsed.worldState?.position || {})
+  },
+
   questProgress: {
     ...DEFAULT_PLAYER.worldState.questProgress,
     ...(parsed.worldState?.questProgress || {})
@@ -173,6 +178,11 @@ try {
       worldState: {
   ...DEFAULT_PLAYER.worldState,
   ...(value.worldState || {}),
+
+  position: {
+    ...DEFAULT_PLAYER.worldState.position,
+    ...(value.worldState?.position || {})
+  },
 
   questProgress: {
     ...DEFAULT_PLAYER.worldState.questProgress,

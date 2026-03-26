@@ -404,42 +404,43 @@ if (savedPos && this.scene.key === "JScriptoriaCityScene") {
         return;
       }
 
-      // Door interaction
       if (this.nearbyDoor) {
 
-        const targetScene = this.nearbyDoor.getData("scene");
-        const lesson = this.nearbyDoor.getData("lesson");
-        const lessonOrder = this.nearbyDoor.getData("order");
+    const targetScene = this.nearbyDoor.getData("scene");
+    const lesson = this.nearbyDoor.getData("lesson");
+    const lessonOrder = this.nearbyDoor.getData("order");
 
-        const player = GameState.player;
+    const player = GameState.player;
 
-        const ownedKeystones = player.items?.keyItems?.filter(id =>
-          id.startsWith("keystone")
-        ) || [];
+    const ownedKeystones = player.items?.keyItems?.filter(id =>
+      id.startsWith("keystone")
+    ) || [];
 
-        // lessonOrder is 0-based index from Tiled
-        if (lessonOrder > ownedKeystones.length) {
-          this.dialogueManager.start([
-            "The door is sealed by ancient magic.",
-            "Complete the previous Rift to unlock this lesson."
-          ]);
-          return;
-        }
-        // ✅ QUEST HOOK
-        const step = QuestSystem.getCurrentStep();
-        if (step?.id === "go_house") {
-          QuestSystem.completeStep("go_house");
-        }
+    // lessonOrder is 0-based index from Tiled
+    if (lessonOrder > ownedKeystones.length) {
+      this.dialogueManager.start([
+        "The door is locked.",
+        "Collect the previous keystone to unlock this lesson."
+      ]);
+      return;
+    }
 
-        SceneTransition.start(this, () => {
-          this.scene.start(targetScene, {
-            lesson: lesson,
-            spawn: "MalePlayer"
-          });
-        });
+    // ✅ QUEST HOOK
+    const step = QuestSystem.getCurrentStep();
+    if (step?.id === "go_house") {
+      QuestSystem.completeStep("go_house");
+    }
 
-        return;
-      }
+    // ---- SAVE PLAYER POSITION BEFORE TRANSITION ----
+    this.savePlayerPosition();
+
+    // ---- SWITCH SCENE ----
+    SceneTransition.start(this, () => {
+      this.scene.start(targetScene, { lesson, spawn: "MalePlayer" });
+    });
+
+    return;
+}
     });
 
     //this.input.keyboard.on("keydown-F", () => {
@@ -1752,28 +1753,17 @@ if (savedPos && this.scene.key === "JScriptoriaCityScene") {
     if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
     if (window.updateCryptos) window.updateCryptos(gs.cryptos);
   }
-  /*
-  handlePerkEffects() {
-    const player = this.player;
-    if (!player?.effects?.enemyDebuffLock) return;
-  
-    const radius = 6 * 32; // 6 tiles, assuming 32px tiles
-  
-    console.log("[Perk] CTRL+ALT+DEL triggered");
-  
-    this.enemies.getChildren().forEach(enemy => {
-      const distance = Phaser.Math.Distance.Between(
-        player.x, player.y,
-        enemy.x, enemy.y
-      );
-  
-      if (distance <= radius) {
-        enemy.destroy();
+  savePlayerPosition() {
+    const player = GameState.player;
+    if (!player) return;
+
+    GameState.player = {
+      ...player,
+      worldState: {
+        ...player.worldState,
+        position: { x: this.player.x, y: this.player.y }
       }
-    });
-  
-    // Remove effect so it runs only once
-    delete player.effects.enemyDebuffLock;
-  }
-  */
+    };
+    console.log("[GameState] Saved player position:", this.player.x, this.player.y);
+}
 }
