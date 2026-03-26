@@ -36,8 +36,8 @@ export default class LessonHouseScene extends Phaser.Scene {
     );
 
     this.load.spritesheet(
-      "orin",
-      "/assets/sprites/npcs/orin.png",
+      "kaelen",
+      "/assets/sprites/npcs/kaelen.png",
       { frameWidth:16, frameHeight:16 }
     );
 
@@ -92,18 +92,18 @@ export default class LessonHouseScene extends Phaser.Scene {
       spawnLayer.objects.find(o => o.name === "MalePlayer") ||
       { x: 152, y: 288 };
 
-      // ✅ Load saved position for this scene
-//const savedPos = GameState.getScenePosition("LessonHouseScene");
+      //const savedPos = GameState.player?.worldState?.position;
 
 let spawnX = Math.round(spawnObj.x / 16) * 16;
 let spawnY = Math.round(spawnObj.y / 16) * 16;
-
-//if (savedPos) {
- // spawnX = savedPos.x;
-  //spawnY = savedPos.y;
-//}
-
-    this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
+/*
+// ✅ Use saved position if it exists
+if (savedPos) {
+  spawnX = savedPos.x;
+  spawnY = savedPos.y;
+}
+*/
+    this.player = this.physics.add.sprite(spawnObj.x, spawnObj.y, "player_male", 0)
       .setOrigin(0,1)
       .setCollideWorldBounds(true)
       .setSize(12,8)
@@ -387,14 +387,19 @@ createBooks() {
 
     this.input.keyboard.on("keydown-Z", () => {
   if (this.nearExit) {
-
+/*
     // Save player position in house
     const player = GameState.player;
     if (player) {
-      // Save player position for this scene
-GameState.setScenePosition("LessonHouseScene", this.player.x, this.player.y);
+      GameState.player = {
+        ...player,
+        worldState: {
+          ...player.worldState,
+          position: { x: this.player.x, y: this.player.y }
+        }
+      };
     }
-
+*/
     SceneTransition.start(this, () => {
       this.scene.start("JScriptoriaCityScene", {
         spawn: "LessonDoorReturn"
