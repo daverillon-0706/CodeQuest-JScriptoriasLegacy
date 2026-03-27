@@ -1301,6 +1301,11 @@
                          "name":"order",
                          "type":"int",
                          "value":0
+                        }, 
+                        {
+                         "name":"spawnKey",
+                         "type":"string",
+                         "value":"syntax_exit"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1323,6 +1328,11 @@
                          "name":"order",
                          "type":"int",
                          "value":2
+                        }, 
+                        {
+                         "name":"spawnKey",
+                         "type":"string",
+                         "value":"variables_exit"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1345,6 +1355,11 @@
                          "name":"order",
                          "type":"int",
                          "value":3
+                        }, 
+                        {
+                         "name":"spawnKey",
+                         "type":"string",
+                         "value":"operators_exit"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1367,6 +1382,11 @@
                          "name":"order",
                          "type":"int",
                          "value":1
+                        }, 
+                        {
+                         "name":"spawnKey",
+                         "type":"string",
+                         "value":"datatypes_exit"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1389,6 +1409,11 @@
                          "name":"order",
                          "type":"int",
                          "value":4
+                        }, 
+                        {
+                         "name":"spawnKey",
+                         "type":"string",
+                         "value":"conditions_exit"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1411,6 +1436,11 @@
                          "name":"order",
                          "type":"int",
                          "value":6
+                        }, 
+                        {
+                         "name":"spawnKey",
+                         "type":"string",
+                         "value":"functions_exit"
                         }],
                  "rotation":0,
                  "type":"",
@@ -1427,12 +1457,17 @@
                         {
                          "name":"lesson",
                          "type":"string",
-                         "value":"array"
+                         "value":"arrays"
                         }, 
                         {
                          "name":"order",
                          "type":"int",
                          "value":5
+                        }, 
+                        {
+                         "name":"spawnKey",
+                         "type":"string",
+                         "value":"arrays_exit"
                         }],
                  "rotation":0,
                  "type":"",

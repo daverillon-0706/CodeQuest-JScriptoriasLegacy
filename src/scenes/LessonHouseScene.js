@@ -18,6 +18,7 @@ export default class LessonHouseScene extends Phaser.Scene {
   init(data) {
     this.lesson = data?.lesson || "syntax";
     this.sceneData = data || {};
+    this.returnSpawn = data?.returnSpawn;
   }
 
   preload() {
@@ -400,7 +401,8 @@ export default class LessonHouseScene extends Phaser.Scene {
               };
             }
         */
-       const spawnKey = this.sceneData.spawn;
+       const spawnKey = this.returnSpawn;
+       console.log("Returning to city with spawn:", spawnKey);
         SceneTransition.start(this, () => {
           this.scene.start("JScriptoriaCityScene", {
             spawn: spawnKey

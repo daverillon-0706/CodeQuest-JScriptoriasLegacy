@@ -700,42 +700,49 @@
    <properties>
     <property name="lesson" value="syntax"/>
     <property name="order" type="int" value="0"/>
+    <property name="spawnKey" value="syntax_exit"/>
    </properties>
   </object>
   <object id="34" name="variables_door" x="720.333" y="934.667" width="16" height="16">
    <properties>
     <property name="lesson" value="variables"/>
     <property name="order" type="int" value="2"/>
+    <property name="spawnKey" value="variables_exit"/>
    </properties>
   </object>
   <object id="35" name="operators_door" x="911.333" y="627.333" width="16" height="16">
    <properties>
     <property name="lesson" value="operators"/>
     <property name="order" type="int" value="3"/>
+    <property name="spawnKey" value="operators_exit"/>
    </properties>
   </object>
   <object id="36" name="datatypes_door" x="464.667" y="660.667" width="16" height="16">
    <properties>
     <property name="lesson" value="datatypes"/>
     <property name="order" type="int" value="1"/>
+    <property name="spawnKey" value="datatypes_exit"/>
    </properties>
   </object>
   <object id="37" name="conditions_door" x="1055.67" y="628.667" width="16" height="16">
    <properties>
     <property name="lesson" value="conditions"/>
     <property name="order" type="int" value="4"/>
+    <property name="spawnKey" value="conditions_exit"/>
    </properties>
   </object>
   <object id="38" name="functions_door" x="1055.67" y="805" width="16" height="16">
    <properties>
     <property name="lesson" value="functions"/>
     <property name="order" type="int" value="6"/>
+    <property name="spawnKey" value="functions_exit"/>
    </properties>
   </object>
   <object id="39" name="array_door" x="943.333" y="982.333" width="16" height="16">
    <properties>
-    <property name="lesson" value="array"/>
+    <property name="lesson" value="arrays"/>
     <property name="order" type="int" value="5"/>
+    <property name="spawnKey" value="arrays_exit"/>
    </properties>
   </object>
  </objectgroup>

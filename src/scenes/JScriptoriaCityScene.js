@@ -122,6 +122,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.scanMonolithTiles();
 
     // ---- PLAYER SPAWN ----
+    
     const spawnLayer = this.map.getObjectLayer("Objects") || { objects: [] };
     let spawnObj = spawnLayer.objects.find(o => o.name === data.spawn)
       || spawnLayer.objects.find(o => o.name === "MalePlayer")
@@ -137,6 +138,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       .setOffset(2, 8)
       .setDepth(5);
 
+      console.log("City received spawn:", data.spawn);
     if (!this.player.activePerks) {
       this.player.activePerks = {};
     }
@@ -428,7 +430,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
         // ---- SWITCH SCENE ----
         SceneTransition.start(this, () => {
-          this.scene.start(targetScene, { lesson, spawn: spawnKey });
+          this.scene.start(targetScene, { lesson, spawn: spawnKey, returnSpawn: spawnKey });
         });
 
         return;
