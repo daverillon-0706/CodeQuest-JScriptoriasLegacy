@@ -127,18 +127,9 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       || spawnLayer.objects.find(o => o.name === "MalePlayer")
       || { x: 704, y: 759 };
 
-    //const savedPos = GameState.getScenePosition("JScriptoriaCityScene");
-
     let spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
     let spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
 
-    // ✅ Load saved position for this scene
-/*
-    if (savedPos) {
-      spawnX = savedPos.x;
-      spawnY = savedPos.y;
-    }
-*/
     this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
       .setOrigin(0, 1)
       .setCollideWorldBounds(true)
@@ -150,7 +141,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       this.player.activePerks = {};
     }
     //GameState.player = this.player;
-
     this.player.isCoding = false;
     this.compilerWindow = null;
     this.codingKeyHandler = null;
@@ -160,7 +150,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     this.player.takeDamage = (amount = 1) => {
 
-      // 🔥 Update GameState directly (NOT customData)
+      // Update GameState directly (NOT customData)
       if (!GameState.player) return;
 
       GameState.player.hp -= amount;
@@ -174,7 +164,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         this.onPlayerGameOver();
       }
 
-      // ✅ Sync HUD after change
+      // Sync HUD after change
       if (window.HUD) {
         window.HUD.updateHUD();
       }
@@ -410,6 +400,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         const targetScene = this.nearbyDoor.getData("scene");
         const lesson = this.nearbyDoor.getData("lesson");
         const lessonOrder = this.nearbyDoor.getData("order");
+        const spawnKey = this.nearbyDoor.getData("spawnKey");
 
         const player = GameState.player;
 
@@ -437,7 +428,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
         // ---- SWITCH SCENE ----
         SceneTransition.start(this, () => {
-          this.scene.start(targetScene, { lesson, spawn: "MalePlayer" });
+          this.scene.start(targetScene, { lesson, spawn: spawnKey });
         });
 
         return;
@@ -674,24 +665,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       // ================= NAME ABOVE HEAD =================
       const npcName = nameProp?.value || npcId;
 
-      /*
-      const nameText = this.add.text(
-        obj.x,
-        obj.y - 32,
-        npcName,
-        {
-          fontSize: "8px",
-          fill: "#ffffff",
-          stroke: "#000000",
-          strokeThickness: 5
-        }
-      )
-  
-      .setOrigin(0.5)
-      .setDepth(9999);
-  
-      npc.nameText = nameText;
-  */
       npc.customData = {
         dialogue,
         npcId,
@@ -1713,38 +1686,42 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     }
   }
   createLessonDoorsFromMap() {
+  const doorLayer = this.map.getObjectLayer("LessonDoors");
+  if (!doorLayer) return;
 
-    const doorLayer = this.map.getObjectLayer("LessonDoors");
-    if (!doorLayer) return;
+  this.lessonDoors = [];
 
-    this.lessonDoors = [];
+  doorLayer.objects.forEach(obj => {
+    const doorX = obj.x + (obj.width / 2);
+    const doorY = obj.y + (obj.height / 2);
 
-    doorLayer.objects.forEach(obj => {
+    const doorZone = this.add.zone(doorX, doorY, obj.width, obj.height);
+    this.physics.world.enable(doorZone);
 
-      const doorX = obj.x + (obj.width / 2);
-      const doorY = obj.y + (obj.height / 2);
+    doorZone.body.setAllowGravity(false);
+    doorZone.body.setImmovable(true);
 
-      const doorZone = this.add.zone(doorX, doorY, obj.width, obj.height);
+    // --- LESSON DATA ---
+    const lesson = obj.properties?.find(p => p.name === "lesson")?.value;
+    const order = obj.properties?.find(p => p.name === "order")?.value;
 
-      this.physics.world.enable(doorZone);
+    // --- SPAWN KEY ---
+    const spawnKey = obj.properties?.find(p => p.name === "spawnKey")?.value;
 
-      doorZone.body.setAllowGravity(false);
-      doorZone.body.setImmovable(true);
+    // Store for transition
+    doorZone.setData("scene", "LessonHouseScene");
+    doorZone.setData("lesson", lesson);
+    doorZone.setData("order", order);
+    doorZone.setData("spawnKey", spawnKey); // 👈 NEW
 
-      const lesson = obj.properties?.find(p => p.name === "lesson")?.value;
-      const order = obj.properties?.find(p => p.name === "order")?.value;
-
-      doorZone.setData("scene", "LessonHouseScene");
-      doorZone.setData("lesson", lesson);
-      doorZone.setData("order", order);
-
-      this.physics.add.overlap(this.player, doorZone, () => {
-        this.nearbyDoor = doorZone;
-      });
-
-      this.lessonDoors.push(doorZone);
+    // Player overlap detection
+    this.physics.add.overlap(this.player, doorZone, () => {
+      this.nearbyDoor = doorZone;
     });
-  }
+
+    this.lessonDoors.push(doorZone);
+  });
+}
   refreshHUD() {
     const gs = GameState.player;
     if (!gs) return;
@@ -1754,6 +1731,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if (window.updateEnergy) window.updateEnergy(gs.energy, gs.max_energy);
     if (window.updateCryptos) window.updateCryptos(gs.cryptos);
   }
+  // I don't know if this one should be used...
   savePlayerPosition() {
     const player = GameState.player;
     if (!player) return;

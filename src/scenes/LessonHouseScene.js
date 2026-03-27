@@ -24,7 +24,7 @@ export default class LessonHouseScene extends Phaser.Scene {
 
     this.load.tilemapTiledJSON("ClassroomScene", "/maps/ClassroomScene.tmj");
 
-    const tilesets = ["board","cabinet","chair","desk","floor","wall"];
+    const tilesets = ["board", "cabinet", "chair", "desk", "floor", "wall"];
     tilesets.forEach(name => {
       this.load.image(name, `/assets/tilesets/classroom/${name}.png`);
     });
@@ -32,19 +32,19 @@ export default class LessonHouseScene extends Phaser.Scene {
     this.load.spritesheet(
       "player_male",
       "/assets/sprites/player/player_male.png",
-      { frameWidth:16, frameHeight:16 }
+      { frameWidth: 16, frameHeight: 16 }
     );
 
     this.load.spritesheet(
       "kaelen",
       "/assets/sprites/npcs/kaelen.png",
-      { frameWidth:16, frameHeight:16 }
+      { frameWidth: 16, frameHeight: 16 }
     );
 
     this.load.spritesheet(
       "book",
       "/assets/icons/item/book.png",
-      { frameWidth:16, frameHeight:16 }
+      { frameWidth: 16, frameHeight: 16 }
     );
   }
 
@@ -62,8 +62,8 @@ export default class LessonHouseScene extends Phaser.Scene {
       this.scale.height * 5,
       0x000000
     )
-    .setOrigin(0)
-    .setDepth(-10);
+      .setOrigin(0)
+      .setDepth(-10);
 
     // --------------------------
     // Map
@@ -92,22 +92,22 @@ export default class LessonHouseScene extends Phaser.Scene {
       spawnLayer.objects.find(o => o.name === "MalePlayer") ||
       { x: 152, y: 288 };
 
-      //const savedPos = GameState.player?.worldState?.position;
+    //const savedPos = GameState.player?.worldState?.position;
 
-let spawnX = Math.round(spawnObj.x / 16) * 16;
-let spawnY = Math.round(spawnObj.y / 16) * 16;
-/*
-// ✅ Use saved position if it exists
-if (savedPos) {
-  spawnX = savedPos.x;
-  spawnY = savedPos.y;
-}
-*/
+    let spawnX = Math.round(spawnObj.x / 16) * 16;
+    let spawnY = Math.round(spawnObj.y / 16) * 16;
+    /*
+    // ✅ Use saved position if it exists
+    if (savedPos) {
+      spawnX = savedPos.x;
+      spawnY = savedPos.y;
+    }
+    */
     this.player = this.physics.add.sprite(spawnObj.x, spawnObj.y, "player_male", 0)
-      .setOrigin(0,1)
+      .setOrigin(0, 1)
       .setCollideWorldBounds(true)
-      .setSize(12,8)
-      .setOffset(2,8)
+      .setSize(12, 8)
+      .setOffset(2, 8)
       .setDepth(3);
 
     this.physics.add.collider(this.player, this.wallLayer);
@@ -132,11 +132,11 @@ if (savedPos) {
     // --------------------------
     // Camera
     // --------------------------
-    this.physics.world.setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels);
+    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
     this.cameras.main
-      .setBounds(0,0,this.map.widthInPixels,this.map.heightInPixels)
-      .startFollow(this.player,true,0.08,0.08)
+      .setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+      .startFollow(this.player, true, 0.08, 0.08)
       .setZoom(3);
 
     // --------------------------
@@ -173,7 +173,7 @@ if (savedPos) {
     });
 
     console.log("Lesson ID received:", this.lesson);
-console.log("Lesson data:", LessonManager.getLesson(this.lesson));
+    console.log("Lesson data:", LessonManager.getLesson(this.lesson));
   }
 
   update() {
@@ -199,10 +199,10 @@ console.log("Lesson data:", LessonManager.getLesson(this.lesson));
     npcLayer.objects.forEach(obj => {
 
       const npc = this.physics.add.sprite(obj.x, obj.y, "orin", 0)
-        .setOrigin(0,1)
+        .setOrigin(0, 1)
         .setImmovable(true)
-        .setSize(12,8)
-        .setOffset(2,8);
+        .setSize(12, 8)
+        .setOffset(2, 8);
 
       const dialogueProp = obj.properties?.find(p => p.name === "dialogue");
 
@@ -261,106 +261,106 @@ console.log("Lesson data:", LessonManager.getLesson(this.lesson));
   }
 
   // =====================================================
-// BOOKS (Inventory Style)
-// =====================================================
-createBooks() {
+  // BOOKS (Inventory Style)
+  // =====================================================
+  createBooks() {
 
-  const lessonData = LessonManager.getLesson(this.lesson);
-  if (!lessonData) return;
+    const lessonData = LessonManager.getLesson(this.lesson);
+    if (!lessonData) return;
 
-  LessonManager.initLessonProgress(this.lesson);
+    LessonManager.initLessonProgress(this.lesson);
 
-  const bookLayer = this.map.getObjectLayer("lesson object");
-  if (!bookLayer) return;
+    const bookLayer = this.map.getObjectLayer("lesson object");
+    if (!bookLayer) return;
 
-  bookLayer.objects.forEach(obj => {
+    bookLayer.objects.forEach(obj => {
 
-    const lessonProp =
-      obj.properties?.find(p => p.name === "lesson")?.value;
+      const lessonProp =
+        obj.properties?.find(p => p.name === "lesson")?.value;
 
-    const bookKey =
-      obj.properties?.find(p => p.name === "bookKey")?.value;
+      const bookKey =
+        obj.properties?.find(p => p.name === "bookKey")?.value;
 
-    if (lessonProp !== this.lesson) return;
+      if (lessonProp !== this.lesson) return;
 
-    const bookData = lessonData.books.find(b => b.key === bookKey);
-    if (!bookData) return;
+      const bookData = lessonData.books.find(b => b.key === bookKey);
+      if (!bookData) return;
 
-    if (LessonManager.isBookRead(this.lesson, bookKey)) return;
+      if (LessonManager.isBookRead(this.lesson, bookKey)) return;
 
-    const book = this.physics.add.staticSprite(obj.x, obj.y, "book")
-      .setOrigin(0,1)
-      .setDepth(obj.y);
+      const book = this.physics.add.staticSprite(obj.x, obj.y, "book")
+        .setOrigin(0, 1)
+        .setDepth(obj.y);
 
-    book.play("book_idle");
+      book.play("book_idle");
 
-    // Match hitbox to sprite
-    if (book.body) {
-      book.body.setSize(16, 32);
-      book.body.setOffset(8,8);
-    }
-
-    this.physics.add.overlap(this.player, book, () => {
-
-      if (!Phaser.Input.Keyboard.JustDown(this.interactKey)) return;
-
-      // ✅ Mark as collected
-      LessonManager.markBookRead(this.lesson, bookKey);
-
-      // ✅ Play pickup feedback
-      if (this.soundManager) {
-        this.soundManager.play?.("energy_gain");
+      // Match hitbox to sprite
+      if (book.body) {
+        book.body.setSize(16, 32);
+        book.body.setOffset(8, 8);
       }
 
-      // ✅ Visual feedback
-      book.setTint(0x00ff00);
+      this.physics.add.overlap(this.player, book, () => {
 
-      this.tweens.add({
-        targets: book,
-        alpha: 0,
-        scale: 1.3,
-        duration: 400,
-        ease: "Power2",
-        onComplete: () => book.destroy()
-      });
+        if (!Phaser.Input.Keyboard.JustDown(this.interactKey)) return;
 
-      // ✅ Show clean system message
-      DialogueManager.start([
-        `Book Collected: ${bookData.title}`,
-        "Inspect it in your inventory."
-      ]);
+        // ✅ Mark as collected
+        LessonManager.markBookRead(this.lesson, bookKey);
 
-      // ✅ Completion Check
-      this.time.delayedCall(200, () => {
-
-        if (LessonManager.isAllBooksRead(this.lesson)) {
-
-          const step = QuestSystem.getCurrentStep();
-/*
-  if (step?.id === "collect_books") {
-    QuestSystem.completeStep("collect_books");
-  }
-    */
-          const progress =
-            GameState.player.lessonProgress?.[this.lesson];
-
-          if (!progress?._completionShown) {
-
-            progress._completionShown = true;
-            GameState.player = GameState.player;
-
-            DialogueManager.start([
-              "All lesson materials completed!",
-              "Talk to the instructor to begin the quiz."
-            ]);
-          }
+        // ✅ Play pickup feedback
+        if (this.soundManager) {
+          this.soundManager.play?.("energy_gain");
         }
 
-      });
+        // ✅ Visual feedback
+        book.setTint(0x00ff00);
 
+        this.tweens.add({
+          targets: book,
+          alpha: 0,
+          scale: 1.3,
+          duration: 400,
+          ease: "Power2",
+          onComplete: () => book.destroy()
+        });
+
+        // ✅ Show clean system message
+        DialogueManager.start([
+          `Book Collected: ${bookData.title}`,
+          "Inspect it in your inventory."
+        ]);
+
+        // ✅ Completion Check
+        this.time.delayedCall(200, () => {
+
+          if (LessonManager.isAllBooksRead(this.lesson)) {
+
+            const step = QuestSystem.getCurrentStep();
+            /*
+              if (step?.id === "collect_books") {
+                QuestSystem.completeStep("collect_books");
+              }
+                */
+            const progress =
+              GameState.player.lessonProgress?.[this.lesson];
+
+            if (!progress?._completionShown) {
+
+              progress._completionShown = true;
+              GameState.player = GameState.player;
+
+              DialogueManager.start([
+                "All lesson materials completed!",
+                "Talk to the instructor to begin the quiz."
+              ]);
+            }
+          }
+
+        });
+
+      });
     });
-  });
-}
+  }
 
   // =====================================================
   // EXIT
@@ -386,26 +386,27 @@ createBooks() {
     });
 
     this.input.keyboard.on("keydown-Z", () => {
-  if (this.nearExit) {
-/*
-    // Save player position in house
-    const player = GameState.player;
-    if (player) {
-      GameState.player = {
-        ...player,
-        worldState: {
-          ...player.worldState,
-          position: { x: this.player.x, y: this.player.y }
-        }
-      };
-    }
-*/
-    SceneTransition.start(this, () => {
-      this.scene.start("JScriptoriaCityScene", {
-        spawn: "LessonDoorReturn"
-      });
+      if (this.nearExit) {
+        /*
+            // Save player position in house
+            const player = GameState.player;
+            if (player) {
+              GameState.player = {
+                ...player,
+                worldState: {
+                  ...player.worldState,
+                  position: { x: this.player.x, y: this.player.y }
+                }
+              };
+            }
+        */
+       const spawnKey = this.sceneData.spawn;
+        SceneTransition.start(this, () => {
+          this.scene.start("JScriptoriaCityScene", {
+            spawn: spawnKey
+          });
+        });
+      }
     });
-  }
-});
   }
 }
