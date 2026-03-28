@@ -62,4 +62,14 @@ export default class SoundManager {
 
     this.currentBGM.play();
   }
+
+  playOnce(key, config = {}) {
+  this.add(key, config);
+
+  const sound = this.sounds[key];
+
+  if (!sound.isPlaying) {
+    sound.play(config);
+  }
+}
 }

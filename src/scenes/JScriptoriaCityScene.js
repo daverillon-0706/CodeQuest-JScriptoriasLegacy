@@ -25,6 +25,7 @@ import SceneTransition from "../systems/SceneTransition.js";
 import TutorialUI from "../ui/HUD/TutorialUI.js";
 import { QUESTS } from "../systems/quests/QuestList.js";
 import QuestSystem from "../systems/quests/QuestSystem.js";
+import { elysiaDialogues } from "../systems/ElysiaDialogues.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -39,6 +40,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.playerController = null;
     this.dialogueManager = null;
     this.hoverManager = null;
+    this.canEnterDoor = true;
     // ---- BUGS ----
     this.maxBugs = 30;
     //this.spawnInterval = 5000;
@@ -90,6 +92,24 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.load.spritesheet('wisp', '/assets/sprites/bug/wisp.png', { frameWidth: 16, frameHeight: 16, endFrame: 7 });
     this.load.spritesheet('rift', '/assets/sprites/bug/rift.png', { frameWidth: 48, frameHeight: 32, endFrame: 7 });
 
+    // Houses
+    this.load.image('syntaxIcon', 'assets/icons/maps/syntax_map.png');
+    this.load.image('datatypesIcon', 'assets/icons/maps/datatypes_map.png');
+    this.load.image('variablesIcon', 'assets/icons/maps/variables_map.png');
+    this.load.image('operatorsIcon', 'assets/icons/maps/operators_map.png');
+    this.load.image('conditionsIcon', 'assets/icons/maps/conditions_map.png');
+    this.load.image('arraysIcon', 'assets/icons/maps/arrays_map.png');
+    this.load.image('functionsIcon', 'assets/icons/maps/functions_map.png');
+
+    // Monoliths (can be same icons)
+    this.load.image('syntaxMonolithIcon', 'assets/icons/maps/syntax_map.png');
+    this.load.image('datatypesMonolithIcon', 'assets/icons/maps/datatypes_map.png');
+    this.load.image('variablesMonolithIcon', 'assets/icons/maps/variables_map.png');
+    this.load.image('operatorsMonolithIcon', 'assets/icons/maps/operators_map.png');
+    this.load.image('conditionsMonolithIcon', 'assets/icons/maps/conditions_map.png');
+    this.load.image('arraysMonolithIcon', 'assets/icons/maps/arrays_map.png');
+    this.load.image('functionsMonolithIcon', 'assets/icons/maps/functions_map.png');
+
     // Weapons
     this.load.spritesheet("bullet", "/assets/sprites/player/bullet.png", { frameWidth: 8, frameHeight: 8 });
 
@@ -100,9 +120,28 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.load.audio("energy_use", "assets/sfx/player/energy_use.wav");
     this.load.audio("cryptos", "assets/sfx/player/cryptos.wav");
     this.load.audio("blaster", "assets/sfx/player/blaster.wav");
+    this.load.audio('kaching', 'assets/sfx/player/kaching.wav');
+    this.load.audio('error', 'assets/sfx/player/error.wav');
+    this.load.audio('rift_summon', 'assets/sfx/player/rift_summon.wav');
+    this.load.audio('door', 'assets/sfx/player/door.wav');
+    this.load.audio('kiosk', 'assets/sfx/player/kiosk.wav');
   }
   // ================= CREATE =================
   create(data = {}) {
+    this.doorSpawnMap = {
+      "syntax_door": { x: 612, y: 451 },
+      "datatypes_door": { x: 466, y: 684 },
+      "variables_door": { x: 718, y: 956 },
+      "operators_door": { x: 913, y: 656 },
+      "conditions_door": { x: 1056, y: 652 },
+      "arrays_door": { x: 948, y: 1003 },
+      "functions_door": { x: 1058, y: 829 }
+    };
+
+    console.log("=== CITY SPAWN DEBUG ===");
+    console.log("Incoming data:", data);
+    console.log("Incoming spawn:", data.spawn);
+    console.log("Exists in map:", data?.spawn && this.doorSpawnMap[data.spawn]);
     SceneTransition.start(this, () => {
       console.log("City scene finished transition");
     });
@@ -121,15 +160,49 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     this.scanMonolithTiles();
 
-    // ---- PLAYER SPAWN ----
-    
-    const spawnLayer = this.map.getObjectLayer("Objects") || { objects: [] };
-    let spawnObj = spawnLayer.objects.find(o => o.name === data.spawn)
-      || spawnLayer.objects.find(o => o.name === "MalePlayer")
-      || { x: 704, y: 759 };
+    // House positions
+    this.houses = [
+      { name: "syntax", x: 609, y: 416, iconKey: "syntaxIcon" },
+      { name: "datatypes", x: 464, y: 660, iconKey: "datatypesIcon" },
+      { name: "variables", x: 720, y: 934, iconKey: "variablesIcon" },
+      { name: "operators", x: 911, y: 627, iconKey: "operatorsIcon" },
+      { name: "conditions", x: 1055, y: 628, iconKey: "conditionsIcon" },
+      { name: "arrays", x: 943, y: 982, iconKey: "arraysIcon" },
+      { name: "functions", x: 1055, y: 805, iconKey: "functionsIcon" }
+    ];
 
-    let spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
-    let spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
+    // Monolith positions
+    this.monoliths = [
+      { name: "syntax", x: 1200, y: 63, iconKey: "syntaxMonolithIcon" },
+      { name: "datatypes", x: 79, y: 6, iconKey: "datatypesMonolithIcon" },
+      { name: "variables", x: 16, y: 831, iconKey: "variablesMonolithIcon" },
+      { name: "operators", x: 31, y: 1295, iconKey: "operatorsMonolithIcon" },
+      { name: "conditions", x: 623, y: 1359, iconKey: "conditionsMonolithIcon" },
+      { name: "arrays", x: 1360, y: 1359, iconKey: "arraysMonolithIcon" },
+      { name: "functions", x: 1375, y: 96, iconKey: "functionsMonolithIcon" }
+    ];
+
+    // ---- PLAYER SPAWN ----
+    let spawnX, spawnY;
+
+    // PRIORITY 1: door spawn map
+    if (data.spawn && this.doorSpawnMap[data.spawn]) {
+      spawnX = this.doorSpawnMap[data.spawn].x;
+      spawnY = this.doorSpawnMap[data.spawn].y;
+      console.log("City spawn from door:", data.spawn);
+    } else {
+      // PRIORITY 2: default spawn (new game)
+      const spawnLayer = this.map.getObjectLayer("Objects") || { objects: [] };
+
+      const spawnObj =
+        spawnLayer.objects.find(o => o.name === "MalePlayer") ||
+        { x: 704, y: 759 };
+
+      spawnX = Math.round(spawnObj.x / this.TILE_SIZE) * this.TILE_SIZE;
+      spawnY = Math.round(spawnObj.y / this.TILE_SIZE) * this.TILE_SIZE;
+
+      console.log("City default spawn");
+    }
 
     this.player = this.physics.add.sprite(spawnX, spawnY, "player_male", 0)
       .setOrigin(0, 1)
@@ -138,7 +211,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       .setOffset(2, 8)
       .setDepth(5);
 
-      console.log("City received spawn:", data.spawn);
+    console.log("City received spawn:", data.spawn);
     if (!this.player.activePerks) {
       this.player.activePerks = {};
     }
@@ -191,13 +264,9 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         console.log("Equipped default defense perk: Magic Mushroom");
       }
     }
-
-    PerksManager.setScene(this);
-
     this.tutorialUI = new TutorialUI(this);
     console.log("QUESTS:", QUESTS);
     console.log("Current Quest:", QuestSystem.getCurrentQuest());
-
 
     console.log("New Current Quest:", QuestSystem.getCurrentQuest());
     const player = GameState.player;
@@ -211,9 +280,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         this.tutorialUI.show();
       });
     }
-
-
-
     // Shop System Logic
     this.shopSystem = new ShopSystem(this);
 
@@ -291,6 +357,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.load.audio("cryptos", "/assets/sfx/cryptos.wav");
     this.blasterSFX = this.sound.add("blaster", { volume: 0.5 });
 
+
     // ---- SYSTEMS ----
     this.createAnimations();
     this.createCityNPCs();
@@ -346,6 +413,14 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.hoverManager.registerFromObjectLayer(this.map, "hover objects");
 
     // ---- INTERACTIONS ----
+    this.minimapVisible = true;
+    this.input.keyboard.on('keydown-M', () => {
+      this.minimapVisible = !this.minimapVisible;
+      if (this.minimapCanvas) this.minimapCanvas.style.display = this.minimapVisible ? 'block' : 'none';
+    });
+    this.input.keyboard.on('keydown-T', () => {
+  this.soundManager.play('kaching');
+});
     this.input.keyboard.on("keydown-Z", () => {
       console.log("CanTalkTo:", this.playerController?.canTalkTo);
       if (ChestSystem.interact()) return;
@@ -358,21 +433,30 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
       const npc = this.playerController.canTalkTo;
 
-      if (npc?.customData?.dialogue?.length) {
-        this.dialogueManager.start(npc.customData.dialogue);
+      if (npc) {
+        // ONLY override Elysia
+        if (npc.customData?.npcId === "elysia") {
+          const dialogueLines = getElysiaDialogue(npc);
+          this.dialogueManager.start(dialogueLines);
 
-        // ✅ QUEST HOOK
-        const step = QuestSystem.getCurrentStep();
-        if (step?.id === "talk_elysia") {
-          QuestSystem.completeStep("talk_elysia");
+          const step = QuestSystem.getCurrentStep();
+          if (step?.id === "talk_elysia") {
+            QuestSystem.completeStep("talk_elysia");
+          }
+
+          return;
         }
 
-        return;
-      }
+        //All other NPCs use Tiled dialogue
+        if (npc.customData?.dialogue?.length) {
+          this.dialogueManager.start(npc.customData.dialogue);
+          return;
+        }
 
-      if (npc?.interact) {
-        npc.interact();
-        return;
+        if (npc?.interact) {
+          npc.interact();
+          return;
+        }
       }
 
       const trigger = this.sceneTriggers?.getNearbyTrigger?.();
@@ -397,13 +481,19 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         return;
       }
 
-      if (this.nearbyDoor) {
+      if (this.nearbyDoor && this.canEnterDoor) {
 
         const targetScene = this.nearbyDoor.getData("scene");
         const lesson = this.nearbyDoor.getData("lesson");
         const lessonOrder = this.nearbyDoor.getData("order");
-        const spawnKey = this.nearbyDoor.getData("spawnKey");
+        let spawnKey = this.nearbyDoor.getData("spawnKey");
 
+        // 🔥 convert "_exit" → "_door"
+        if (spawnKey) {
+          spawnKey = spawnKey.replace("_exit", "_door");
+        }
+
+        const doorName = this.nearbyDoor.name;
         const player = GameState.player;
 
         const ownedKeystones = player.items?.keyItems?.filter(id =>
@@ -427,19 +517,32 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
         // ---- SAVE PLAYER POSITION BEFORE TRANSITION ----
         //this.savePlayerPosition();
+        this.canEnterDoor = false
+        this.time.delayedCall(1500, () => {
+          this.canEnterDoor = true;
+        });
+        console.log("DOOR DEBUG:");
+        console.log("Door object:", this.nearbyDoor);
+        console.log("Door name:", this.nearbyDoor.name);
+        console.log("Door data spawnKey:", this.nearbyDoor.getData("spawnKey"));
 
         // ---- SWITCH SCENE ----
         SceneTransition.start(this, () => {
-          this.scene.start(targetScene, { lesson, spawn: spawnKey, returnSpawn: spawnKey });
+          this.soundManager.play('door');
+          this.scene.start(targetScene, {
+            lesson,
+            spawn: spawnKey,
+            returnSpawn: spawnKey
+          });
         });
 
         return;
       }
     });
 
-    //this.input.keyboard.on("keydown-F", () => {
+    // Shoot the bullet with space bar
     this.player.anims.play("attack-down");
-    //});
+
     // ================= PLAYER ↔ BUG DAMAGE =================
     this.physics.add.overlap(this.player, this.bugGroup, (player, bug) => {
       if (bug.dealDamage && !player.isHit) {
@@ -459,24 +562,41 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.time.delayedCall(0, () => {
       if (window.HUD) window.HUD.updateHUD();
     });
-    SceneTransition.start(this, () => {
-      console.log("City scene loaded");
+    this.events.on("shutdown", () => {
+      if (this.npcs) {
+        this.npcs.forEach(npc => {
+          const el = npc.customData?.nameEl;
+          if (el) el.remove();
+        });
+      }
     });
   }
   // ================= UPDATE =================
   update(time, delta) {
     if (!this.playerController) return;
     this.playerController.update(this.npcs);
-    console.log("NPC COUNT:", this.npcs.length);
+    //console.log("NPC COUNT:", this.npcs.length);
 
     // Update NPC name positions
-    if (this.cityNPCs) {
-      this.cityNPCs.forEach(npc => {
-        if (npc.nameText && npc.active) {
-          npc.nameText.setPosition(npc.x, npc.y - 32);
-        }
+
+    // 🔥 Update NPC HTML name positions
+    if (this.npcs) {
+      const cam = this.cameras.main;
+
+      this.npcs.forEach(npc => {
+        const el = npc.customData?.nameEl;
+        if (!el || !npc.active) return;
+
+        // Convert world → screen
+        const screenX = (npc.x - cam.worldView.x) * cam.zoom;
+        const screenY = (npc.y - cam.worldView.y) * cam.zoom;
+
+        el.style.left = `${screenX}px`;
+        el.style.top = `${screenY - 16}px`; // adjust height
       });
     }
+
+
     if (this.bugManager) {
       this.bugManager.update(time, delta);
 
@@ -494,10 +614,12 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     }
     //this.handlePerkEffects();
 
+
     // ---- MINIMAP UPDATE ----
     if (this.minimap) {
       this.minimap.clear();
       this.drawMinimapMap();
+      this.drawHTMLMinimapHouses();
       this.drawHTMLMinimapMonoliths();
       this.drawMinimapPlayer();
       this.drawMinimapBugs();
@@ -515,6 +637,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
       // Redraw
       this.drawHTMLMinimapMap();
+      this.drawHTMLMinimapHouses();
       this.drawHTMLMinimapMonoliths();
       this.drawHTMLMinimapPlayer();
       this.drawHTMLMinimapBugs();
@@ -665,12 +788,31 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         .setDepth(obj.y);
 
       // ================= NAME ABOVE HEAD =================
+      // 🔥 CREATE HTML ELEMENT
       const npcName = nameProp?.value || npcId;
 
+      // 🔥 CREATE HTML LABEL
+      const nameEl = document.createElement("div");
+      nameEl.textContent = npcName;
+
+      Object.assign(nameEl.style, {
+        position: "absolute",
+        color: "#fff",
+        fontSize: "10px",
+        fontFamily: "monospace",
+        pointerEvents: "none",
+        transform: "translate(-50%, -100%)", // center + above
+        zIndex: 9999
+      });
+
+      document.body.appendChild(nameEl);
+
+      // store reference
       npc.customData = {
         dialogue,
         npcId,
-        name: npcName
+        name: npcName,
+        nameEl // 👈 IMPORTANT
       };
 
       npc.interact = () => {
@@ -753,7 +895,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if (!layer) return;
 
     const currentQuestIndex =
-      GameState.player.worldState.questProgress.currentQuestIndex;
+      GameState.player.worldState?.questProgress?.currentQuestIndex ?? 0;
 
     const currentQuest = QUESTS[currentQuestIndex];
 
@@ -836,6 +978,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   }
   activateRiftFromKiosk(kiosk) {
     if (!kiosk?.kioskName) return;
+    this.soundManager.play('kiosk');
 
     const owned = GameState.player.items.keyItems || [];
 
@@ -975,17 +1118,13 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.isUIBlockingInput = true;
     rift.isDebugging = true;
 
-    // ==============================
     // Challenge tracking
-    // ==============================
     rift.challengeIndex = rift.challengeIndex ?? 0;
     rift.totalChallenges = rift.totalChallenges ?? rift.challengePool.length;
 
     const challenge = rift.challengePool[rift.challengeIndex];
 
-    // ==============================
     // Create container
-    // ==============================
     const container = document.createElement("div");
     container.id = `rift-debug-${rift.riftName}`;
 
@@ -1004,18 +1143,14 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       zIndex: 10000
     });
 
-    // ==============================
     // Instruction panel
-    // ==============================
     const instruction = document.createElement("div");
     instruction.textContent = challenge?.instruction ?? "No instruction.";
     instruction.style.marginBottom = "8px";
     instruction.style.color = "#8f8";
     container.appendChild(instruction);
 
-    // ==============================
     // Code textarea
-    // ==============================
     const textarea = document.createElement("textarea");
 
     Object.assign(textarea.style, {
@@ -1034,9 +1169,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     textarea.addEventListener("keydown", (e) => {
       e.stopPropagation();
     });
-    // ==============================
+
     // Console output box
-    // ==============================
     const consoleBox = document.createElement("div");
 
     Object.assign(consoleBox.style, {
@@ -1078,15 +1212,15 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       }
 
       try {
-        // 1️⃣ Syntax check
+        //  Syntax check
         new Function(code);
 
-        // 2️⃣ Sandbox execution
+        //  Sandbox execution
         const sandboxConsole = { log: (...args) => printConsole(args.join(" ")) };
         const sandboxFunc = new Function("console", `"use strict"; ${code}`);
         sandboxFunc(sandboxConsole);
 
-        // 3️⃣ Challenge validation
+        // Challenge validation
         let success = false;
         if (challenge.validate) {
           success = challenge.validate(code);
@@ -1099,7 +1233,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
           return;
         }
 
-        // 4️⃣ Success flow
+        // Success flow
         printConsole("✅ Challenge cleared!");
         console.log("=== SUCCESS FLOW DEBUG START ===");
         console.log("Rift object:", rift);
@@ -1168,9 +1302,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     container.appendChild(compileBtn);
 
-    // ==============================
     // Close button
-    // ==============================
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Close";
     closeBtn.style.marginLeft = "10px";
@@ -1181,15 +1313,11 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     container.appendChild(closeBtn);
 
-    // ==============================
     // Attach to DOM
-    // ==============================
     document.body.appendChild(container);
     this.compilerWindow = container;
 
-    // ==============================
     // Emergency close if damaged
-    // ==============================
     this.codingDamageHandler =
       this.physics.add.overlap(
         this.player,
@@ -1236,6 +1364,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   }
   defeatRift(rift) {
     if (!rift || !rift.completed) return;
+    this.soundManager.play('rift_summon');
 
     console.log("RiftName:", rift.riftName);
     console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);
@@ -1385,6 +1514,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       this.minimap.fillCircle(x, y, 2);
     });
   }
+  /*
   drawHTMLMinimapMonoliths() {
     if (!this.minimapCtx || !this.monoliths) return;
 
@@ -1403,6 +1533,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     });
   }
+  */
   // ================= HTML MINIMAP INIT =================
   scanMonolithTiles() {
     if (!this.monolithLayer) return;
@@ -1506,10 +1637,37 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       ctx.fill();
     });
   }
+  drawHTMLMinimapHouses() {
+    if (!this.minimapCtx || !this.houses) return;
+    const ctx = this.minimapCtx;
+
+    this.houses.forEach(house => {
+      const x = house.x * this.mapScaleX;
+      const y = house.y * this.mapScaleY;
+
+      const icon = this.textures.get(house.iconKey).getSourceImage();
+      const size = 8; // adjust for minimap scale
+      ctx.drawImage(icon, x - size / 2, y - size / 2, size, size);
+    });
+  }
+  drawHTMLMinimapMonoliths() {
+    if (!this.minimapCtx || !this.monoliths) return;
+    const ctx = this.minimapCtx;
+
+    this.monoliths.forEach(m => {
+      const x = m.x * this.mapScaleX;
+      const y = m.y * this.mapScaleY;
+
+      const icon = this.textures.get(m.iconKey).getSourceImage();
+      const size = 8;
+      ctx.drawImage(icon, x - size / 2, y - size / 2, size, size);
+    });
+  }
   onBulletHitBug(bullet, bug) {
     if (!bullet.active || !bug.active) return;
-
+    if (bug instanceof InternalRiftBug) return;
     bullet.destroy();
+
 
     if (bug.takeDamage) {
       bug.takeDamage(1);
@@ -1639,33 +1797,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     };
     container.appendChild(retryBtn);
 
-
-    // ===== Continue Button =====
-    const continueBtn = document.createElement("button");
-    continueBtn.textContent = "Continue";
-    continueBtn.onclick = () => {
-      this.removeGameOverUI();           // remove overlay
-      this.playerController.unfreeze();   // allow movement again
-
-      // Load last save from GameState
-      if (GameState.player) {
-        const gs = GameState.player;
-
-        // Reset player sprite properties to last save
-        this.player.setPosition(gs.x || this.player.x, gs.y || this.player.y);
-        this.player.customData.HP = gs.hp;
-        this.player.customData.max_hp = gs.max_hp;
-        this.player.customData.Energy = gs.energy;
-        this.player.customData.Coins = gs.cryptos;
-
-        if (window.HUD) window.HUD.updateHUD();
-        if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
-
-        console.log("Continued from last save!");
-      }
-    };
-    container.appendChild(continueBtn);
-
     // ===== Return to Main Menu =====
     const mainMenuBtn = document.createElement("button");
     mainMenuBtn.textContent = "Return to Main Menu";
@@ -1688,42 +1819,42 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     }
   }
   createLessonDoorsFromMap() {
-  const doorLayer = this.map.getObjectLayer("LessonDoors");
-  if (!doorLayer) return;
+    const doorLayer = this.map.getObjectLayer("LessonDoors");
+    if (!doorLayer) return;
 
-  this.lessonDoors = [];
+    this.lessonDoors = [];
 
-  doorLayer.objects.forEach(obj => {
-    const doorX = obj.x + (obj.width / 2);
-    const doorY = obj.y + (obj.height / 2);
+    doorLayer.objects.forEach(obj => {
+      const doorX = obj.x + (obj.width / 2);
+      const doorY = obj.y + (obj.height / 2);
 
-    const doorZone = this.add.zone(doorX, doorY, obj.width, obj.height);
-    this.physics.world.enable(doorZone);
+      const doorZone = this.add.zone(doorX, doorY, obj.width, obj.height);
+      this.physics.world.enable(doorZone);
 
-    doorZone.body.setAllowGravity(false);
-    doorZone.body.setImmovable(true);
+      doorZone.body.setAllowGravity(false);
+      doorZone.body.setImmovable(true);
 
-    // --- LESSON DATA ---
-    const lesson = obj.properties?.find(p => p.name === "lesson")?.value;
-    const order = obj.properties?.find(p => p.name === "order")?.value;
+      // --- LESSON DATA ---
+      const lesson = obj.properties?.find(p => p.name === "lesson")?.value;
+      const order = obj.properties?.find(p => p.name === "order")?.value;
 
-    // --- SPAWN KEY ---
-    const spawnKey = obj.properties?.find(p => p.name === "spawnKey")?.value;
+      // --- SPAWN KEY ---
+      const spawnKey = obj.properties?.find(p => p.name === "spawnKey")?.value;
 
-    // Store for transition
-    doorZone.setData("scene", "LessonHouseScene");
-    doorZone.setData("lesson", lesson);
-    doorZone.setData("order", order);
-    doorZone.setData("spawnKey", spawnKey); // 👈 NEW
+      // Store for transition
+      doorZone.setData("scene", "LessonHouseScene");
+      doorZone.setData("lesson", lesson);
+      doorZone.setData("order", order);
+      doorZone.setData("spawnKey", spawnKey); // 👈 NEW
 
-    // Player overlap detection
-    this.physics.add.overlap(this.player, doorZone, () => {
-      this.nearbyDoor = doorZone;
+      // Player overlap detection
+      this.physics.add.overlap(this.player, doorZone, () => {
+        this.nearbyDoor = doorZone;
+      });
+
+      this.lessonDoors.push(doorZone);
     });
-
-    this.lessonDoors.push(doorZone);
-  });
-}
+  }
   refreshHUD() {
     const gs = GameState.player;
     if (!gs) return;
@@ -1745,9 +1876,35 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         position: { x: this.player.x, y: this.player.y }
       }
     };
-  /*
-    GameState.setScenePosition(this.scene.key, player.x, player.y);
-    console.log("[GameState] Saved player position:", this.player.x, this.player.y);
-    */
+    /*
+      GameState.setScenePosition(this.scene.key, player.x, player.y);
+      console.log("[GameState] Saved player position:", this.player.x, this.player.y);
+      */
   }
+
+}
+function getElysiaDialogue(npc) {
+  if (npc?.customData?.npcId !== "elysia") {
+    return npc?.customData?.dialogue || ["..."];
+  }
+
+  const player = GameState.player;
+  if (!player) return ["Hello!"];
+
+  const keystones = player.items?.keyItems?.filter(id =>
+    id.startsWith("keystone")
+  ) || [];
+
+  const count = keystones.length;
+
+  // Determine which lesson the player is currently on
+  const lessonKeys = Object.keys(elysiaDialogues);
+  const currentLessonKey = lessonKeys[Math.min(count, lessonKeys.length - 1)];
+
+  const lines = elysiaDialogues[currentLessonKey];
+
+  // Pick a random line for variety
+  const randomLine = lines[Math.floor(Math.random() * lines.length)];
+
+  return [randomLine];
 }

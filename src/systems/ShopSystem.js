@@ -1,10 +1,12 @@
 import ShopUI from "./ShopUI.js";
 import {inventoryData} from "../ui/data/inventoryData.js"
 import GameState from "../GameState.js";
+import SoundManager from "./SoundManager.js";
 
 export default class ShopSystem {
   constructor(scene) {
     this.scene = scene;
+    this.soundManager = new SoundManager(scene);
 
     this.isOpen = false;
 
@@ -69,12 +71,14 @@ export default class ShopSystem {
 
   buyItem(item) {
   const player = GameState.player;
+  this.soundManager.play('kaching');
   if (!player) return;
 
   // =========================
   // Currency check
   // =========================
   if (player.cryptos < item.price) {
+    this.soundManager.play('error');
     console.log("[Shop] Not enough Cryptos");
     return;
   }
@@ -85,6 +89,7 @@ export default class ShopSystem {
   if (item.id === "heart_container") {
 
     if (player.max_hp >= 13) {
+      this.soundManager.play('error');
       console.log("[Shop] Max HP already at cap");
       return;
     }
@@ -94,6 +99,7 @@ export default class ShopSystem {
     player.hp = player.max_hp; // full heal
 
     GameState.player = player;
+    
     console.log(`[Shop] Max HP increased → ${player.max_hp}`);
     
 
@@ -106,6 +112,7 @@ return;
   if (item.id === "energy_container") {
 
     if (player.max_energy >= 10) {
+      this.soundManager.play('error');
       console.log("[Shop] Max Energy already at cap");
       return;
     }
@@ -133,6 +140,7 @@ return;
     player.items.consumables.find(c => c.id === item.id)?.amount ?? 0;
 
   if (item.limit && owned >= item.limit) {
+    this.soundManager.play('error');
     console.log(`[Shop] ${item.name} limit reached`);
     return;
   }

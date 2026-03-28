@@ -263,7 +263,7 @@ Operators: [
 Conditions: [
   {
     instruction: "Fix the if condition",
-    starterCode: "let x = 10; if (x < 5) { result = true; }",
+    starterCode: "// Make the result as true let x = 10; if (x < 5) { result = true; }",
     validate: (code) => {
       try {
         const fn = new Function(`${code}; return result === true;`);

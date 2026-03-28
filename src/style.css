@@ -1,8 +1,16 @@
 /*root of html*/
 :root {
   --accent: #00ffff;
+  --font-main: 'Press Start 2P', monospace; /* your main game font */
+  --font-size-main: 18px;                   /* base size for UI/dialogue text */
 }
 
+/* Apply globally to everything 
+body, html, div, span, p, h1, h2, h3, h4, h5, h6, button, input, textarea {
+  font-family: var(--font-main);
+  font-size: var(--font-size-main);
+  color: #000000;
+}*/
 
 /*Body*/
 body {
@@ -1716,4 +1724,19 @@ body {
   font-size: 14px;
   line-height: 1.6;
   transition: 0.2s ease;
+}
+
+/*NPC name layer*/
+#npc-name-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* don't block clicks */
+}
+.npc-name {
+  position: absolute;
+  font-size: 10px;
+  color: white;
+  text-shadow: 0 0 2px black;
+  transform: translate(-50%, -100%);
 }

@@ -431,7 +431,7 @@ export default class HUD {
     if (appId === "app-inventory") {
 
       syncInventory(); // update UI state from GameState
-      this.inventory.loadInventory(); // refresh the grid instead of creating new instance;
+      this.inventory.loadInventory(this.inventory.currentTab);// refresh the grid instead of creating new instance;
 
       console.log(
         "[HUD] Inventory synced & loaded"
@@ -638,7 +638,7 @@ window.addEventListener("gamestate-updated", () => {
   if (!hud) return;
 
   if (document.getElementById("app-inventory")?.classList.contains("active")) {
-    hud.inventory.loadInventory();
+    hud.inventory.loadInventory(hud.inventory.currentTab);
   }
 
   hud.updateHUD();

@@ -30,6 +30,7 @@ export default class ShopUI {
 
     div.querySelector("button").onclick = () => {
   if (this.onBuy) this.onBuy(item);
+  this.soundManager.play('kaching');
 };
 
 

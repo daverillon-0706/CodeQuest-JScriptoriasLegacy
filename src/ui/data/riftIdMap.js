@@ -5,7 +5,7 @@ export const RIFT_ID_MAP = {
   "Variables Monolith": "Variables",
   "Operators Monolith": "Operators",
   "Conditions Monolith": "Conditions",
-  "Array Monolith": "Array",
+  "Arrays Monolith": "Arrays",
   "Functions Monolith": "Functions"
 };
 

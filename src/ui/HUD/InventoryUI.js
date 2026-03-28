@@ -26,7 +26,8 @@ export default class InventoryUI {
 
     // Tab switching
     this.invTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault(); // ✅ prevent page refresh
         this.invTabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         this.loadInventory(tab.dataset.tab);
@@ -47,75 +48,94 @@ export default class InventoryUI {
 
   // Setup quick-access consumable button behavior
   setupQuickAccess() {
-  // Get the current player perks
-  const player = GameState.player;
-  if (!player) return;
+    const player = GameState.player;
+    if (!player) return;
 
-  // Loop over both quick-access consumable slots
-  player.perks.consumables = player.perks.consumables || [null, null];
+    player.perks.consumables = player.perks.consumables || [null, null];
 
-  player.perks.consumables.forEach((consumableId, index) => {
-    const slotEl = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
-    if (!slotEl) return;
+    player.perks.consumables.forEach((_, index) => {
+      const slotEl = document.querySelector(`.quick-slot.item[data-slot="item-${index + 1}"]`);
+      if (!slotEl) return;
 
-    // Set data-id and icon
-    slotEl.dataset.id = consumableId ?? '';
-    const imgEl = slotEl.querySelector('.perk-icon img');
-    if (imgEl) imgEl.src = consumableId ? ITEM_ICONS[consumableId] ?? '' : '';
+      const consumableId = player.perks.consumables[index];
+      slotEl.dataset.id = consumableId ?? '';
+      const imgEl = slotEl.querySelector('.perk-icon img');
+      if (imgEl) imgEl.src = consumableId ? ITEM_ICONS[consumableId] ?? '' : '';
 
-    // Click listener to use the consumable
-    slotEl.onclick = () => {
-      if (!consumableId) return;
-      const scene = window.currentScene;
-      const success = ConsumablesManager.use(consumableId, scene);
+      // Use the dataset at click time to avoid stale closures
+      slotEl.onclick = () => {
+        const currentId = slotEl.dataset.id;
+        if (!currentId) return;
 
-      const consumableData = inventoryData.cons[consumableId];
-      if (!consumableData) return alert("❌ Consumable not found!");
+        const scene = window.currentScene;
+        const success = ConsumablesManager.use(currentId, scene);
+        const consumableData = inventoryData.cons[currentId];
+        if (!consumableData) return alert("❌ Consumable not found!");
 
-      if (success) {
-        alert(`✅ Used ${consumableData.name} from Quick Access`);
+        if (success) {
+          alert(`✅ Used ${consumableData.name} from Quick Access`);
 
-        // Remove from slot if depleted
-        const updatedPlayer = GameState.player;
-        const slotIdx = updatedPlayer.perks.consumables.findIndex(c => c === consumableId);
-        if (slotIdx !== -1) {
-          updatedPlayer.perks.consumables[slotIdx] = null;
+          // Remove from slot if depleted
+          const updatedPlayer = GameState.player;
+          const slotIdx = updatedPlayer.perks.consumables.findIndex(c => c === currentId);
+          if (slotIdx !== -1) updatedPlayer.perks.consumables[slotIdx] = null;
+          GameState.player = updatedPlayer;
+
+          syncInventory();
+          this.reload();
+        } else {
+          alert(`❌ No ${consumableData.name} left!`);
         }
-        GameState.player = updatedPlayer;
-
-        syncInventory();
-        this.reload();
-      } else {
-        alert(`❌ No ${consumableData.name} left!`);
-      }
-    };
-  });
-}
+      };
+    });
+  }
 
   // Load inventory items for a given tab
   loadInventory(tab = 'key') {
-  this.currentTab = tab;
-  this.invGrid.innerHTML = '';
+    this.currentTab = tab;
+    this.invGrid.innerHTML = '';
 
-  syncInventory();
+    syncInventory();
 
-  const player = GameState.player;
-  if (!player) return;
+    const player = GameState.player;
+    if (!player) return;
 
-  // ===============================
-  // KEY ITEMS (Keycards / Keystones)
-  // ===============================
-  if (tab === 'key') {
+    // ===============================
+    // KEY ITEMS (Keycards / Keystones)
+    // ===============================
+    if (tab === 'key') {
+      const keyItems = player.items?.keyItems || [];
+      keyItems.forEach(id => {
+        const itemData = inventoryData.key?.[id] || { name: id, desc: "Key Item" };
+        const slot = document.createElement('div');
+        slot.classList.add('inv-slot');
 
-    const keyItems = player.items?.keyItems || [];
+        const img = document.createElement('img');
+        img.src = ITEM_ICONS[id] ?? '';
+        img.classList.add('inv-icon');
+        slot.appendChild(img);
 
-    keyItems.forEach(id => {
+        slot.addEventListener('click', () =>
+          this.openItemDetails(itemData, id)
+        );
 
-      const itemData = inventoryData.key?.[id] || {
-        name: id,
-        desc: "Key Item"
-      };
+        this.invGrid.appendChild(slot);
+      });
+      return;
+    }
 
+    // ===============================
+    // OTHER TABS (Consumables etc)
+    // ===============================
+    const data = inventoryData[tab];
+    const state = inventoryState[tab];
+    if (!data || !state) return;
+
+    Object.keys(data).forEach(id => {
+      const owned = state[id] > 0;
+      if (!owned) return;
+
+      const item = data[id];
       const slot = document.createElement('div');
       slot.classList.add('inv-slot');
 
@@ -125,105 +145,70 @@ export default class InventoryUI {
       slot.appendChild(img);
 
       slot.addEventListener('click', () =>
-        this.openItemDetails(itemData, id)
+        this.openItemDetails(item, id, state[id])
       );
 
       this.invGrid.appendChild(slot);
     });
-
-    return;
   }
-
-  // ===============================
-  // OTHER TABS (Consumables etc)
-  // ===============================
-
-  const data = inventoryData[tab];
-  const state = inventoryState[tab];
-  if (!data || !state) return;
-
-  Object.keys(data).forEach(id => {
-
-    const owned = state[id] > 0;
-    if (!owned) return;
-
-    const item = data[id];
-
-    const slot = document.createElement('div');
-    slot.classList.add('inv-slot');
-
-    const img = document.createElement('img');
-    img.src = ITEM_ICONS[id] ?? '';
-    img.classList.add('inv-icon');
-    slot.appendChild(img);
-
-    slot.addEventListener('click', () =>
-      this.openItemDetails(item, id, state[id])
-    );
-
-    this.invGrid.appendChild(slot);
-  });
-}
 
   // Open item details (right panel)
   openItemDetails(item, id = null, amount = null) {
     this.invName.textContent = item.name;
     this.invDesc.textContent = item.desc + (amount !== null ? `\nQuantity: ${amount}` : '');
-
     this.invIcon.src = ITEM_ICONS[id] ?? '';
     this.invIcon.style.display = 'block';
     this.invDetails.classList.remove('hidden');
 
-    if (this.currentTab === 'cons') {
-      // Use Button
-      let btn = document.getElementById('inv-use-btn');
-      if (!btn) {
-        btn = document.createElement('button');
-        btn.id = 'inv-use-btn';
-        btn.textContent = 'Use';
-        btn.style.marginTop = '8px';
-        this.invDetails.appendChild(btn);
+    if (this.currentTab !== 'cons') return;
+
+    // Remove existing buttons to avoid multiple listeners
+    ['inv-use-btn', 'inv-equip-btn'].forEach(btnId => {
+      const oldBtn = document.getElementById(btnId);
+      if (oldBtn) oldBtn.remove();
+    });
+
+    // Use Button
+    const useBtn = document.createElement('button');
+    useBtn.id = 'inv-use-btn';
+    useBtn.textContent = 'Use';
+    useBtn.style.marginTop = '8px';
+    useBtn.onclick = () => {
+      const scene = window.currentScene;
+      const success = ConsumablesManager.use(id, scene);
+
+      if (success) {
+        alert(`✅ Used ${item.name}`);
+        syncInventory();
+        this.reload();
+        this.invDetails.classList.add('hidden');
+      } else {
+        alert(`❌ No ${item.name} left!`);
       }
-      btn.onclick = () => {
-        const scene = window.currentScene;
-        const success = ConsumablesManager.use(id, scene);
+    };
+    this.invDetails.appendChild(useBtn);
 
-        if (success) {
-          alert(`✅ Used ${item.name}`);
-          syncInventory();
-          this.reload();
-          this.invDetails.classList.add('hidden');
-        } else {
-          alert(`❌ No ${item.name} left!`);
-        }
-      };
+    // Equip to Quick Access Button
+    const equipBtn = document.createElement('button');
+    equipBtn.id = 'inv-equip-btn';
+    equipBtn.textContent = 'Equip to Quick Access';
+    equipBtn.style.marginTop = '4px';
+    equipBtn.onclick = () => {
+      const player = GameState.player;
+      if (!player || !player.perks) return;
 
-      // Equip to Quick Access Button
-      let equipBtn = document.getElementById('inv-equip-btn');
-      if (!equipBtn) {
-        equipBtn = document.createElement('button');
-        equipBtn.id = 'inv-equip-btn';
-        equipBtn.textContent = 'Equip to Quick Access';
-        equipBtn.style.marginTop = '4px';
-        this.invDetails.appendChild(equipBtn);
-      }
-      equipBtn.onclick = () => {
-  const player = GameState.player;
-  if (!player || !player.perks) return;
+      player.perks.consumables = player.perks.consumables || [null, null];
+      const slotIndex = player.perks.consumables.findIndex(c => !c);
+      if (slotIndex === -1) return alert("❌ No empty Quick Access slots!");
 
-  player.perks.consumables = player.perks.consumables || [null, null];
+      player.perks.consumables[slotIndex] = id;
+      GameState.player = player;
 
-  const slotIndex = player.perks.consumables.findIndex(c => !c);
-  if (slotIndex === -1) return alert("❌ No empty Quick Access slots!");
+      // Refresh quick-access icons & click listeners
+      this.setupQuickAccess();
 
-  player.perks.consumables[slotIndex] = id;
-  GameState.player = player; // persist changes
-
-  // Refresh quick-access icons & click listeners
-  this.setupQuickAccess();
-
-  alert(`✅ Equipped ${item.name} to Quick Access`);
-};
-    }
+      alert(`✅ Equipped ${item.name} to Quick Access`);
+    };
+    this.invDetails.appendChild(equipBtn);
   }
 }
