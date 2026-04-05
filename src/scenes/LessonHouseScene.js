@@ -8,6 +8,9 @@ import LessonManager from "../systems/learning/LessonManager.js";
 import GameState from "../GameState.js";
 import QuizUI from "../ui/HUD/QuizUI.js";
 import QuestSystem from "../systems/quests/QuestSystem.js";
+import NotificationSystem from "../systems/NotificationSystem.js";
+import { inventoryData } from "../ui/data/inventoryData.js";
+import quizData from "../ui/data/quizData.js";
 
 export default class LessonHouseScene extends Phaser.Scene {
 
@@ -37,7 +40,7 @@ export default class LessonHouseScene extends Phaser.Scene {
     );
 
     this.load.spritesheet(
-      "kaelen",
+      "orin",
       "/assets/sprites/npcs/kaelen.png",
       { frameWidth: 16, frameHeight: 16 }
     );
@@ -129,6 +132,8 @@ export default class LessonHouseScene extends Phaser.Scene {
 
     PerksManager.setScene(this);
     this.soundManager = new SoundManager(this);
+    this.NotificationSystem = new NotificationSystem(this);
+    this.NotificationSystem.init();
 
     // --------------------------
     // Camera
@@ -244,7 +249,34 @@ export default class LessonHouseScene extends Phaser.Scene {
             options: [
               {
                 text: "Yes",
-                action: () => new QuizUI(lessonId)
+                action: () => {
+                  console.log("=================================");
+                  console.log("Instructor quiz interaction");
+                  console.log("lessonId from NPC:", lessonId);
+
+                  const lessonMap = {
+                    syntax: "syntax",
+                    datatype: "datatypes",
+                    variable: "variables",
+                    operator: "operators",
+                    condition: "conditions",
+                    array: "arrays",
+                    function: "functions"
+                  };
+
+                  const quizCategory = lessonMap[lessonId] || lessonId;
+
+                  console.log("Mapped quiz category:", quizCategory);
+                  console.log("Quiz data exists:", !!quizData[quizCategory]);
+                  console.log("Quiz questions:", quizData[quizCategory]);
+                  console.log(
+                    "Question count:",
+                    quizData[quizCategory]?.length || 0
+                  );
+                  console.log("=================================");
+
+                  new QuizUI(quizCategory);
+                }
               },
               {
                 text: "Not yet",
@@ -265,7 +297,6 @@ export default class LessonHouseScene extends Phaser.Scene {
   // BOOKS (Inventory Style)
   // =====================================================
   createBooks() {
-
     const lessonData = LessonManager.getLesson(this.lesson);
     if (!lessonData) return;
 
@@ -275,18 +306,13 @@ export default class LessonHouseScene extends Phaser.Scene {
     if (!bookLayer) return;
 
     bookLayer.objects.forEach(obj => {
-
-      const lessonProp =
-        obj.properties?.find(p => p.name === "lesson")?.value;
-
-      const bookKey =
-        obj.properties?.find(p => p.name === "bookKey")?.value;
+      const lessonProp = obj.properties?.find(p => p.name === "lesson")?.value;
+      const bookKey = obj.properties?.find(p => p.name === "bookKey")?.value;
 
       if (lessonProp !== this.lesson) return;
 
       const bookData = lessonData.books.find(b => b.key === bookKey);
       if (!bookData) return;
-
       if (LessonManager.isBookRead(this.lesson, bookKey)) return;
 
       const book = this.physics.add.staticSprite(obj.x, obj.y, "book")
@@ -302,20 +328,16 @@ export default class LessonHouseScene extends Phaser.Scene {
       }
 
       this.physics.add.overlap(this.player, book, () => {
-
         if (!Phaser.Input.Keyboard.JustDown(this.interactKey)) return;
 
-        // ✅ Mark as collected
+        // Mark as collected
         LessonManager.markBookRead(this.lesson, bookKey);
 
-        // ✅ Play pickup feedback
-        if (this.soundManager) {
-          this.soundManager.play?.("energy_gain");
-        }
+        // Play pickup sound
+        this.soundManager?.play?.("energy_gain");
 
-        // ✅ Visual feedback
+        // Visual feedback
         book.setTint(0x00ff00);
-
         this.tweens.add({
           targets: book,
           alpha: 0,
@@ -325,40 +347,40 @@ export default class LessonHouseScene extends Phaser.Scene {
           onComplete: () => book.destroy()
         });
 
-        // ✅ Show clean system message
-        DialogueManager.start([
-          `Book Collected: ${bookData.title}`,
-          "Inspect it in your inventory."
-        ]);
+        // Show notification
+        if (this.NotificationSystem) {
+          this.NotificationSystem.add(
+            `Book Collected: ${bookData.title}`,
+            "quest"
+          );
 
-        // ✅ Completion Check
+          // If the book grants a key item, show that too
+          const keyItemId = bookData.keyItem; // e.g., "keycard_variables"
+          if (keyItemId && inventoryData.key[keyItemId]) {
+            const itemName = inventoryData.key[keyItemId].name;
+            this.NotificationSystem.add(`Obtained ${itemName}!`, "quest");
+          }
+        }
+
+        // Check completion for lesson
         this.time.delayedCall(200, () => {
-
           if (LessonManager.isAllBooksRead(this.lesson)) {
-
             const step = QuestSystem.getCurrentStep();
-            /*
-              if (step?.id === "collect_books") {
-                QuestSystem.completeStep("collect_books");
-              }
-                */
-            const progress =
-              GameState.player.lessonProgress?.[this.lesson];
+            const progress = GameState.player.lessonProgress?.[this.lesson];
 
             if (!progress?._completionShown) {
-
               progress._completionShown = true;
               GameState.player = GameState.player;
 
-              DialogueManager.start([
-                "All lesson materials completed!",
-                "Talk to the instructor to begin the quiz."
-              ]);
+              if (this.NotificationSystem) {
+                this.NotificationSystem.add(
+                  "All lesson materials completed! Talk to the instructor to begin the quiz.",
+                  "quest"
+                );
+              }
             }
           }
-
         });
-
       });
     });
   }
@@ -401,8 +423,8 @@ export default class LessonHouseScene extends Phaser.Scene {
               };
             }
         */
-       const spawnKey = this.returnSpawn;
-       console.log("Returning to city with spawn:", spawnKey);
+        const spawnKey = this.returnSpawn;
+        console.log("Returning to city with spawn:", spawnKey);
         SceneTransition.start(this, () => {
           this.scene.start("JScriptoriaCityScene", {
             spawn: spawnKey

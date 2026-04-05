@@ -209,7 +209,7 @@
     <property name="kioskName" value="Conditions Kiosk"/>
    </properties>
   </object>
-  <object id="22" name="rift_kiosk" x="1344.33" y="1392.5" width="16" height="32">
+  <object id="22" name="rift_kiosk" x="1344.33" y="1397.17" width="16" height="32">
    <properties>
     <property name="kioskName" value="Arrays Kiosk"/>
    </properties>
@@ -563,7 +563,7 @@
     <property name="hoverName" value="Mira's Inn"/>
    </properties>
   </object>
-  <object id="9" name="Data Types Monolith" x="79.9394" y="-0.121212" width="48" height="64">
+  <object id="9" name="Data Types Monolith" x="79.9394" y="2.87879" width="48" height="64">
    <properties>
     <property name="hoverDescription" value="The Monolith resposible for building the city's data types."/>
     <property name="hoverName" value="DataTypes Monolith"/>
@@ -738,7 +738,7 @@
     <property name="spawnKey" value="functions_exit"/>
    </properties>
   </object>
-  <object id="39" name="array_door" x="943.333" y="982.333" width="16" height="16">
+  <object id="39" name="arrays_door" x="943.333" y="982.333" width="16" height="16">
    <properties>
     <property name="lesson" value="arrays"/>
     <property name="order" type="int" value="5"/>

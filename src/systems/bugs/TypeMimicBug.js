@@ -18,6 +18,7 @@ export default class TypeMimicBug extends Bug {
     this.isRevealed = false;
     this.isAttacking = false;
     this.cooldown = false;
+    this.displayName = "Type Mimic";
     this.setFrame(0);
     this.body.setImmovable(true);
     this.isDead = false;         // Already good if you have it

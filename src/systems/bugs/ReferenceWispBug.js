@@ -20,6 +20,7 @@ export default class ReferenceWispBug extends Bug {
 
     this.lastHit = 0;
     this.hitCooldown = 800;
+    this.displayName = "Reference Wisp";
 
     // Colliders with world layers
     const layers = [scene.buildingLayer, scene.wallLayer, scene.itemLayer];

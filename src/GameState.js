@@ -200,7 +200,7 @@ try {
       new CustomEvent("gamestate-updated", { detail: toStore })
     );
 
-    console.log("[GameState] Saved player data:", JSON.stringify(toStore, null, 2));
+    //console.log("[GameState] Saved player data:", JSON.stringify(toStore, null, 2));
   },
 
   // =========================

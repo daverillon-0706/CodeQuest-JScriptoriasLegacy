@@ -26,6 +26,8 @@ import TutorialUI from "../ui/HUD/TutorialUI.js";
 import { QUESTS } from "../systems/quests/QuestList.js";
 import QuestSystem from "../systems/quests/QuestSystem.js";
 import { elysiaDialogues } from "../systems/ElysiaDialogues.js";
+import NotificationSystem from "../systems/NotificationSystem.js";
+import { getItemName } from "../utils/getItemName.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -128,6 +130,9 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   }
   // ================= CREATE =================
   create(data = {}) {
+    this.NotificationSystem = new NotificationSystem(this);
+    this.NotificationSystem.init();
+
     this.doorSpawnMap = {
       "syntax_door": { x: 612, y: 451 },
       "datatypes_door": { x: 466, y: 684 },
@@ -256,12 +261,12 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if (GameState.player) {
       if (!GameState.player.perks?.offense) {
         PerksManager.equip(OffensePerks.pixel_gun);
-        console.log("Equipped default offense perk: Pixel Gun");
+        this.NotificationSystem.add("Equipped default offense perk: Pixel Gun", "system");
       }
 
       if (!GameState.player.perks?.defense) {
         PerksManager.equip(DefensePerks.magic_mushroom);
-        console.log("Equipped default defense perk: Magic Mushroom");
+        this.NotificationSystem.add("Equipped default defense perk: Magic Mushroom", "system");
       }
     }
     this.tutorialUI = new TutorialUI(this);
@@ -346,6 +351,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     );
 
     // Rift logic
+    this.riftKiosks = [];
     this.rifts = [];
     this.createRiftSystemsFromMap();
 
@@ -419,8 +425,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       if (this.minimapCanvas) this.minimapCanvas.style.display = this.minimapVisible ? 'block' : 'none';
     });
     this.input.keyboard.on('keydown-T', () => {
-  this.soundManager.play('kaching');
-});
+      this.soundManager.play('kaching');
+    });
     this.input.keyboard.on("keydown-Z", () => {
       console.log("CanTalkTo:", this.playerController?.canTalkTo);
       if (ChestSystem.interact()) return;
@@ -442,6 +448,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
           const step = QuestSystem.getCurrentStep();
           if (step?.id === "talk_elysia") {
             QuestSystem.completeStep("talk_elysia");
+            this.NotificationSystem.add("Quest step completed: Talk to Elysia", "quest");
           }
 
           return;
@@ -475,6 +482,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         const step = QuestSystem.getCurrentStep();
         if (step?.id === "summon_rift") {
           QuestSystem.completeStep("summon_rift");
+          this.NotificationSystem.add("Rift summoned!", "success");
         }
 
         this.activateRiftFromKiosk(kiosk);
@@ -513,6 +521,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         const step = QuestSystem.getCurrentStep();
         if (step?.id === "go_house") {
           QuestSystem.completeStep("go_house");
+          this.NotificationSystem.add("Quest step completed: Go to house", "quest");
         }
 
         // ---- SAVE PLAYER POSITION BEFORE TRANSITION ----
@@ -535,7 +544,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
             returnSpawn: spawnKey
           });
         });
-
+        //this.NotificationSystem.add(`Entered door: ${doorName}`);
         return;
       }
     });
@@ -555,6 +564,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         this.time.delayedCall(300, () => {
           player.isHit = false;
         });
+        this.NotificationSystem.add(`Hit by ${bug.name || "enemy"}! Lost HP`, "error");
       }
     });
     if (window.HUD) window.HUD.updateHUD();
@@ -569,6 +579,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
           if (el) el.remove();
         });
       }
+      this.NotificationSystem?.destroy();
     });
   }
   // ================= UPDATE =================
@@ -1002,16 +1013,27 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     );
     if (!GameState.hasKeyItem(requiredKeycard)) {
       console.log("❌ Missing keycard:", requiredKeycard);
+      const keycardName = getItemName(requiredKeycard);
+
+      this.NotificationSystem.add(
+        `Missing required keycard: ${keycardName}`,
+        "error"
+      );
       return;
     }
 
 
     console.log("✅ Keycard verified:", requiredKeycard);
+
     // Convert "Syntax Kiosk" → "Syntax Monolith"
     const targetRiftName = kiosk.kioskName.replace("Kiosk", "Monolith");
 
     // Normalize to internal ID
     const riftId = normalizeRiftName(targetRiftName); // e.g., "Syntax", "DataTypes"
+    this.NotificationSystem.add(
+      `${riftId} Rift activated!`,
+      "quest"
+    );
     console.log("Looking for rift:", targetRiftName, "→", riftId);
 
     // Ensure riftProgress exists
@@ -1020,6 +1042,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
     if (riftProgress?.completed) {
       console.log(`[Rift] ${riftId} already completed, skipping activation`);
+      this.NotificationSystem.add(
+        `${riftId} Rift already completed.`,
+        "warning"
+      );
       return;
     }
 
@@ -1032,6 +1058,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     // Prevent duplicate activation
     if (rift.isActive || rift.isDebugging) {
       console.log(`[Rift] Rift already active or debugging: ${riftId}`);
+      this.NotificationSystem.add(
+        `${riftId} Rift is already active.`,
+        "warning"
+      );
       return;
     }
 
@@ -1230,6 +1260,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
         if (!success) {
           printConsole("❌ Code ran but failed validation.", true);
+          this.NotificationSystem.add(
+            "Incorrect solution submitted.",
+            "error"
+          );
           return;
         }
 
@@ -1243,6 +1277,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
         try {
           rift.advanceChallenge();
+          this.NotificationSystem.add(
+            `Challenge ${rift.challengeIndex + 1} cleared!`,
+            "success"
+          );
 
           console.log("AdvanceChallenge executed successfully");
           console.log("ChallengeIndex AFTER advance:", rift.challengeIndex);
@@ -1280,6 +1318,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
             printConsole(
               `➡️ Next Challenge: ${rift.challengeIndex + 1}/${rift.totalChallenges}`
             );
+            this.NotificationSystem.add(
+              `Next Rift Challenge unlocked.`,
+              "quest"
+            );
           } else {
             console.warn("⚠️ Next challenge is undefined!");
           }
@@ -1289,14 +1331,19 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
       } catch (e) {
         printConsole(`❌ Compilation error: ${e.message}`, true);
+        this.NotificationSystem.add(
+          `Compilation Error: ${e.message}`,
+          "error"
+        );
 
-        // Damage penalty
-        this.player.takeDamage(2);
+        /* Damage penalty
+        this.player.takeDamage(1);
         if (window.HUD) window.HUD.updateHUD();
 
         if (this.player.hp <= 0) {
           this.closeRiftCompiler(rift);
         }
+        */
       }
     };
 
@@ -1426,11 +1473,21 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if (step?.id === "defeat_rift") {
       console.log("✅ Completing quest step: defeat_rift");
       QuestSystem.completeStep("defeat_rift");
+      this.NotificationSystem.add(
+        `${rift.riftName} Rift defeated!`,
+        "success"
+      );
     } else {
       console.warn("⚠️ Quest step not completed (not defeat_rift).");
     }
 
-    alert(`🗝️ You obtained the ${rift.riftName} Keystone!`);
+    //alert(`🗝️ You obtained the ${rift.riftName} Keystone!`);
+    const keystoneName = getItemName(keystoneId);
+
+    this.NotificationSystem.add(
+      `Obtained ${keystoneName}!`,
+      "quest"
+    );
   }
   syncSpriteFromGameState() {
     const gs = GameState.player;
@@ -1514,26 +1571,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       this.minimap.fillCircle(x, y, 2);
     });
   }
-  /*
-  drawHTMLMinimapMonoliths() {
-    if (!this.minimapCtx || !this.monoliths) return;
-
-    const ctx = this.minimapCtx;
-
-    this.monoliths.forEach(m => {
-
-      const x = m.x * this.mapScaleX;
-      const y = m.y * this.mapScaleY;
-
-      ctx.fillStyle = "yellow";
-
-      ctx.beginPath();
-      ctx.arc(x, y, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-    });
-  }
-  */
   // ================= HTML MINIMAP INIT =================
   scanMonolithTiles() {
     if (!this.monolithLayer) return;
@@ -1684,6 +1721,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     GameState.player.cryptos += reward;
 
     console.log("Earned cryptos:", reward);
+    this.NotificationSystem.add(
+      `Defeated enemy! +${reward} Cryptos`,
+      "success"
+    );
 
     if (window.updateCryptos) {
       window.updateCryptos(GameState.player.cryptos);
@@ -1695,6 +1736,10 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   }
   onPlayerGameOver() {
     console.log("Triggering Game Over");
+    this.NotificationSystem.add(
+      "You were defeated...",
+      "error"
+    );
 
     // Freeze gameplay
     this.playerController.freeze();
@@ -1881,7 +1926,6 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       console.log("[GameState] Saved player position:", this.player.x, this.player.y);
       */
   }
-
 }
 function getElysiaDialogue(npc) {
   if (npc?.customData?.npcId !== "elysia") {

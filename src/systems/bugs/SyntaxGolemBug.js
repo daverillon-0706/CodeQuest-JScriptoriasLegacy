@@ -18,6 +18,7 @@ export default class SyntaxGolemBug extends Bug {
     this.hasSlammed = false;
     this.chargeTimer = null;
     this.resetTimer = null;
+    this.displayName = "Syntax Golem";
 
 
     this.body.setImmovable(true);

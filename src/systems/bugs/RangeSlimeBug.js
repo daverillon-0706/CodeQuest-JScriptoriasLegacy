@@ -21,6 +21,7 @@ export default class RangeSlimeBug extends Bug {
     this.lastMove = 0;
     this.isCharging = false;
     this.hasHit = false;
+    this.displayName = "Range Slime";
 
     // Colliders with world layers
     const layers = [scene.buildingLayer, scene.wallLayer, scene.itemLayer];
@@ -48,14 +49,14 @@ export default class RangeSlimeBug extends Bug {
 
   update(time) {
     if (this.isDead) return;
-    
+
     if (this.stunned) {
-    if (this.body) {
-      this.body.setVelocity(0, 0);
+      if (this.body) {
+        this.body.setVelocity(0, 0);
+      }
+      this.anims.stop();
+      return;
     }
-    this.anims.stop();
-    return;
-  }
     const player = this.scene.player;
     if (!player) return;
 
@@ -86,58 +87,66 @@ export default class RangeSlimeBug extends Bug {
   }
 
   dealDamage(player) {
-  if (!player.invincible && this.isCharging && !this.hasHit) {
+    if (!player.invincible && this.isCharging && !this.hasHit) {
 
-    const dmg = this.typeData.dmg || 2;
+      const dmg = this.typeData.dmg || 2;
 
-    const gs = GameState.player;
-    if (!gs) return;
+      const gs = GameState.player;
+      if (!gs) return;
 
-    // =========================
-    // APPLY DAMAGE
-    // =========================
-    gs.hp = Math.max(gs.hp - dmg, 0);
-    player.customData.HP = gs.hp;
-    GameState.player = gs;
+      // =========================
+      // APPLY DAMAGE
+      // =========================
+      gs.hp = Math.max(gs.hp - dmg, 0);
+      player.customData.HP = gs.hp;
+      GameState.player = gs;
+      /*
+      if (this.scene.NotificationSystem) {
+        this.scene.NotificationSystem.add(
+          `Hit by Range Slime! Lost ${dmg} HP`,
+          "error"
+        );
+      }
+*/
 
-    // =========================
-    // UPDATE UI
-    // =========================
-    if (this.scene.updateHUD) this.scene.updateHUD();
-    if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
+      // =========================
+      // UPDATE UI
+      // =========================
+      if (this.scene.updateHUD) this.scene.updateHUD();
+      if (window.updateHearts) window.updateHearts(gs.hp, gs.max_hp);
 
-    // =========================
-    // INVINCIBILITY + FEEDBACK
-    // =========================
-    player.invincible = true;
-    player.setTint(0xff0000);
+      // =========================
+      // INVINCIBILITY + FEEDBACK
+      // =========================
+      player.invincible = true;
+      player.setTint(0xff0000);
 
-    this.scene.time.delayedCall(800, () => {
-      player.invincible = false;
-      player.clearTint();
-    });
+      this.scene.time.delayedCall(800, () => {
+        player.invincible = false;
+        player.clearTint();
+      });
 
-    this.scene.cameras.main.shake(150, 0.01);
+      this.scene.cameras.main.shake(150, 0.01);
 
-    // =========================
-    // CHARGE RESET
-    // =========================
-    this.isCharging = false;
-    this.hasHit = true;
-    this.body.setVelocity(0);
+      // =========================
+      // CHARGE RESET
+      // =========================
+      this.isCharging = false;
+      this.hasHit = true;
+      this.body.setVelocity(0);
 
-    this.scene.time.delayedCall(1000, () => {
-      this.hasHit = false;
-    });
+      this.scene.time.delayedCall(1000, () => {
+        this.hasHit = false;
+      });
 
-    // =========================
-    // GAME OVER CHECK
-    // =========================
-    if (gs.hp <= 0) {
-      this.scene.onPlayerGameOver();
+      // =========================
+      // GAME OVER CHECK
+      // =========================
+      if (gs.hp <= 0) {
+        this.scene.onPlayerGameOver();
+      }
     }
   }
-}
 
 
 }

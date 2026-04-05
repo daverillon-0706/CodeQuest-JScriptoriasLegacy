@@ -44,18 +44,29 @@ export default class Bug extends Phaser.Physics.Arcade.Sprite {
 
   console.log("Bug.js → Bug died → Rewarding cryptos");
 
-  const reward = Phaser.Math.Between(300, 500);
+  const reward = this.rewardCoins ?? Phaser.Math.Between(300, 500);
   const gs = GameState.player;
 
   if (gs) {
     gs.cryptos = (gs.cryptos ?? 0) + reward;
     GameState.player = { ...gs };
 
-    if (window.updateCryptos)
+    if (window.updateCryptos) {
       window.updateCryptos(gs.cryptos);
+    }
 
-    if (window.HUD)
+    if (window.HUD) {
       window.HUD.updateHUD();
+    }
+
+    const enemyName = this.displayName || "Bug";
+
+    if (this.scene.NotificationSystem) {
+      this.scene.NotificationSystem.add(
+        `Defeated ${enemyName}! Gained ${reward} Cryptos`,
+        "quest"
+      );
+    }
   }
 
   // 💀 Destroy bug visually
@@ -68,7 +79,6 @@ export default class Bug extends Phaser.Physics.Arcade.Sprite {
     }
   });
 }
-
   update() {
 
   if (this.stunned) {

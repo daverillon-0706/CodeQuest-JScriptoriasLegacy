@@ -1,126 +1,176 @@
 import QuizManager from "../../systems/learning/QuizManager";
 import GameState from "../../GameState";
 import QuestSystem from "../../systems/quests/QuestSystem";
+import NotificationSystem from "../../systems/NotificationSystem";
+import { getItemName } from "../../utils/getItemName"; 
 
 export default class QuizUI {
   constructor(category) {
     this.quiz = new QuizManager(category);
+    this.NotificationSystem = new NotificationSystem(document.body);
+    this.NotificationSystem.init();
+
+    // Block if already passed
+    if (GameState.hasPassedQuiz?.(category)) {
+      this.NotificationSystem.add(
+        `You have already passed this quiz and received your keycard!`,
+        "info"
+      );
+      return;
+    }
+
     this.createUI();
-    this.renderQuestion();
+    this.renderAllQuestions();
   }
 
   createUI() {
     this.container = document.createElement("div");
     this.container.className = "quiz-overlay";
 
+    document.body.appendChild(this.container);
+
     this.container.innerHTML = `
       <div class="quiz-box">
-        <h2 id="quiz-title">Quiz</h2>
-        <h3 id="quiz-counter"></h3>
-
-        <div id="quiz-question"></div>
-        <div id="quiz-options"></div>
-
-        <textarea id="quiz-code" style="display:none;"></textarea>
-
-        <button id="quiz-submit" disabled>Submit</button>
+        <h2 id="quiz-title">${this.quiz.category.toUpperCase()} Quiz</h2>
+        <div id="quiz-questions"></div>
+        <button id="quiz-submit">Submit</button>
       </div>
     `;
 
-    document.body.appendChild(this.container);
-
-    this.questionEl = this.container.querySelector("#quiz-question");
-    this.optionsEl = this.container.querySelector("#quiz-options");
-    this.codeEl = this.container.querySelector("#quiz-code");
+    this.questionsEl = this.container.querySelector("#quiz-questions");
     this.submitBtn = this.container.querySelector("#quiz-submit");
-    this.counterEl = this.container.querySelector("#quiz-counter");
 
     this.submitBtn.onclick = () => this.handleSubmit();
   }
 
-  renderQuestion() {
-    const q = this.quiz.getCurrentQuestion();
+  renderAllQuestions() {
+    this.questionsEl.innerHTML = "";
 
-    if (!q) return;
+    this.quiz.questions.forEach((q, index) => {
+      const block = document.createElement("div");
+      block.className = "quiz-question-block";
+      block.dataset.index = index;
 
-    this.selectedAnswer = null;
-    this.submitBtn.disabled = true;
+      const title = document.createElement("h3");
+      title.textContent = `${index + 1}. ${q.question}`;
+      block.appendChild(title);
 
-    this.questionEl.textContent = q.question;
-    this.optionsEl.innerHTML = "";
-    this.codeEl.style.display = "none";
+      // MULTIPLE CHOICE
+      if (q.type === "multiple") {
+        q.options.forEach((opt, i) => {
+          const label = document.createElement("label");
+          label.className = "quiz-option";
 
-    // Update counter
-    if (this.counterEl) {
-      this.counterEl.textContent =
-        `Question ${this.quiz.currentIndex + 1} / ${this.quiz.questions.length}`;
-    }
+          label.innerHTML = `
+            <input type="radio" name="question-${index}" value="${i}">
+            <span>${opt}</span>
+          `;
+          block.appendChild(label);
+        });
+      }
 
-    // MULTIPLE CHOICE
-    if (q.type === "multiple") {
-      q.options.forEach((opt, i) => {
-        const btn = document.createElement("button");
-        btn.textContent = opt;
+      // COMPILER / TEXTBOX
+      if (q.type === "compiler") {
+        const textarea = document.createElement("textarea");
+        textarea.className = "quiz-code-input";
+        textarea.value = q.starterCode || "";
 
-        btn.onclick = () => {
-          this.selectedAnswer = i;
+        // Allow all keys
+        textarea.addEventListener("keydown", e => e.stopPropagation());
 
-          // Remove highlight from others
-          this.optionsEl.querySelectorAll("button")
-            .forEach(b => b.classList.remove("active"));
+        block.appendChild(textarea);
+      }
 
-          btn.classList.add("active");
-
-          this.submitBtn.disabled = false;
-        };
-
-        this.optionsEl.appendChild(btn);
-      });
-    }
-
-    // COMPILER QUESTION
-    if (q.type === "compiler") {
-      this.codeEl.style.display = "block";
-      this.codeEl.value = q.starterCode || "";
-      this.submitBtn.disabled = false;
-    }
+      this.questionsEl.appendChild(block);
+    });
   }
 
   handleSubmit() {
-    const q = this.quiz.getCurrentQuestion();
-    if (!q) return;
+    let score = 0;
 
-    // MULTIPLE
-    if (q.type === "multiple") {
-      this.quiz.submitMultipleAnswer(this.selectedAnswer);
+    this.quiz.questions.forEach((q, index) => {
+      const block = this.questionsEl.querySelector(`[data-index="${index}"]`);
+      let isCorrect = false;
+
+      // MULTIPLE CHOICE
+      if (q.type === "multiple") {
+        const selected = block.querySelector(
+          `input[name="question-${index}"]:checked`
+        );
+        const selectedValue = selected ? parseInt(selected.value) : null;
+        isCorrect = selectedValue === q.answer;
+
+        // Highlight correct/wrong
+        block.querySelectorAll("label").forEach((label, i) => {
+          if (i === q.answer) label.classList.add("correct-answer");
+          if (selectedValue === i && selectedValue !== q.answer)
+            label.classList.add("wrong-answer");
+        });
+      }
+
+      // COMPILER
+      if (q.type === "compiler") {
+        const textarea = block.querySelector("textarea");
+        const output = this.runCode(textarea.value);
+        isCorrect = output.trim() === q.expectedOutput.trim();
+
+        // Disable textarea after submission
+        textarea.disabled = true;
+
+        const result = document.createElement("div");
+        result.className = "compiler-result";
+        result.innerHTML = `
+          <p><strong>Your Output:</strong> ${output}</p>
+          <p><strong>Expected Output:</strong> ${q.expectedOutput}</p>
+          ${q.sampleAnswer ? `<pre>${q.sampleAnswer}</pre>` : ""}
+        `;
+        block.appendChild(result);
+      }
+
+      if (isCorrect) {
+        score++;
+        block.classList.add("correct");
+      } else {
+        block.classList.add("incorrect");
+      }
+    });
+    
+    this.quiz.correctAnswers = score;
+    this.quiz.currentIndex = this.quiz.questions.length;
+
+    const passed = this.quiz.finish(); // handles GameState, keycard, etc.
+
+    // Show keycard notification
+    if (passed) {
+      const keycardId = `keycard_${this.quiz.category}`;
+      const keyName = getItemName(keycardId);
+
+      if (GameState.player.lessonProgress?.[this.quiz.category]?.keycardRewarded) {
+        QuestSystem.completeStep("collect_books");
+        this.NotificationSystem.add(`You received: ${keyName}!`, "success");
+      }
     }
 
-    // COMPILER
-    if (q.type === "compiler") {
-      const output = this.runCode(this.codeEl.value);
-      this.quiz.submitCompilerAnswer(output);
-    }
+    // Show final result
+    this.NotificationSystem.add(
+      passed
+        ? `🎉 Passed! Score: ${score}/${this.quiz.questions.length}`
+        : `❌ Failed! Score: ${score}/${this.quiz.questions.length}`,
+      passed ? "success" : "error"
+    );
 
-    // Finished?
-    if (this.quiz.isFinished()) {
-      const passed = this.quiz.finish();
-      this.showResult(passed);
-    } else {
-      this.renderQuestion();
-    }
+    // Close UI after submission
+    this.container.remove();
   }
 
   runCode(code) {
     let output = "";
     const originalLog = console.log;
-
-    console.log = (msg) => {
-      output += msg;
-    };
+    console.log = msg => { output += msg; };
 
     try {
       eval(code);
-    } catch (e) {
+    } catch {
       output = "Error";
     }
 
@@ -128,58 +178,49 @@ export default class QuizUI {
     return output;
   }
 
+
   showResult(passed) {
+    this.container.innerHTML = `
+      <div class="quiz-box">
+        <h2>
+          ${passed
+            ? "You have passed the quiz! Congratulations!"
+            : "You failed the quiz, try again next time!"}
+        </h2>
+        <button id="quiz-close">Close</button>
+      </div>
+    `;
 
-  if (passed) {
+    this.container.querySelector("#quiz-close").onclick = () => this.container.remove();
 
-    // Mark quiz as passed (if you have this system)
-    GameState.markQuizPassed?.(this.quiz.category);
+    if (!passed) return;
 
+    // Quest and progression
     const step = QuestSystem.getCurrentStep();
-  if (step?.id === "collect_books") {
-    QuestSystem.completeStep("collect_books");
-  }
+    if (step?.id === "collect_books") {
+      QuestSystem.completeStep("collect_books");
+    }
 
-    // ---- PROGRESSION UNLOCK ----
     if (GameState.player.currentLessonIndex === undefined) {
       GameState.player.currentLessonIndex = 0;
     }
 
-    // Find lesson order dynamically if you use LESSON_ORDER
     const LESSON_ORDER = [
       "syntax",
       "datatypes",
       "variables",
       "operators",
       "conditions",
-      "array",
+      "arrays",
       "functions"
     ];
 
     const lessonOrder = LESSON_ORDER.indexOf(this.quiz.category);
-
-    if (lessonOrder >= 0 &&
-        GameState.player.currentLessonIndex <= lessonOrder) {
-
+    if (lessonOrder >= 0 && GameState.player.currentLessonIndex <= lessonOrder) {
       GameState.player.currentLessonIndex = lessonOrder + 1;
     }
 
     // Trigger save
     GameState.player = GameState.player;
   }
-
-  this.container.innerHTML = `
-    <div class="quiz-box">
-      <h2>
-        ${passed
-          ? "You have passed the quiz! Congratulations!"
-          : "You failed the quiz, try again next time!"}
-      </h2>
-      <button id="quiz-close">Close</button>
-    </div>
-  `;
-
-  this.container.querySelector("#quiz-close")
-    .onclick = () => this.container.remove();
-}
 }
