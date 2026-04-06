@@ -28,6 +28,7 @@ import QuestSystem from "../systems/quests/QuestSystem.js";
 import { elysiaDialogues } from "../systems/ElysiaDialogues.js";
 import NotificationSystem from "../systems/NotificationSystem.js";
 import { getItemName } from "../utils/getItemName.js";
+import MusicManager from "../systems/MusicManager.js";
 
 export default class JScriptoriaCityScene extends Phaser.Scene {
   constructor() {
@@ -127,12 +128,30 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.load.audio('rift_summon', 'assets/sfx/player/rift_summon.wav');
     this.load.audio('door', 'assets/sfx/player/door.wav');
     this.load.audio('kiosk', 'assets/sfx/player/kiosk.wav');
+    this.load.audio("codequest-overworld", "/assets/bgm/codequest-overworld.wav");
+    this.load.audio("codequest-riftboss", "/assets/bgm/codequest-riftboss.wav");
+    this.load.audio("codequest-victory", "/assets/bgm/codequest-victory.wav");
   }
   // ================= CREATE =================
   create(data = {}) {
     this.NotificationSystem = new NotificationSystem(this);
     this.NotificationSystem.init();
+    this.musicManager = new MusicManager(this);
+    // ---- SOUND MANAGER ----
+    this.soundManager = new SoundManager(this);
+    this.musicManager.play("overworld");
 
+    if (GameState.player?.settings) {
+    const s = GameState.player.settings;
+
+    if (s.musicVolume !== undefined) this.musicManager.setVolume(s.musicVolume);
+    if (s.musicEnabled !== undefined) {
+        s.musicEnabled ? this.musicManager.resume() : this.musicManager.pause();
+    }
+
+    if (s.sfxVolume !== undefined) this.soundManager.setVolume(s.sfxVolume);
+    if (s.sfxEnabled !== undefined) this.soundManager.setMute(!s.sfxEnabled);
+}
     this.doorSpawnMap = {
       "syntax_door": { x: 612, y: 451 },
       "datatypes_door": { x: 466, y: 684 },
@@ -361,7 +380,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.load.audio("energy_gain", "/assets/sfx/player/energy_gain.wav");
     this.load.audio("energy_use", "/assets/sfx/player/energy_use.wav");
     this.load.audio("cryptos", "/assets/sfx/cryptos.wav");
-    this.blasterSFX = this.sound.add("blaster", { volume: 0.5 });
+    this.soundManager.add('blaster');
+    //this.blasterSFX = this.sound.add("blaster", { volume: 0.5 });
 
 
     // ---- SYSTEMS ----
@@ -371,6 +391,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     PerksManager.setScene(this);
     window.currentScene = this;
 
+    
+    
     // Group to manage all bullets
     this.bulletGroup = this.physics.add.group({
       classType: Bullet,
@@ -385,8 +407,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       undefined,
       this
     );
-    // ---- SOUND MANAGER ----
-    this.soundManager = new SoundManager(this);
+    
 
     // ---- HUD ----
     this.playerHPEl = document.getElementById("playerHP-text");
@@ -580,6 +601,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
         });
       }
       this.NotificationSystem?.destroy();
+      this.musicManager.stop();
     });
   }
   // ================= UPDATE =================
@@ -1095,6 +1117,9 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     rift.completed = false;
     rift.isActive = true;
 
+    // Play music
+    this.musicManager.fadeTo("riftboss", 1000);
+
     // Activate rift
     rift.activate(riftId, () => {
       // Completion callback
@@ -1412,6 +1437,21 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
   defeatRift(rift) {
     if (!rift || !rift.completed) return;
     this.soundManager.play('rift_summon');
+    // Stop boss music first
+      this.musicManager.stop();
+
+      // Small delay so Phaser fully clears the old sound
+      this.time.delayedCall(100, () => {
+        this.musicManager.play("victory", {
+          volume: 1,
+          loop: false
+        });
+
+        // Return to overworld after victory theme
+        this.time.delayedCall(4000, () => {
+          this.musicManager.fadeTo("overworld", 1000);
+        });
+      });
 
     console.log("RiftName:", rift.riftName);
     console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);

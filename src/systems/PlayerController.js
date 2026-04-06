@@ -1,5 +1,6 @@
 // src/systems/PlayerController.js
 import Bullet from "./weapons/bullet.js";
+import SoundManager from "./SoundManager.js";
 
 
 export default class PlayerController {
@@ -266,7 +267,7 @@ export default class PlayerController {
     b.setVisible(true);
     b.body.enable = true;
     b.fire(this.player.frame.name);
-    this.scene.blasterSFX.play();
+    this.scene.soundManager.play('blaster');
 
 
 

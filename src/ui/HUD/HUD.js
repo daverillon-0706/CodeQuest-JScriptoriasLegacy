@@ -11,6 +11,7 @@ import PerksManager from "../../systems/PerksManager.js";
 import ConsumablesManager from "../../systems/ConsumablesManager.js";
 import GuideUI from "./GuideUI.js";
 import SaveLoadUI from "./SaveLoadUI.js";
+import SettingsUI from "./SettingsUI.js";
 
 export default class HUD {
   constructor() {
@@ -24,7 +25,8 @@ export default class HUD {
     this.lessons = new LessonsUI();
     this.guide = new GuideUI();
     this.saveLoad = new SaveLoadUI();
-    
+    this.settings = new SettingsUI();
+
 
     // Optional: sync inventory once at startup
     syncInventory();
@@ -286,8 +288,12 @@ export default class HUD {
         : this.closeTablet()
     );
 
-    this.closeBtn?.addEventListener("click", () => this.closeTablet());
-    this.backBtn?.addEventListener("click", () => this.closeAllApps());
+    this.closeBtn?.addEventListener("click", () => {
+    this.settings.revertChanges();
+    this.closeTablet();});
+    this.backBtn?.addEventListener("click", () => {
+    this.settings.revertChanges();
+    this.closeAllApps();});
 
     this.overlay?.addEventListener("click", e => {
       if (e.target === this.overlay) this.closeTablet();
@@ -343,9 +349,12 @@ export default class HUD {
         if (appId === "app-tutorial") {
           this.guide.open();
         }
+        if (appId === "app-settings") {
+          this.settings.loadPreferences(); // refresh sliders if needed
+        }
         if (appId === "app-save") {
-  this.saveLoad.attachEvents();
-}
+          this.saveLoad.attachEvents();
+        }
         if (appId === "app-logout") {
           this.handleLogout();
           return;
@@ -353,7 +362,7 @@ export default class HUD {
       });
     });
 
-    
+
   }
 
   attachCompilerEvents() {
@@ -451,28 +460,28 @@ export default class HUD {
       .getElementById("tablet-home")
       ?.classList.add("hidden");
   }
-/*
-  loadGuide(index = 0) {
-    const container = document.getElementById("tutorial-content");
-    if (!container) return;
-
-    this.currentGuideIndex = index;
-
-    const section = this.guideSections[index];
-    if (!section) return;
-
-    container.innerHTML = `
-    <h4>${section.title}</h4>
-    <p>${section.text}</p>
-  `;
-
-    const prevBtn = document.getElementById("tutorial-prev");
-    const nextBtn = document.getElementById("tutorial-next");
-
-    if (prevBtn) prevBtn.disabled = index === 0;
-    if (nextBtn) nextBtn.disabled = index === this.guideSections.length - 1;
-  }
-*/
+  /*
+    loadGuide(index = 0) {
+      const container = document.getElementById("tutorial-content");
+      if (!container) return;
+  
+      this.currentGuideIndex = index;
+  
+      const section = this.guideSections[index];
+      if (!section) return;
+  
+      container.innerHTML = `
+      <h4>${section.title}</h4>
+      <p>${section.text}</p>
+    `;
+  
+      const prevBtn = document.getElementById("tutorial-prev");
+      const nextBtn = document.getElementById("tutorial-next");
+  
+      if (prevBtn) prevBtn.disabled = index === 0;
+      if (nextBtn) nextBtn.disabled = index === this.guideSections.length - 1;
+    }
+  */
   quickOpen(appId) {
     this.openTablet();
     setTimeout(() => this.openApp(appId), 10);

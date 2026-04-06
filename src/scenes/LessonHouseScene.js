@@ -11,6 +11,7 @@ import QuestSystem from "../systems/quests/QuestSystem.js";
 import NotificationSystem from "../systems/NotificationSystem.js";
 import { inventoryData } from "../ui/data/inventoryData.js";
 import quizData from "../ui/data/quizData.js";
+import MusicManager from "../systems/MusicManager.js";
 
 export default class LessonHouseScene extends Phaser.Scene {
 
@@ -50,10 +51,12 @@ export default class LessonHouseScene extends Phaser.Scene {
       "/assets/icons/item/book.png",
       { frameWidth: 16, frameHeight: 16 }
     );
+
+    // Sounds
+    this.load.audio("codequest-indoors", "/assets/bgm/codequest-indoors.wav");
   }
 
   create() {
-
     // --------------------------
     // Background
     // --------------------------
@@ -131,7 +134,14 @@ export default class LessonHouseScene extends Phaser.Scene {
     );
 
     PerksManager.setScene(this);
+    window.currentScene = this;
     this.soundManager = new SoundManager(this);
+    this.musicManager = new MusicManager(this);
+
+    this.musicManager.play("indoors", {
+      volume: 0.5,
+      loop: true
+    });
     this.NotificationSystem = new NotificationSystem(this);
     this.NotificationSystem.init();
 
@@ -423,6 +433,7 @@ export default class LessonHouseScene extends Phaser.Scene {
               };
             }
         */
+       this.musicManager?.stop();
         const spawnKey = this.returnSpawn;
         console.log("Returning to city with spawn:", spawnKey);
         SceneTransition.start(this, () => {

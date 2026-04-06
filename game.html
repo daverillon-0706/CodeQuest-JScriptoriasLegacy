@@ -172,10 +172,10 @@
     <div id="map-name">J. Scriptoria City</div>
   </div>
 
-  <!-- NOTIFICATIONS -->
+  <!-- NOTIFICATIONS 
   <div id="notifications-container" class="hud-notifications">
   </div>
-
+-->
 
 
 
@@ -421,6 +421,37 @@
       <!-- ================= SETTINGS ================= -->
       <div id="app-settings" class="tablet-panel hidden">
         <h3>Settings</h3>
+
+        <div class="settings-option">
+          <label for="music-volume">Music Volume:</label>
+          <input type="range" id="music-volume" min="0" max="1" step="0.01" value="0.5">
+          <span class="volume-label"></span>
+        </div>
+
+        <div class="settings-option">
+          <label for="sfx-volume">SFX Volume:</label>
+          <input type="range" id="sfx-volume" min="0" max="1" step="0.01" value="0.5">
+          <span class="volume-label"></span>
+        </div>
+
+        <div class="settings-option">
+          <label>
+            <input type="checkbox" id="toggle-music" checked>
+            Music Enabled
+          </label>
+        </div>
+
+        <div class="settings-option">
+          <label>
+            <input type="checkbox" id="toggle-sfx" checked>
+            Sound Effects Enabled
+          </label>
+        </div>
+
+        <button id="save-settings-btn" class="settings-save-btn">
+          Save Changes
+        </button>
+
       </div>
 
       <!-- ================= SAVE / LOAD ================= -->

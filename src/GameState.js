@@ -51,13 +51,20 @@ const DEFAULT_PLAYER = {
     questsCompleted: [],
     position: { x: 704, y: 759 },
     questProgress: {
-    currentQuestIndex: 0,
-    currentStepIndex: 0
-  }
+      currentQuestIndex: 0,
+      currentStepIndex: 0
+    }
   },
 
   riftProgress: {},
-  lessonProgress: {}
+  lessonProgress: {},
+
+  settings: {
+    musicVolume: 0.5,
+    sfxVolume: 0.5,
+    musicEnabled: true,
+    sfxEnabled: true
+  }
 };
 
 const GameState = {
@@ -71,13 +78,13 @@ const GameState = {
 
     let parsed;
 
-try {
-  parsed = JSON.parse(stored);
-} catch (e) {
-  console.error("[GameState] Corrupted save, resetting.");
-  localStorage.removeItem(STORAGE_KEY);
-  return null;
-}
+    try {
+      parsed = JSON.parse(stored);
+    } catch (e) {
+      console.error("[GameState] Corrupted save, resetting.");
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
 
     // ✅ Safe fallback for old saves
     if (parsed.currentLessonIndex === undefined) {
@@ -87,6 +94,11 @@ try {
     return {
       ...DEFAULT_PLAYER,
       ...parsed,
+
+      settings: {
+        ...DEFAULT_PLAYER.settings,
+        ...(parsed.settings || {})
+      },
 
       perks: {
         ...DEFAULT_PLAYER.perks,
@@ -99,19 +111,19 @@ try {
       },
 
       worldState: {
-  ...DEFAULT_PLAYER.worldState,
-  ...(parsed.worldState || {}),
+        ...DEFAULT_PLAYER.worldState,
+        ...(parsed.worldState || {}),
 
-  position: {
-    ...DEFAULT_PLAYER.worldState.position,
-    ...(parsed.worldState?.position || {})
-  },
+        position: {
+          ...DEFAULT_PLAYER.worldState.position,
+          ...(parsed.worldState?.position || {})
+        },
 
-  questProgress: {
-    ...DEFAULT_PLAYER.worldState.questProgress,
-    ...(parsed.worldState?.questProgress || {})
-  }
-},
+        questProgress: {
+          ...DEFAULT_PLAYER.worldState.questProgress,
+          ...(parsed.worldState?.questProgress || {})
+        }
+      },
 
       lessonProgress: {
         ...DEFAULT_PLAYER.lessonProgress,
@@ -176,21 +188,22 @@ try {
       },
 
       worldState: {
-  ...DEFAULT_PLAYER.worldState,
-  ...(value.worldState || {}),
+        ...DEFAULT_PLAYER.worldState,
+        ...(value.worldState || {}),
 
-  position: {
-    ...DEFAULT_PLAYER.worldState.position,
-    ...(value.worldState?.position || {})
-  },
+        position: {
+          ...DEFAULT_PLAYER.worldState.position,
+          ...(value.worldState?.position || {})
+        },
 
-  questProgress: {
-    ...DEFAULT_PLAYER.worldState.questProgress,
-    ...(value.worldState?.questProgress || {})
-  }
-},
+        questProgress: {
+          ...DEFAULT_PLAYER.worldState.questProgress,
+          ...(value.worldState?.questProgress || {})
+        }
+      },
       riftProgress: value.riftProgress ?? {},
-      lessonProgress: value.lessonProgress ?? {}
+      lessonProgress: value.lessonProgress ?? {},
+      settings: value.settings ?? DEFAULT_PLAYER.settings
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
@@ -230,8 +243,37 @@ try {
     const owned = this.getKeyItems();
     return KEY_ITEM_ORDER[owned.length] ?? null;
   },
-/*
-  addKeyItem(id, ORDER) {
+  /*
+    addKeyItem(id, ORDER) {
+      const player = this.player;
+      if (!player) return;
+  
+      player.items.keyItems = player.items.keyItems || [];
+  
+      const owned = player.items.keyItems;
+  
+      if (owned.includes(id)) {
+        console.log("[KeyItem] Already owned:", id);
+        return;
+      }
+  
+      const type = id.startsWith("keycard") ? "keycard" : "keystone";
+      const sameTypeOwned = owned.filter(i => i.startsWith(type));
+  
+      const expected = ORDER[sameTypeOwned.length];
+  
+      if (id !== expected) {
+        console.warn(`[KeyItem] Cannot collect ${id}. Expected: ${expected}`);
+        return;
+      }
+  
+      owned.push(id);
+  
+      this.player = player;
+      console.log("[KeyItem] Collected:", id);
+    },
+  */
+  addKeyItem(id) {
     const player = this.player;
     if (!player) return;
 
@@ -244,40 +286,11 @@ try {
       return;
     }
 
-    const type = id.startsWith("keycard") ? "keycard" : "keystone";
-    const sameTypeOwned = owned.filter(i => i.startsWith(type));
-
-    const expected = ORDER[sameTypeOwned.length];
-
-    if (id !== expected) {
-      console.warn(`[KeyItem] Cannot collect ${id}. Expected: ${expected}`);
-      return;
-    }
-
     owned.push(id);
 
     this.player = player;
     console.log("[KeyItem] Collected:", id);
   },
-*/
-addKeyItem(id) {
-  const player = this.player;
-  if (!player) return;
-
-  player.items.keyItems = player.items.keyItems || [];
-
-  const owned = player.items.keyItems;
-
-  if (owned.includes(id)) {
-    console.log("[KeyItem] Already owned:", id);
-    return;
-  }
-
-  owned.push(id);
-
-  this.player = player;
-  console.log("[KeyItem] Collected:", id);
-},
   addConsumable(id, amount = 1) {
     const player = this.player;
     if (!player) return;

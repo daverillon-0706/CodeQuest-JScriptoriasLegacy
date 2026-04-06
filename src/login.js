@@ -50,6 +50,7 @@ newGameBtn.addEventListener("click", () => {
   a.click();
 
   alert("Save file created! Keep it safe.");
+  stopTitleMusic();
   window.location.href = "/game.html";
 });
 
@@ -80,6 +81,7 @@ continueBtn.addEventListener("click", () => {
       localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
 
       alert("Save loaded successfully!");
+      stopTitleMusic();
       window.location.href = "/game.html";
 
     } catch(err) {
@@ -143,3 +145,27 @@ function animate() {
   requestAnimationFrame(animate);
 }
 animate();
+// -------------------
+// TITLE MUSIC
+// -------------------
+const titleMusic = new Audio("/assets/bgm/codequest-title.wav");
+
+titleMusic.loop = true;
+titleMusic.volume = 0.5;
+
+// Browsers require user interaction first
+function startTitleMusic() {
+  titleMusic.play().catch(err => {
+    console.warn("Music autoplay blocked:", err);
+  });
+}
+
+// Trigger once on any first interaction
+document.addEventListener("click", startTitleMusic, { once: true });
+document.addEventListener("keydown", startTitleMusic, { once: true });
+
+// Stop music before leaving login page
+function stopTitleMusic() {
+  titleMusic.pause();
+  titleMusic.currentTime = 0;
+}

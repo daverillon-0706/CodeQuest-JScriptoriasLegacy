@@ -12,7 +12,7 @@ export default class NotificationSystem {
 
     Object.assign(this.container.style, {
       position: "fixed",
-      top: "330px", // below minimap
+      top: "330px",
       right: "16px",
       width: "260px",
       maxHeight: "220px",
@@ -26,7 +26,7 @@ export default class NotificationSystem {
       fontSize: "12px",
       color: "#fff",
       pointerEvents: "none",
-      display: "flex",
+      display: "none",
       flexDirection: "column-reverse",
       gap: "4px",
     });
@@ -36,6 +36,8 @@ export default class NotificationSystem {
 
   add(message, type = "info") {
     if (!this.container) return;
+
+    this.container.style.display = "flex";
 
     const notif = document.createElement("div");
 
@@ -69,6 +71,10 @@ export default class NotificationSystem {
       notif.style.transform = "scale(0.8)";
       setTimeout(() => {
         notif.remove();
+        // Hide container if no notifications left
+        if (this.container && this.container.children.length === 0) {
+          this.container.style.display = "none";
+        }
       }, 300);
     }, this.duration);
 
