@@ -206,12 +206,12 @@ export default class HUD {
   // HUD UPDATE (SAFE)
   // -------------------------
   updateHUD() {
-    console.log("HUD UPDATE CALLED");
-    console.log("GameState.player =", GameState.player);
+    //console.log("HUD UPDATE CALLED");
+    //console.log("GameState.player =", GameState.player);
     const player = GameState.player;
     if (!player) return;
-    console.log("HUD synced from:", player);
-    console.log("Sprite customData:", this.player?.customData);
+    //console.log("HUD synced from:", player);
+    //console.log("Sprite customData:", this.player?.customData);
 
     const hp = player.hp ?? 0;
     const max_hp = player.max_hp ?? 0;

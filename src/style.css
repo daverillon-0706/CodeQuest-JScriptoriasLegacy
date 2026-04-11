@@ -709,7 +709,7 @@ body {
 
 /* ------------------------- */
 /* JOURNAL CODEX UI          */
-/* ------------------------- */
+/* ------------------------- 
 
 .codex-container {
   display: grid;
@@ -719,7 +719,7 @@ body {
   padding: 12px;
 }
 
-/* Sidebar */
+/* Sidebar 
 .codex-sidebar {
   background: rgba(255, 255, 255, 0.1);
   padding: 12px;
@@ -754,7 +754,7 @@ body {
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* Book List */
+/* Book List 
 .codex-list {
   background: rgba(255, 255, 255, 0.1);
   padding: 12px;
@@ -786,7 +786,7 @@ body {
   background: rgba(255, 255, 255, 0.35);
 }
 
-/* Reader Panel */
+/* Reader Panel 
 .codex-reader {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -826,6 +826,59 @@ body {
 
 .hidden {
   display: none !important;
+}
+*/
+.profile-container {
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.profile-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-row {
+  display: flex;
+  gap: 16px;
+}
+
+.top-row .profile-card {
+  flex: 1;
+}
+
+.middle-row .profile-card {
+  flex: 1;
+}
+
+.profile-card {
+  background: rgba(20, 20, 30, 0.95);
+  border: 2px solid #3b4a70;
+  border-radius: 12px;
+  padding: 14px;
+  color: white;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+}
+
+.inventory-card {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.profile-item-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.download-btn {
+  margin-top: 10px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 /* ----------------------------- */
@@ -1737,6 +1790,186 @@ body {
   background: #ffdede;
   border: 1px solid #f44336;
   text-decoration: line-through;
+}
+
+.quiz-option.correct {
+  background-color: rgba(0, 255, 0, 0.2);
+  border: 1px solid limegreen;
+}
+
+.quiz-option.incorrect {
+  background-color: rgba(255, 0, 0, 0.2);
+  border: 1px solid crimson;
+}
+
+.quiz-correct {
+  color: limegreen;
+  font-weight: bold;
+}
+
+.quiz-incorrect {
+  color: crimson;
+  font-weight: bold;
+}
+#quiz-close {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.quiz-breakdown-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+.quiz-breakdown-section h4 {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.quiz-lesson-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+/* Labels stay neutral */
+.lesson-label {
+  font-weight: bold;
+  color: #ddd;
+}
+
+/* Scores stay orange (shared with quiz) */
+.lesson-score {
+  color: #ffd54a;
+}
+
+
+.player-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.avatar-popup-content {
+  background: #1e1e2e;
+  padding: 20px;
+  border-radius: 12px;
+  width: 320px;
+  text-align: center;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.avatar-grid img {
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: 0.2s;
+}
+
+.avatar-grid img:hover {
+  border-color: #4fd1c5;
+  transform: scale(1.05);
+}
+.avatar-grid img.selected {
+  border: 3px solid #4cafef;
+  transform: scale(1.1);
+}
+
+#app-codex .rift-card p {
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+/* Only stat values (Wins, Losses, etc.) */
+#app-codex .rift-card p span {
+  font-weight: bold;
+  color: #9efc9e;
+}
+
+/* Divider feel for new analytics section */
+#app-codex .rift-card p strong {
+  color: #ffffff;
+}
+
+/* Accuracy highlight */
+#rift-accuracy {
+  color: #00ff99;
+  font-weight: bold;
+  text-shadow: 0 0 6px rgba(0, 255, 153, 0.3);
+}
+
+/* Error stats styling */
+#rift-errors-total {
+  color: #ffd166;
+}
+
+#rift-errors-syntax {
+  color: #ff6b6b;
+}
+
+#rift-errors-validation {
+  color: #ff9f43;
+}
+
+/* Weak area badge */
+#rift-weak-area {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* Optional: make weak area more readable visually */
+#rift-weak-area[data-type="Syntax"] {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+}
+
+#rift-weak-area[data-type="Logic"] {
+  background: rgba(255, 159, 67, 0.15);
+  color: #ff9f43;
+}
+
+#rift-weak-area[data-type="Balanced"] {
+  background: rgba(0, 255, 153, 0.12);
+  color: #00ff99;
+}
+
+#export-card {
+  background: white;
+  padding: 20px;
 }
 
 .compiler-result {

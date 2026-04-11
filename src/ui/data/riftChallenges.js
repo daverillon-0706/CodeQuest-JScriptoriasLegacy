@@ -5,6 +5,7 @@ export const RiftChallenges = {
   // =========================
   Syntax: [
     {
+      lessonType: "syntax",
       instruction: "Fix the syntax error",
       starterCode: "let x = ;",
       validate: (code) => {
@@ -64,6 +65,7 @@ export const RiftChallenges = {
 // =========================
 DataTypes: [
   {
+    lessonType: "datatypes",
     instruction: "Fix the variable so it becomes a string",
     starterCode: "let text = 123;",
     validate: (code) => {
@@ -130,6 +132,7 @@ DataTypes: [
 // =========================
 Variables: [
   {
+    lessonType: "variables",
     instruction: "Fix the declaration of variable a",
     starterCode: "a = 5;",
     validate: (code) => {
@@ -196,6 +199,7 @@ Variables: [
 // =========================
 Operators: [
   {
+    lessonType: "operators",
     instruction: "Fix the addition",
     starterCode: "let result = 2 - 3;",
     validate: (code) => {
@@ -262,6 +266,7 @@ Operators: [
 // =========================
 Conditions: [
   {
+    lessonType: "conditions",
     instruction: "Fix the if condition",
     starterCode: "// Make the result as true let x = 10; if (x < 5) { result = true; }",
     validate: (code) => {
@@ -328,6 +333,7 @@ Conditions: [
 // =========================
 Arrays: [
   {
+    lessonType: "arrays",
     instruction: "Fix the array declaration",
     starterCode: "let numbers = 1,2,3;",
     validate: (code) => {
@@ -394,6 +400,7 @@ Arrays: [
 // =========================
 Functions: [
   {
+    lessonType: "functions",
     instruction: "Fix the function declaration",
     starterCode: "greet() { return 'Hi'; }",
     validate: (code) => {

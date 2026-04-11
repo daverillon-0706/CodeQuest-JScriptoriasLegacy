@@ -11,6 +11,7 @@ const DEFAULT_PLAYER = {
   // Identity
   name: "",
   token: "",
+  avatarId: "avatar_1",
 
   // 🔥 Lesson progression (NEW)
   currentLessonIndex: 0,
@@ -166,6 +167,7 @@ const GameState = {
       isNewGame: value.isNewGame ?? true,
       name: value.name ?? "",
       token: value.token ?? "",
+      avatarId: value.avatarId ?? "avatar_1",
       hp: value.hp ?? 3,
       max_hp: value.max_hp ?? 3,
       energy: value.energy ?? 10,

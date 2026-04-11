@@ -256,42 +256,149 @@
 
       <!-- ================= CODEX ================= -->
       <div id="app-codex" class="tablet-panel hidden">
+        <div id="export-card">
+          <div class="profile-container">
 
-        <div class="codex-container">
+            <div class="profile-header">
+              <h2>Player Profile</h2>
+            </div>
 
-          <aside class="codex-sidebar">
-            <h3>Categories</h3>
-            <ul class="codex-category-list">
-              <li class="cat active" data-cat="stories">📘 Stories</li>
-              <li class="cat" data-cat="lore">📜 Lore</li>
-              <li class="cat" data-cat="characters">🧑 Characters</li>
-              <li class="cat" data-cat="locations">🌍 Locations</li>
-              <li class="cat" data-cat="bugs">🧩 Bugs</li>
-              <li class="cat" data-cat="achievements">🏆 Achievements</li>
-              <li class="cat" data-cat="lessons">📖 Lessons</li>
-            </ul>
-          </aside>
+            <div class="profile-grid">
 
-          <section class="codex-list">
-            <h3 class="codex-list-title">Entries</h3>
-            <ul id="codex-items" class="codex-items"></ul>
-          </section>
+              <!-- Top Row -->
+              <div class="profile-row top-row">
 
-          <section class="codex-reader">
-            <div id="codex-reader-content" class="reader-content">
-              <div id="codex-entry-icon" class="entry-icon hidden">
-                <img src="" alt="">
+                <!-- Name / Basic Info -->
+                <div class="profile-card player-card">
+                  <h3>Player Info</h3>
+
+                  <div class="player-avatar">
+                    <img id="player-avatar" src="" alt="Player Avatar">
+                    <input type="file" id="avatar-upload" accept="image/*" hidden>
+                  </div>
+
+                  <p><strong>Name:</strong> <span id="profile-player-name">---</span></p>
+                  <p><strong>Current Area:</strong> <span id="profile-player-area">---</span></p>
+                  <p><strong>Play Time:</strong> <span id="profile-playtime">0h 0m</span></p>
+                </div>
+
+                <!-- Hearts / Energy / Cryptos -->
+                <div class="profile-card stats-card">
+                  <h3>Resources</h3>
+
+                  <div class="resource-box">
+                    <p>❤️ Hearts</p>
+                    <span id="profile-hearts">0 / 0</span>
+                  </div>
+
+                  <div class="resource-box">
+                    <p>⚡ Energy</p>
+                    <span id="profile-energy">0 / 0</span>
+                  </div>
+
+                  <div class="resource-box">
+                    <p>Cryptos</p>
+                    <span id="profile-cryptos">
+                      <img src="/assets/icons/hud/cryptos.png" alt="crypto" class="coin-icon">0
+                    </span>
+                  </div>
+                </div>
+
               </div>
-              <p>Select an entry to read.</p>
+
+              <!-- Middle Row -->
+              <div class="profile-row middle-row">
+
+                <!-- Quiz Results -->
+                <div class="profile-card quiz-card">
+                  <h3>Quiz Results</h3>
+
+                  <p><strong>Quizzes Completed:</strong> <span id="quiz-completed">0</span></p>
+                  <p><strong>Quizzes Passed:</strong> <span id="quiz-passed">0</span></p>
+                  <p><strong>Best Score:</strong> <span id="quiz-best-score">0 / 5</span></p>
+                  <p><strong>First Attempt Score:</strong> <span id="quiz-first-attempt">0 / 5</span></p>
+                  <p><strong>Total Attempts:</strong> <span id="quiz-total-attempts">0</span></p>
+
+                  <div class="quiz-breakdown-section">
+                    <h4>Lesson Breakdown</h4>
+                    <div id="quiz-lesson-breakdown"></div>
+                  </div>
+                </div>
+
+                <!-- Rift Challenge Results -->
+                <div class="profile-card rift-card">
+                  <h3>Rift Challenges</h3>
+
+                  <p><strong>Wins:</strong> <span id="rift-wins">0</span></p>
+                  <p><strong>Losses:</strong> <span id="rift-losses">0</span></p>
+                  <p><strong>Total Challenges:</strong> <span id="rift-total">0</span></p>
+                  <p><strong>Best Rift:</strong> <span id="rift-best">---</span></p>
+
+                  <p><strong>Accuracy:</strong> <span id="rift-accuracy">0%</span></p>
+                  <p><strong>Total Errors:</strong> <span id="rift-errors-total">0</span></p>
+                  <p><strong>Syntax Errors:</strong> <span id="rift-errors-syntax">0</span></p>
+                  <p><strong>Logic Errors:</strong> <span id="rift-errors-validation">0</span></p>
+                  <p><strong>Weak Area:</strong> <span id="rift-weak-area">---</span></p>
+
+                  <!-- ✅ MATCH QUIZ STRUCTURE -->
+                  <div class="quiz-breakdown-section">
+                    <h4>Rift Breakdown</h4>
+                    <div id="rift-lesson-breakdown"></div>
+                  </div>
+                </div>
+
+                <!-- Items Collected -->
+                <div class="profile-card inventory-card">
+                  <h3>Items Collected</h3>
+
+                  <div class="inventory-section">
+                    <h4>Key Items</h4>
+                    <ul id="profile-key-items" class="profile-item-list"></ul>
+                  </div>
+
+                  <div class="inventory-section">
+                    <h4>Consumables</h4>
+                    <ul id="profile-consumables" class="profile-item-list"></ul>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Bottom Row -->
+              <div class="profile-row bottom-row">
+
+                <div class="profile-card download-card">
+                  <h3>Download Summary</h3>
+                  <p>Generate a downloadable card showing your current CodeQuest progress.</p>
+
+                  <button id="download-profile-card" class="download-btn">
+                    Download Player Card
+                  </button>
+                </div>
+
+              </div>
+
             </div>
 
-            <div id="codex-pages" class="reader-pages hidden">
-              <button id="page-prev">◀</button>
-              <span id="page-number">Page 1</span>
-              <button id="page-next">▶</button>
-            </div>
-          </section>
+          </div>
+        </div>
 
+        <div id="avatar-popup" class="avatar-popup hidden">
+          <div class="avatar-popup-content">
+            <h3>Select Your Avatar</h3>
+
+            <div class="avatar-grid">
+              <img src="assets/icons/avatar/avatar_1.png" data-id="avatar_1">
+              <img src="assets/icons/avatar/avatar_2.png" data-id="avatar_2">
+              <img src="assets/icons/avatar/avatar_3.png" data-id="avatar_3">
+              <img src="assets/icons/avatar/avatar_4.png" data-id="avatar_4">
+              <img src="assets/icons/avatar/avatar_5.png" data-id="avatar_5">
+              <img src="assets/icons/avatar/avatar_6.png" data-id="avatar_6">
+              <img src="assets/icons/avatar/avatar_7.png" data-id="avatar_7">
+            </div>
+
+            <button id="avatar-close">Close</button>
+          </div>
         </div>
       </div>
 
@@ -545,6 +652,7 @@
     */
 
   </script>
+</body>
 </body>
 
 </html>

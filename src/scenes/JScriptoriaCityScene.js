@@ -142,16 +142,16 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     this.musicManager.play("overworld");
 
     if (GameState.player?.settings) {
-    const s = GameState.player.settings;
+      const s = GameState.player.settings;
 
-    if (s.musicVolume !== undefined) this.musicManager.setVolume(s.musicVolume);
-    if (s.musicEnabled !== undefined) {
+      if (s.musicVolume !== undefined) this.musicManager.setVolume(s.musicVolume);
+      if (s.musicEnabled !== undefined) {
         s.musicEnabled ? this.musicManager.resume() : this.musicManager.pause();
-    }
+      }
 
-    if (s.sfxVolume !== undefined) this.soundManager.setVolume(s.sfxVolume);
-    if (s.sfxEnabled !== undefined) this.soundManager.setMute(!s.sfxEnabled);
-}
+      if (s.sfxVolume !== undefined) this.soundManager.setVolume(s.sfxVolume);
+      if (s.sfxEnabled !== undefined) this.soundManager.setMute(!s.sfxEnabled);
+    }
     this.doorSpawnMap = {
       "syntax_door": { x: 612, y: 451 },
       "datatypes_door": { x: 466, y: 684 },
@@ -391,8 +391,8 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     PerksManager.setScene(this);
     window.currentScene = this;
 
-    
-    
+
+
     // Group to manage all bullets
     this.bulletGroup = this.physics.add.group({
       classType: Bullet,
@@ -407,7 +407,7 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
       undefined,
       this
     );
-    
+
 
     // ---- HUD ----
     this.playerHPEl = document.getElementById("playerHP-text");
@@ -1285,6 +1285,15 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
         if (!success) {
           printConsole("❌ Code ran but failed validation.", true);
+
+          rift.lastErrors = rift.lastErrors || [];
+
+          rift.lastErrors.push({
+            type: "ValidationError",
+            message: "Incorrect solution submitted",
+            challengeIndex: rift.challengeIndex,
+            date: Date.now()
+          });
           this.NotificationSystem.add(
             "Incorrect solution submitted.",
             "error"
@@ -1356,6 +1365,15 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
 
       } catch (e) {
         printConsole(`❌ Compilation error: ${e.message}`, true);
+        // Store runtime/compile error in current attempt
+        rift.lastErrors = rift.lastErrors || [];
+
+        rift.lastErrors.push({
+          type: e.name || "Error",
+          message: e.message,
+          challengeIndex: rift.challengeIndex ?? 0,
+          date: Date.now()
+        });
         this.NotificationSystem.add(
           `Compilation Error: ${e.message}`,
           "error"
@@ -1438,20 +1456,20 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if (!rift || !rift.completed) return;
     this.soundManager.play('rift_summon');
     // Stop boss music first
-      this.musicManager.stop();
+    this.musicManager.stop();
 
-      // Small delay so Phaser fully clears the old sound
-      this.time.delayedCall(100, () => {
-        this.musicManager.play("victory", {
-          volume: 1,
-          loop: false
-        });
-
-        // Return to overworld after victory theme
-        this.time.delayedCall(4000, () => {
-          this.musicManager.fadeTo("overworld", 1000);
-        });
+    // Small delay so Phaser fully clears the old sound
+    this.time.delayedCall(100, () => {
+      this.musicManager.play("victory", {
+        volume: 1,
+        loop: false
       });
+
+      // Return to overworld after victory theme
+      this.time.delayedCall(4000, () => {
+        this.musicManager.fadeTo("overworld", 1000);
+      });
+    });
 
     console.log("RiftName:", rift.riftName);
     console.log("Mapped Keystone:", KEYSTONE_MAP[rift.riftName]);
@@ -1460,13 +1478,32 @@ export default class JScriptoriaCityScene extends Phaser.Scene {
     if (!player) return;
 
     // =========================
-    // Rift Progress Save
+    // Rift Progress Save (UPDATED)
     // =========================
     player.riftProgress = player.riftProgress || {};
     player.riftProgress[rift.riftName] =
-      player.riftProgress[rift.riftName] || {};
+      player.riftProgress[rift.riftName] || { attempts: [] };
 
-    player.riftProgress[rift.riftName].completed = true;
+    const riftRecord = player.riftProgress[rift.riftName];
+
+    // ensure attempts array exists
+    riftRecord.attempts = riftRecord.attempts || [];
+
+    // ADD THIS RUN AS AN ATTEMPT
+    riftRecord.attempts.push({
+      result: "win",
+      lessonType: rift.riftName.toLowerCase(), // or mapped version
+      completedChallenges: rift.challengePool?.length || 0,
+      totalChallenges: rift.totalChallenges || rift.challengePool?.length || 0,
+      errors: rift.lastErrors || [],
+      date: Date.now()
+    });
+
+    // reset after saving
+    rift.lastErrors = [];
+
+    // keep legacy flag (DO NOT REMOVE — used by old logic/UI safety)
+    riftRecord.completed = true;
 
     // =========================
     // Keystone Reward
