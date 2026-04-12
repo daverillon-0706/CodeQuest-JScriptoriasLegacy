@@ -39,14 +39,12 @@ export default class SettingsUI {
     getSettings() {
         if (!GameState.player) return {};
 
-        if (!GameState.player.settings) {
-            GameState.player.settings = {
-                musicVolume: 0.5,
-                sfxVolume: 0.5,
-                musicEnabled: true,
-                sfxEnabled: true
-            };
-        }
+        GameState.player.settings ||= {
+            musicVolume: 0.5,
+            sfxVolume: 0.5,
+            musicEnabled: true,
+            sfxEnabled: true
+        };
 
         return GameState.player.settings;
     }
@@ -55,24 +53,45 @@ export default class SettingsUI {
         const player = GameState.player;
         if (!player) return;
 
-        player.settings = {
-            ...(player.settings || {}),
-            ...this.pendingSettings
+        const settings = this.getSettings();
+
+        const finalSettings = {
+            musicVolume: this.pendingSettings.musicVolume ?? settings.musicVolume,
+            sfxVolume: this.pendingSettings.sfxVolume ?? settings.sfxVolume,
+            musicEnabled: this.pendingSettings.musicEnabled ?? settings.musicEnabled,
+            sfxEnabled: this.pendingSettings.sfxEnabled ?? settings.sfxEnabled,
         };
 
+        player.settings = finalSettings;
         GameState.player = player;
 
-        localStorage.setItem("codequest_settings", JSON.stringify(player.settings));
+        localStorage.setItem("codequest_settings", JSON.stringify(finalSettings));
 
         window.dispatchEvent(new CustomEvent("settings-updated", {
-            detail: player.settings
+            detail: finalSettings
         }));
 
         this.pendingSettings = {};
-        this.savedSettingsSnapshot = { ...player.settings };
+        this.savedSettingsSnapshot = { ...finalSettings };
 
-        //this.showFeedback("✅ Settings Saved");
         this.notificationSystem.add("Settings Saved", "success");
+        const musicManager = window.currentScene?.musicManager;
+        const soundManager = window.currentScene?.soundManager;
+
+        if (musicManager) {
+            if (finalSettings.musicEnabled) {
+                musicManager.resume?.();
+                musicManager.setVolume(Math.pow(finalSettings.musicVolume, 2.2));
+            } else {
+                musicManager.pause?.();
+                musicManager.setVolume(0);
+            }
+        }
+
+        if (soundManager) {
+            soundManager.setVolume(Math.pow(finalSettings.sfxVolume, 2.2));
+            soundManager.setMute(!finalSettings.sfxEnabled);
+        }
     }
 
     revertChanges() {
@@ -114,7 +133,7 @@ export default class SettingsUI {
         this.musicVolumeSlider?.addEventListener("input", e => {
             const sliderVal = parseFloat(e.target.value); // 0 → 1
             const volume = Math.pow(sliderVal, 2.2);     // exponential scaling
-            this.pendingSettings.musicVolume = sliderVal; // store **linear value** for saving
+            this.pendingSettings.musicVolume = volume; // store **linear value** for saving
 
             if (this.musicVolumeLabel) this.musicVolumeLabel.textContent = ` ${Math.round(volume * 100)}%`;
 
@@ -131,7 +150,7 @@ export default class SettingsUI {
         this.sfxVolumeSlider?.addEventListener("input", e => {
             const sliderVal = parseFloat(e.target.value);
             const volume = Math.pow(sliderVal, 2.2);
-            this.pendingSettings.sfxVolume = sliderVal;
+            this.pendingSettings.sfxVolume = volume;
 
             if (this.sfxVolumeLabel) this.sfxVolumeLabel.textContent = ` ${Math.round(volume * 100)}%`;
 
@@ -190,9 +209,13 @@ export default class SettingsUI {
 
         if (savedSettings) {
             try {
+                const saved = JSON.parse(savedSettings);
+
+                GameState.player = GameState.player || {};
                 GameState.player.settings = {
                     ...this.getSettings(),
-                    ...JSON.parse(savedSettings)
+                    ...saved
+
                 };
             } catch (err) {
                 console.warn("[SettingsUI] Failed to parse saved settings", err);
@@ -232,13 +255,13 @@ export default class SettingsUI {
             if (typeof soundManager.setMute === "function") soundManager.setMute(!(settings.sfxEnabled ?? true));
         }
     }
-/*
-    showFeedback(text) {
-        if (!this.feedback) return;
-        this.feedback.textContent = text;
-        this.feedback.classList.add("active");
-        clearTimeout(this.feedbackTimeout);
-        this.feedbackTimeout = setTimeout(() => this.feedback.classList.remove("active"), 1500);
-    }
-        */
+    /*
+        showFeedback(text) {
+            if (!this.feedback) return;
+            this.feedback.textContent = text;
+            this.feedback.classList.add("active");
+            clearTimeout(this.feedbackTimeout);
+            this.feedbackTimeout = setTimeout(() => this.feedback.classList.remove("active"), 1500);
+        }
+            */
 }

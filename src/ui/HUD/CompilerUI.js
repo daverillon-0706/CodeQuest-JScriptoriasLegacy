@@ -1,76 +1,203 @@
 export default class CompilerUI {
   constructor() {
-    // HTML elements
+    // Panels
     this.panel = document.getElementById("app-compiler");
+
+    // Buttons
     this.runBtn = document.getElementById("compiler-run");
-    this.codeBox = document.getElementById("compiler-code");
+    this.clearBtn = document.getElementById("compiler-clear");
+    this.saveBtn = document.getElementById("compiler-save");
+    this.copyBtn = document.getElementById("compiler-copy");
 
-    // Disable Phaser keys while typing
-this.codeBox.addEventListener("focus", () => {
-  if (window.game && window.game.input && window.game.input.keyboard) {
-    window.game.input.keyboard.enabled = false;
-  }
-});
+    // Editors
+    this.htmlBox = document.getElementById("compiler-html");
+    this.cssBox = document.getElementById("compiler-css");
+    this.jsBox = document.getElementById("compiler-js");
 
-this.codeBox.addEventListener("blur", () => {
-  if (window.game && window.game.input && window.game.input.keyboard) {
-    window.game.input.keyboard.enabled = true;
-  }
-});
+    // Preview iframe
+    this.preview = document.getElementById("compiler-preview");
 
-    // Safety: Only attach listeners once
-    if (this.runBtn && !this.runBtn.dataset.bound) {
-      this.runBtn.addEventListener("click", () => this.runCode());
-      this.runBtn.dataset.bound = "true";
-    }
+    this.bindEvents();
+    this.loadSavedCode();
   }
 
-  // Called by HUD.js when the app opens
+  bindEvents() {
+    // Run
+    this.runBtn?.addEventListener("click", () => this.runCode());
+
+    // Clear
+    this.clearBtn?.addEventListener("click", () => this.clearAll());
+
+    // Save
+    this.saveBtn?.addEventListener("click", () => this.saveCode());
+
+    // Copy output (HTML)
+    this.copyBtn?.addEventListener("click", () => this.copyOutput());
+
+    // Phaser lock
+    [this.htmlBox, this.cssBox, this.jsBox].forEach(box => {
+      box?.addEventListener("focus", () => {
+        if (window.game?.input?.keyboard) {
+          window.game.input.keyboard.enabled = false;
+        }
+      });
+
+      box?.addEventListener("blur", () => {
+        if (window.game?.input?.keyboard) {
+          window.game.input.keyboard.enabled = true;
+        }
+      });
+    });
+
+    [this.htmlBox, this.cssBox, this.jsBox].forEach(box => {
+      box?.addEventListener("input", () => this.saveCode());
+    });
+
+    // Simple tab system
+    document.querySelectorAll("[data-tab]").forEach(btn => {
+      btn.addEventListener("click", () => this.switchTab(btn.dataset.tab));
+    });
+  }
+
+  // =========================
+  // TAB SYSTEM
+  // =========================
+
+  switchTab(tab) {
+  // Hide all editors
+  this.htmlBox.classList.add("hidden");
+  this.cssBox.classList.add("hidden");
+  this.jsBox.classList.add("hidden");
+
+  // Hide all labels
+  document.getElementById("label-html")?.classList.add("hidden");
+  document.getElementById("label-css")?.classList.add("hidden");
+  document.getElementById("label-js")?.classList.add("hidden");
+
+  // Show selected
+  const map = {
+    html: this.htmlBox,
+    css: this.cssBox,
+    js: this.jsBox
+  };
+
+  const labelMap = {
+    html: "label-html",
+    css: "label-css",
+    js: "label-js"
+  };
+
+  map[tab]?.classList.remove("hidden");
+  document.getElementById(labelMap[tab])?.classList.remove("hidden");
+
+  // Active tab UI
+  document.querySelectorAll("#app-compiler [data-tab]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tab);
+  });
+}
+
+  // =========================
+  // CORE EXECUTION
+  // =========================
+
+  runCode() {
+    const html = this.htmlBox.value || "";
+    const css = this.cssBox.value || "";
+    const js = this.jsBox.value || "";
+
+    const fullDocument = `
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+${css}
+</style>
+</head>
+<body>
+
+${html}
+
+<script>
+try {
+  ${js}
+} catch (e) {
+  const err = document.createElement("pre");
+  err.style.color = "red";
+  err.textContent = e.message;
+  document.body.appendChild(err);
+}
+<\/script>
+
+</body>
+</html>
+`;
+
+    this.preview.srcdoc = fullDocument;
+
+    document.dispatchEvent(new CustomEvent("compiler-output", {
+      detail: { text: "Web preview updated" }
+    }));
+  }
+
+  // =========================
+  // STORAGE
+  // =========================
+
+  saveCode() {
+    localStorage.setItem("web_html", this.htmlBox.value);
+    localStorage.setItem("web_css", this.cssBox.value);
+    localStorage.setItem("web_js", this.jsBox.value);
+  }
+
+  loadSavedCode() {
+    this.htmlBox.value = localStorage.getItem("web_html") || "";
+    this.cssBox.value = localStorage.getItem("web_css") || "";
+    this.jsBox.value = localStorage.getItem("web_js") || "";
+  }
+
+  // =========================
+  // UTILITIES
+  // =========================
+
+  clearAll() {
+    this.htmlBox.value = "";
+    this.cssBox.value = "";
+    this.jsBox.value = "";
+    this.preview.srcdoc = "";
+
+    localStorage.removeItem("web_html");
+    localStorage.removeItem("web_css");
+    localStorage.removeItem("web_js");
+  }
+
+  copyOutput() {
+    navigator.clipboard.writeText(this.preview.srcdoc || "");
+  }
+
+  // =========================
+  // UI CONTROL
+  // =========================
+
   open() {
     this.panel.classList.remove("hidden");
   }
 
-  // Called by HUD.js when the app closes
   close() {
     this.panel.classList.add("hidden");
   }
 
-  // Clear code after each use
-  reset() {
-    this.codeBox.value = "";
-  }
+  loadExample(example) {
+    this.htmlBox.value = example.html;
+    this.cssBox.value = example.css;
+    this.jsBox.value = example.js;
 
-  // --- MAIN LOGIC ---
-  runCode() {
-    const code = this.codeBox.value.trim();
-    if (!code) return;
+    // Switch to HTML tab (good default)
+    this.switchTab("html");
 
-    // Collect console.log outputs inside an array
-    let output = [];
+    // Open compiler if not open
+    this.open();
 
-    // Temporary override console.log
-    const originalLog = console.log;
-    console.log = (msg) => {
-      output.push(String(msg));
-      originalLog(msg);
-    };
-
-    try {
-      // Evaluate player code
-      eval(code);
-    } catch (err) {
-      output.push("Error: " + err.message);
-    }
-
-    // Restore console.log
-    console.log = originalLog;
-
-    // Trigger HUD to close + show output textbox
-    document.dispatchEvent(new CustomEvent("compiler-output", {
-      detail: { text: output.join("\n") }
-    }));
-
-    // Reset box for next input
-    this.reset();
+    // 🔥 Auto-run preview
+    this.runCode();
   }
 }

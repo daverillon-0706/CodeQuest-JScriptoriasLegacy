@@ -12,6 +12,7 @@ import ConsumablesManager from "../../systems/ConsumablesManager.js";
 import GuideUI from "./GuideUI.js";
 import SaveLoadUI from "./SaveLoadUI.js";
 import SettingsUI from "./SettingsUI.js";
+import GuidebookUI from "./GuidebookUI.js";
 
 export default class HUD {
   constructor() {
@@ -26,7 +27,7 @@ export default class HUD {
     this.guide = new GuideUI();
     this.saveLoad = new SaveLoadUI();
     this.settings = new SettingsUI();
-
+    this.guidebook = new GuidebookUI(this.compiler);
 
     // Optional: sync inventory once at startup
     syncInventory();
@@ -289,10 +290,10 @@ export default class HUD {
     );
 
     this.closeBtn?.addEventListener("click", () => {
-    this.settings.revertChanges();
+    //this.settings.revertChanges();
     this.closeTablet();});
     this.backBtn?.addEventListener("click", () => {
-    this.settings.revertChanges();
+    //this.settings.revertChanges();
     this.closeAllApps();});
 
     this.overlay?.addEventListener("click", e => {
@@ -368,8 +369,8 @@ export default class HUD {
   attachCompilerEvents() {
     document.addEventListener("compiler-output", e => {
       const text = e.detail?.text ?? "";
-      this.showCompilerBubble(text);
-      this.closeTablet();
+      //this.showCompilerBubble(text);
+      //this.closeTablet();
       setTimeout(() => this.openTablet(), 6000);
     });
   }

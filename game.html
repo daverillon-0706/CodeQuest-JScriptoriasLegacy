@@ -171,20 +171,8 @@
     <canvas id="minimapCanvas" width="280" height="280"></canvas>
     <div id="map-name">J. Scriptoria City</div>
   </div>
-
-  <!-- NOTIFICATIONS 
-  <div id="notifications-container" class="hud-notifications">
-  </div>
--->
-
-
-
-  <div id="compiler-output-box" class="compiler-output hidden"></div>
-
-
   <!-- TABLET OVERLAY -->
   <div id="tablet-overlay" class="hidden">
-
     <div id="tablet-hud">
 
       <!-- HEADER -->
@@ -477,9 +465,48 @@
 
       <!-- ================= COMPILER ================= -->
       <div id="app-compiler" class="tablet-panel hidden">
-        <h3>Compiler</h3>
-        <textarea id="compiler-code" placeholder="Write JavaScript here..."></textarea>
-        <button id="compiler-run">Run</button>
+
+        <h3>Web Lab</h3>
+        <button id="open-guidebook">Guidebook</button>
+
+        <div class="compiler-layout">
+
+          <!-- LEFT: EDITORS -->
+          <div class="compiler-left">
+
+            <div class="tabs">
+              <button data-tab="html" class="active">HTML</button>
+              <button data-tab="css">CSS</button>
+              <button data-tab="js">JS</button>
+            </div>
+
+            <label id="label-html">HTML</label>
+            <textarea id="compiler-html"></textarea>
+
+            <label id="label-css" class="hidden">CSS</label>
+            <textarea id="compiler-css" class="hidden"></textarea>
+
+            <label id="label-js" class="hidden">JavaScript</label>
+            <textarea id="compiler-js" class="hidden"></textarea>
+
+            <div class="compiler-tools">
+              <button id="compiler-run">Run</button>
+              <button id="compiler-clear">Clear</button>
+
+              <div class="spacer"></div>
+
+              <button id="compiler-save">Save</button>
+              <button id="compiler-copy">Copy Output</button>
+            </div>
+
+          </div>
+
+          <!-- RIGHT: PREVIEW -->
+          <div class="compiler-right">
+            <iframe id="compiler-preview" sandbox="allow-scripts" title="Web Preview"></iframe>
+          </div>
+
+        </div>
       </div>
 
       <!-- ================= TUTORIAL ================= -->
@@ -584,6 +611,14 @@
       </div>
 
     </div>
+    <!-- FLOATING / OVERLAY PANEL -->
+        <div id="guidebook-panel" class="hidden guidebook-overlay">
+          <div class="guidebook-content">
+            <h3>Guidebook</h3>
+            <button id="close-guidebook">X</button>
+            <div id="guidebook-list"></div>
+          </div>
+        </div>
   </div>
 
   <div id="tutorial-ui" class="overlay hidden">
