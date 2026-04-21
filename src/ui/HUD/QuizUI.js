@@ -58,6 +58,17 @@ export default class QuizUI {
         block.append(...q.options.map((opt, i) => this.createOption(idx, i, opt)));
       } else if (q.type === "compiler") {
         const textarea = document.createElement("textarea");
+        textarea.addEventListener("focus", () => {
+          if (window.game?.input?.keyboard) {
+            window.game.input.keyboard.enabled = false;
+          }
+        });
+
+        textarea.addEventListener("blur", () => {
+          if (window.game?.input?.keyboard) {
+            window.game.input.keyboard.enabled = true;
+          }
+        });
         textarea.className = "quiz-code-input";
         textarea.value = q.starterCode || "";
         block.appendChild(textarea);
@@ -78,156 +89,163 @@ export default class QuizUI {
   }
 
   handleSubmit() {
-  console.log("Submit clicked");
+    console.log("Submit clicked");
 
-  if (this.submitted) {
-    console.log("Already submitted, exiting");
-    return;
+    if (this.submitted) {
+      console.log("Already submitted, exiting");
+      return;
+    }
+
+    this.submitted = true;
+    console.log("Marked as submitted");
+
+    this.submitBtn.disabled = true;
+    console.log("Submit button disabled");
+
+    let score = 0;
+
+    console.log("Starting question loop");
+
+    this.quiz.questions.forEach((q, idx) => {
+      console.log(`Processing question ${idx}`, q);
+
+      const block = this.questionsEl.querySelector(`[data-index="${idx}"]`);
+      console.log("Question block:", block);
+
+      let isCorrect = false;
+
+      if (q.type === "multiple") {
+        console.log("Handling multiple choice question");
+
+        const selected = block.querySelector(`input[name="question-${idx}"]:checked`);
+        console.log("Selected answer:", selected);
+
+        const labels = block.querySelectorAll(".quiz-option");
+        console.log("Labels found:", labels);
+
+        labels.forEach((label, optionIndex) => {
+          const input = label.querySelector("input");
+
+          if (input) {
+            input.disabled = true;
+          }
+
+          if (optionIndex === q.answer) {
+            label.classList.add("correct");
+          }
+
+          if (
+            selected &&
+            parseInt(selected.value) === optionIndex &&
+            optionIndex !== q.answer
+          ) {
+            label.classList.add("incorrect");
+          }
+        });
+
+        isCorrect = selected && parseInt(selected.value) === q.answer;
+        console.log("Multiple question correct:", isCorrect);
+      }
+
+      if (q.type === "compiler") {
+        console.log("Handling compiler question");
+
+        const textarea = block.querySelector("textarea");
+        console.log("Textarea found:", textarea);
+
+        const output = this.runCode(textarea.value);
+        console.log("Compiler output:", output);
+        console.log("Expected output:", q.expectedOutput);
+
+        isCorrect = output.trim() === q.expectedOutput.trim();
+        console.log("Compiler question correct:", isCorrect);
+
+        textarea.disabled = true;
+
+        const result = document.createElement("p");
+        result.className = isCorrect ? "quiz-correct" : "quiz-incorrect";
+        result.textContent = isCorrect
+          ? "✔ Correct Output"
+          : `✖ Incorrect Output (Expected: ${q.expectedOutput})`;
+
+        block.appendChild(result);
+      }
+
+      if (isCorrect) {
+        score++;
+        console.log("Score incremented:", score);
+      }
+    });
+
+    console.log("Finished question loop");
+    console.log("Final score:", score);
+
+    this.quiz.correctAnswers = score;
+    this.quiz.currentIndex = this.quiz.questions.length;
+
+    console.log("Calling finish()");
+    const passed = this.quiz.finish();
+    console.log("Passed:", passed);
+
+    try {
+      console.log("Calling notifyResult()");
+      this.notifyResult(score, passed);
+      console.log("notifyResult completed");
+    } catch (err) {
+      console.error("notifyResult failed:", err);
+    }
+
+    console.log("Hiding submit button");
+    this.submitBtn.style.display = "none";
+
+    console.log("Creating close button");
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "quiz-close";
+    closeBtn.textContent = "Close";
+
+    closeBtn.addEventListener("click", () => {
+      console.log("Close button clicked");
+
+      // 🔥 Restore keyboard no matter what
+      if (window.game?.input?.keyboard) {
+        window.game.input.keyboard.enabled = true;
+      }
+      this.container?.remove();
+
+      if (this.notificationSystem?.container) {
+        this.notificationSystem.container.remove();
+      }
+    });
+
+    console.log("Looking for quiz box");
+    const quizBox = this.container.querySelector(".quiz-box");
+    console.log("quizBox:", quizBox);
+
+    if (quizBox) {
+      console.log("Appending close button");
+      quizBox.appendChild(closeBtn);
+    } else {
+      console.error("quizBox not found");
+    }
+
+    console.log("handleSubmit finished");
   }
-
-  this.submitted = true;
-  console.log("Marked as submitted");
-
-  this.submitBtn.disabled = true;
-  console.log("Submit button disabled");
-
-  let score = 0;
-
-  console.log("Starting question loop");
-
-  this.quiz.questions.forEach((q, idx) => {
-    console.log(`Processing question ${idx}`, q);
-
-    const block = this.questionsEl.querySelector(`[data-index="${idx}"]`);
-    console.log("Question block:", block);
-
-    let isCorrect = false;
-
-    if (q.type === "multiple") {
-      console.log("Handling multiple choice question");
-
-      const selected = block.querySelector(`input[name="question-${idx}"]:checked`);
-      console.log("Selected answer:", selected);
-
-      const labels = block.querySelectorAll(".quiz-option");
-      console.log("Labels found:", labels);
-
-      labels.forEach((label, optionIndex) => {
-        const input = label.querySelector("input");
-
-        if (input) {
-          input.disabled = true;
-        }
-
-        if (optionIndex === q.answer) {
-          label.classList.add("correct");
-        }
-
-        if (
-          selected &&
-          parseInt(selected.value) === optionIndex &&
-          optionIndex !== q.answer
-        ) {
-          label.classList.add("incorrect");
-        }
-      });
-
-      isCorrect = selected && parseInt(selected.value) === q.answer;
-      console.log("Multiple question correct:", isCorrect);
-    }
-
-    if (q.type === "compiler") {
-      console.log("Handling compiler question");
-
-      const textarea = block.querySelector("textarea");
-      console.log("Textarea found:", textarea);
-
-      const output = this.runCode(textarea.value);
-      console.log("Compiler output:", output);
-      console.log("Expected output:", q.expectedOutput);
-
-      isCorrect = output.trim() === q.expectedOutput.trim();
-      console.log("Compiler question correct:", isCorrect);
-
-      textarea.disabled = true;
-
-      const result = document.createElement("p");
-      result.className = isCorrect ? "quiz-correct" : "quiz-incorrect";
-      result.textContent = isCorrect
-        ? "✔ Correct Output"
-        : `✖ Incorrect Output (Expected: ${q.expectedOutput})`;
-
-      block.appendChild(result);
-    }
-
-    if (isCorrect) {
-      score++;
-      console.log("Score incremented:", score);
-    }
-  });
-
-  console.log("Finished question loop");
-  console.log("Final score:", score);
-
-  this.quiz.correctAnswers = score;
-  this.quiz.currentIndex = this.quiz.questions.length;
-
-  console.log("Calling finish()");
-  const passed = this.quiz.finish();
-  console.log("Passed:", passed);
-
-  try {
-    console.log("Calling notifyResult()");
-    this.notifyResult(score, passed);
-    console.log("notifyResult completed");
-  } catch (err) {
-    console.error("notifyResult failed:", err);
-  }
-
-  console.log("Hiding submit button");
-  this.submitBtn.style.display = "none";
-
-  console.log("Creating close button");
-  const closeBtn = document.createElement("button");
-  closeBtn.id = "quiz-close";
-  closeBtn.textContent = "Close";
-
-  closeBtn.addEventListener("click", () => {
-    console.log("Close button clicked");
-
-    this.container?.remove();
-
-    if (this.notificationSystem?.container) {
-      this.notificationSystem.container.remove();
-    }
-  });
-
-  console.log("Looking for quiz box");
-  const quizBox = this.container.querySelector(".quiz-box");
-  console.log("quizBox:", quizBox);
-
-  if (quizBox) {
-    console.log("Appending close button");
-    quizBox.appendChild(closeBtn);
-  } else {
-    console.error("quizBox not found");
-  }
-
-  console.log("handleSubmit finished");
-}
 
   runCode(code) {
     let output = "";
     const originalLog = console.log;
-    console.log = (msg) => { output += msg; };
 
     try {
-      eval(code);
+      console.log = (msg) => { output += msg + "\n"; };
+
+      eval(`(function(){ ${code} })()`);
+
     } catch {
       output = "Error";
+    } finally {
+      console.log = originalLog;
     }
 
-    console.log = originalLog;
     return output.trim();
   }
 
