@@ -3,7 +3,7 @@ export const QUESTS = [
     id: "syntax",
     title: "Syntax Basics",
     steps: [
-      { id: "talk_elysia", label: "Talk to Elysia" },
+      //{ id: "talk_elysia", label: "Talk to Elysia" },
       { id: "go_house", label: "Go to Syntax House ( ; )" },
       { id: "collect_books", label: "Collect Books & Pass Test" },
       { id: "summon_rift", label: "Summon Rift" },
